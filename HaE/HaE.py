@@ -58,11 +58,9 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
         if messageIsRequest:
             return
         content = messageInfo.getResponse()
-        r = self._helpers.analyzeResponse(content)
-        msg = content[r.getBodyOffset():].tostring()
-        # msg 为响应正文信息
+        # content 为响应正文信息
         info = getConfig()
-        results = findContent(info, msg)
+        results = findContent(info, content)
         colorList = []
         if results != {}:
             for i in results:
@@ -205,13 +203,11 @@ class MarkINFOTab(IMessageEditorTab):
 
     # 非响应 没有匹配到不返回Tab标签页
     def isEnabled(self, content, isRequest):
-        r = self._helpers.analyzeResponse(content)
-        msg = content[r.getBodyOffset():].tostring()
         info = getConfig()
         if not isRequest:
-            content = findContent(info, msg)
-            if content != {}:
-                for i in content:
+            contents = findContent(info, content)
+            if contents != {}:
+                for i in contents:
                     if info[i]['extract'] == 1 :
                         return True
 
@@ -220,10 +216,8 @@ class MarkINFOTab(IMessageEditorTab):
         # 判断是否有内容
         if content:
             if not isRequest:
-                r = self._helpers.analyzeResponse(content)
-                msg = content[r.getBodyOffset():].tostring()
                 info = getConfig()
-                contents = findContent(info, msg)
+                contents = findContent(info, content)
                 result = ""
                 for i in contents:
                     if info[i]['extract'] == 1 :
