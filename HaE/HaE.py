@@ -111,14 +111,14 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
         if colorText in colors:
             with open(configFile, 'r+') as content:
                 dicts = json.load(content)
-                # 解决r+写入问题
-                content.seek(0,0)
-                content.truncate()
                 if nameText in dicts:
                     self.tipString.setText("Name is existed!")
                 elif not(isHighlight or isExtract):
                     self.tipString.setText("Highlight or Extract?")
                 else:
+                    # 解决r+写入问题
+                    content.seek(0,0)
+                    content.truncate()
                     dicts[nameText] = {"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}
                     content.write(jsbeautifier.beautify(json.dumps(dicts)))
                     #print(dicts)
@@ -127,8 +127,17 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
             self.tipString.setText("Not in colors list.")
 
     def reloadConfig(self, event):
+        # 重新载入配置文件
         with open(configFile, 'r') as content:
             self.configTextArea.setText(content.read())
+
+    def saveConfig(self, event):
+        # 保存配置文件
+        text = self.configTextArea.getText()
+        if text != "":
+            with open(configFile, 'w') as content:
+                content.write(text)
+            self.reloadConfig()
 
     def getUiComponent(self):
         self.HaEPanel = JPanel()
@@ -172,11 +181,8 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
         self.configPanel = JPanel()
         self.tabbedPane.addTab("Config", None, self.configPanel, None)
         self.configPanel.setLayout(BorderLayout(0, 0))
-        self.configString = JLabel("This is config file content.")
-        self.configString.setHorizontalAlignment(SwingConstants.CENTER)
-        self.configPanel.add(self.configString, BorderLayout.NORTH)
         self.configTextArea = JTextArea()
-        self.configTextArea.setEnabled(False)
+        # self.configTextArea.setEnabled(False)
         self.configTextArea.setTabSize(4)
         self.configTextArea.setLineWrap(True)
         self.configTextArea.setRows(20)
@@ -184,7 +190,9 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
         self.scrollPane = JScrollPane(self.configTextArea)
         self.configPanel.add(self.scrollPane, BorderLayout.SOUTH)
         self.reloadButton = JButton("Reload", actionPerformed=self.reloadConfig)
-        self.configPanel.add(self.reloadButton, BorderLayout.CENTER)
+        self.configPanel.add(self.reloadButton, BorderLayout.NORTH)
+        self.saveButton = JButton("Save", actionPerformed=self.saveConfig)
+        self.configPanel.add(self.saveButton, BorderLayout.CENTER)
         return self.HaEPanel
         
 class MarkINFOTab(IMessageEditorTab):
