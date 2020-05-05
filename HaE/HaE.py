@@ -109,20 +109,20 @@ class BurpExtender(IBurpExtender, ITab,IHttpListener, IMessageEditorTabFactory):
         isHighlight = int(self.highlightCheckBox.isSelected())
         isExtract = int(self.extractCheckBox.isSelected())
         if colorText in colors:
-            with open(configFile, 'r+') as content:
-                dicts = json.load(content)
-                if nameText in dicts:
-                    self.tipString.setText("Name is existed!")
-                elif not(isHighlight or isExtract):
-                    self.tipString.setText("Highlight or Extract?")
-                else:
-                    # 解决r+写入问题
-                    content.seek(0,0)
-                    content.truncate()
-                    dicts[nameText] = {"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}
-                    content.write(jsbeautifier.beautify(json.dumps(dicts)))
-                    #print(dicts)
-                    self.tipString.setText("Save Successfully!")
+            # 获取配置文件信息
+            content = open(configFile, 'r')
+            dicts = json.load(content)
+            content.close()
+            # 读写判断
+            if nameText in dicts:
+                self.tipString.setText("Name is existed!")
+            elif not(isHighlight or isExtract):
+                self.tipString.setText("Highlight or Extract?")
+            else:
+                dicts[nameText] = {"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}
+                with open(configFile, 'w') as configContent:
+                    configContent.write(jsbeautifier.beautify(json.dumps(dicts)))
+                self.tipString.setText("Save Successfully!")
         else:
             self.tipString.setText("Not in colors list.")
 
