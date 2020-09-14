@@ -1,122 +1,70 @@
-# HaE - 信息高亮与提取者
+# HaE - Highlighter and Extractor
 
-## 前言
+## 介绍
 
-HaE（Highlight and Extractor），是基于MarkINFO插件（地址：https://github.com/gh0stkey/BurpSuite-Extender-MarkInfo ）的基础进行重构。
+**HaE**是基于 `BurpSuite` 插件 `JavaAPI` 开发的请求高亮标记与信息提取的辅助型插件。
 
-用处：
-- 高亮标记请求，针对高亮的请求进行深度挖掘
-- 敏感信息泄露发现
+![-w1070](images/16000706401522.jpg)
 
-## 设计想法
+该插件可以通过自定义正则的方式匹配**响应报文**，可以自行决定符合该自定义正则匹配的相应请求是否需要高亮标记、信息提取。
 
-语言：Python
-
-![-w902](images/15845160387850.jpg)
-
-功能：
-- 自定义正则
-- 自定义高亮颜色
-- 自定义高亮或提取
-
-## 设计过程
-
-### 可视化界面
-
-UI设计（基于Eclipse可视化设计），基于Java Swing
-
-![-w1143](images/15845162741518.jpg)
-
-然后将Java代码转换为Python代码即可（**有很多坑～**）
-
-使用BurpSuite接口：`ITab`创建Tab
-
-![-w1276](images/15845160114052.jpg)
-
-### 高亮颜色
-
-将BurpSuite的所有高亮颜色集成：（仅支持：`red, orange, yellow, green, cyan, blue, pink, magenta, gray`）
-
-![-w96](images/15844769689459.jpg)
-
-![-w518](images/15845164967615.jpg)
-
-### 配置文件格式
-
-选用JSON格式，格式为
-
-```
-name: {"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}
-```
-
-### 颜色优先级和升级
-
-定义Colors变量：
-
-`colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'pink', 'magenta', 'gray']`
-
-利用下标的方式进行优先级排序，当满足2个同颜色条件则以优先级顺序上升颜色。（例如：**两个正则，颜色为橘黄色，该请求两个正则都匹配到了，那么将升级为红色**）
+注：`HaE`的使用，对测试人员来说需要基本的正则表达式基础，由于`Java`正则表达式的库并没有`Python`的优雅或方便，在使用正则的，HaE要求使用者必须使用`()`将所需提取的表达式内容包含；例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，如果你要提取这段内容的话就需要变成`(rememberMe=delete)`。
 
 ## 使用方法
 
-贴一些案例，仅供参考，还有更多玩法，可以自我琢磨～
+插件装载：`Extender - Extensions - Add - Select File - Next`
 
-### 环境设置
+初次装载`HaE`会初始化配置文件，默认配置文件内置一个正则：`Email`，初始化的配置文件会放在与`BurpSuite Jar`包同级目录下。
 
-进入Extender - Options - Python Environment
+![-w330](images/16000708493657.jpg)
 
-![-w840](images/15845168078333.jpg)
+除了初始化的配置文件外，还有`init.hae`，该文件用于存储配置文件路径；`HaE`支持自定义配置文件路径，你可以通过点击`Select File`按钮进行选择自定义配置文件。
 
-载入Jython的Jar包以及载入python的包路径。
+![-w477](images/16000710069404.jpg)
 
-加载插件，选择HaE.py文件：
+HaE支持三个动作：
 
-![-w858](images/15845168915243.jpg)
+1. 重载规则（Reload）：当你不使用HaE UI界面去修改配置文件内的规则时，而是直接基于配置文件进行修改规则时可使用；
+2. 新建规则（New）：新建规则会自动添加一行表格数据，单击或双击进行修改数据即可自动保存；
+3. 删除规则（Delete）：单击选中某条规则时，按下该按钮即可删除规则。
 
-加载成功：
+注：HaE的操作都是基于表单UI的方式，操作即会自动保存。
 
-![-w743](images/15845169108559.jpg)
+## 插件优点
+
+1. 多选项自定义控制适配需求；
+2. 多颜色高亮分类，将BurpSuite的所有高亮颜色集成：`red, orange, yellow, green, cyan, blue, pink, magenta, gray`；
+3. 颜色升级算法：利用下标的方式进行优先级排序，当满足2个同颜色条件则以优先级顺序上升颜色。（例如：**两个正则，颜色为橘黄色，该请求两个正则都匹配到了，那么将升级为红色**）
+4. 简单的配置文件格式选用JSON格式，格式为
+    ```
+    {name: {"loaded": isLoaded:,"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}}
+    ```
+5. 内置简单缓存，在“多正则、大数据”的场景下减少卡顿现象。
+
+## 实际使用
+
+使用 RGPerson 生成测试数据，放入网站根目录文件中：
+
+![-w467](images/16000719723284.jpg)
+
+访问该地址，在`Proxy - HTTP History`中可以看见高亮请求，响应标签页中含有`MarkINFO`标签，其中将匹配到的信息提取了出来。
+
+![-w1047](images/16000720732854.jpg)
 
 
-### RUN IT
+## 正则优化
 
-#### 添加自定义正则
-
-```
-名字：Email
-
-正则：[\\w-]+(?:\\.[\\w-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?
-
-高亮颜色：red
-
-是否高亮和提取：是
-```
-
-转到HaE标签页，进行设置，点击Add按钮即可添加
-
-![-w1278](images/15845171413470.jpg)
-
-HaE - Config查看是否进行配置，点击Reload按钮：
-
-![-w1277](images/15845172203307.jpg)
-
-#### 高亮请求
-
-在Proxy - HTTP History中可以看见高亮请求，响应标签页中含有`MarkINFO`标签，其中将匹配到的邮箱提取了出来
-
-![-w1268](images/15845175423506.jpg)
-
-#### 正则优化（参考Demo）
+有些正则在实战应用场景中并不理想
 
 在正则匹配手机号、身份证号码的时候（纯数字类）会存在一些误报（这里匹配身份证号码无法进行校验，误报率很高），但手机号处理这一块可以解决：
 
 原正则：
 
 ```
-(1[3-9]\d{9})
+1[3-9]\d{9}
 ```
 
-误报场景：`12315188888888123`，这时候会匹配到`15188888888`，而实际上这一段并不是手机号，所以完全可以修改正则为：
+误报场景：`12315188888888123`，这时候会匹配到`15188888888`，而实际上这一段并不是手机号，所以修改正则为：
 
 ```
 [^0-9]+(1[3-9]\d{9})[^0-9]+
@@ -126,34 +74,14 @@ HaE - Config查看是否进行配置，点击Reload按钮：
 
 ## 实战用法
 
-### CMS指纹识别
+1. CMS指纹识别，Discuz正则：`(Powered by Discuz!)`
+2. OSS对象存储信息泄露，正则：`([A|a]ccess[K|k]ey[I|i]d|[A|a]ccess[K|k]ey[S|s]ecret)`
+3. 内网地址信息提取，正则：`(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(?:172\.(?:(?:1[6-9])|(?:2\d)|(?:3[01]))\.\d{1,3}\.\d{1,3})|(?:192\.168\.\d{1,3}\.\d{1,3})`
+4. 实战插件关联搭配，漏洞挖掘案例：https://mp.weixin.qq.com/s/5vNn7dMRZBtv0ojPBAHV7Q
+...还有诸多使用方法等待大家去发掘。
 
-例如：识别Discuz，名字：CMS-Discuz，正则：`Powered by Discuz!`，高亮颜色：blue
+## 文末
 
-![-w1272](images/15845485039330.jpg)
+随笔：正义感是一个不可丢失的东西。
 
-Add保存到配置文件中：
-
-![-w294](images/15845485770190.jpg)
-
-请求识别：
-
-![-w1037](images/15845486471590.jpg)
-
-### OSS对象存储信息泄露
-
-名字：INFO-OSS
-
-正则：`[A|a]ccess[K|k]ey[I|i]d|[A|a]ccess[K|k]ey[S|s]ecret`
-
-高亮颜色：cyan
-
-![-w1002](images/15845490590739.jpg)
-
-Add保存到配置文件中：
-
-![-w482](images/15845490802944.jpg)
-
-请求中识别并提取：
-
-![-w1278](images/15845492243895.jpg)
+Github项目地址（BUG、需求、正则欢迎提交）：https://github.com/gh0stkey/HaE
