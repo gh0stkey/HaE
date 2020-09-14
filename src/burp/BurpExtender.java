@@ -68,8 +68,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				initialize();
-				
 				// 判断"config.json"文件是否具备内容，如若不具备则进行初始化
 				if (configFilePath.equals("config.json")) {
 					if (readFileContent(configFilePath).equals("")) {
@@ -80,10 +78,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				// 判断配置文件是否存在
 				if (fileExists(configFilePath)) {
 					configFilePath = readFileContent(initFilePath);
-					fillTable();
 				} else {
 					JOptionPane.showMessageDialog(null, "Config File Not Found!", "Error", JOptionPane.ERROR_MESSAGE);
 				}
+				
+				initialize();
+				fillTable();
+				
 			}
 		});
 		callbacks.registerHttpListener(BurpExtender.this);
