@@ -340,8 +340,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 						boolean isExtract = jsonObj1.getBoolean("extract");
 						boolean isLoaded = jsonObj1.getBoolean("loaded");
 						if (isExtract && isLoaded) {
-							String tmpStr = String.format("[%s] %s \n", name, jsonObj1.getString("data"));
-							String tmpStr1 = new String(tmpStr).intern();
+							String tmpStr = String.format("[%s] %s \n", name, jsonObj1.getString("data")).intern();
 							result += tmpStr;
 						}
 					}
