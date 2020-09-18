@@ -190,6 +190,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				"Loaded", "Name", "Regex", "Color", "isExtract", "isHighlight"
 			}
 		));
+		table.setAutoCreateRowSorter(true);
 		scrollPane.setViewportView(table);
 		
 		table.getColumnModel().getColumn(2).setPreferredWidth(172);
@@ -259,7 +260,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	 */
 	@Override
     public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) {
-        if (!messageIsRequest) {
+		// 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
+        if (!messageIsRequest && (toolFlag == 64 || toolFlag == 32 || toolFlag == 4)) {
             byte[] content = messageInfo.getResponse();
             JSONObject jsonObj = matchRegex(content);
             if (jsonObj.length() > 0) {
