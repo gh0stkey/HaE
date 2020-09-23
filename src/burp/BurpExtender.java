@@ -190,7 +190,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				"Loaded", "Name", "Regex", "Color", "isExtract", "isHighlight"
 			}
 		));
-		table.setAutoCreateRowSorter(true);
 		scrollPane.setViewportView(table);
 		
 		table.getColumnModel().getColumn(2).setPreferredWidth(172);
