@@ -49,7 +49,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	private static String configFilePath = "config.json";
 	private static String initFilePath = "init.hae";
 	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"highlight\":true,\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"extract\":true,\"color\":\"yellow\"}}";
-	private String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
+	private static String endColor = "";
+	private static String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
 	private static IMessageEditorTab HaETab;
 	private static PrintWriter stdout;
 	
@@ -276,7 +277,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                     }
                 }
                 if (colorList.size() != 0) {
-                    String color = colorUpgrade(getColorKeys(colorList));
+                	colorUpgrade(getColorKeys(colorList));
+                    String color = endColor;
                     messageInfo.setHighlight(color);
                 }
             }
@@ -422,35 +424,35 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	/*
 	 * 颜色升级递归算法
 	 */
-	private String colorUpgrade(List<Integer> colorList) {
+	private static String colorUpgrade(List<Integer> colorList) {
 		int colorSize = colorList.size();
+		colorList.sort(Comparator.comparingInt(Integer::intValue));
 		int i = 0;
 		List<Integer> stack = new ArrayList<Integer>();
 		while (i < colorSize) {
-			if (stack.size() > 0) {
-				stack.add(colorList.get(i));
-				i++;
-			} else if (colorList.get(i) != stack.stream().reduce((first, second) -> second).orElse(999999)) {
+			if (stack.isEmpty()) {
 				stack.add(colorList.get(i));
 				i++;
 			} else {
-				stack.set(stack.size() - 1, stack.get(stack.size() - 1) - 1);
-				i++;
-			}
-		}
-		int stackSize = stack.size();
-		// 利用HashSet删除重复元素
-		HashSet tmpList = new HashSet(stack);
-		stack.clear();
-		stack.addAll(tmpList);
-		if (stackSize == stack.size()) {
-			List<String> endColorList = new ArrayList<String>();
-			for (int j = 0; j < stack.size(); j++) {
-				int num = stack.get(j);
-				endColorList.add(colorArray[num]);
+				if (colorList.get(i) != stack.stream().reduce((first, second) -> second).orElse(99999999)) {
+					stack.add(colorList.get(i));
+					i++;
+				} else {
+					stack.set(stack.size() - 1, stack.get(stack.size() - 1) - 1);
+					i++;
+				}
 			}
 			
-			return endColorList.get(0);
+		}
+		// 利用HashSet删除重复元素
+		HashSet tmpList = new HashSet(stack);
+		if (stack.size() == tmpList.size()) {
+			stack.sort(Comparator.comparingInt(Integer::intValue));
+			if(stack.get(0).equals(-1)) {
+				endColor = colorArray[0];
+			} else {
+				endColor = colorArray[stack.get(0)];
+			}
 		} else {
 			colorUpgrade(stack);
 		}
