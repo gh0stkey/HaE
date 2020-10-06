@@ -1,0 +1,24 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'net.portswigger.burp.extender:burp-extender-api:1.7.13'
+    compile 'org.json:json:20200518'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir '.'
+        }
+    }
+}
+
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
