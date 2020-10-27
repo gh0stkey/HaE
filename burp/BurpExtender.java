@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.JLabel;
 
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
 	
@@ -263,6 +264,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		// 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
         if (!messageIsRequest && (toolFlag == 64 || toolFlag == 32 || toolFlag == 4)) {
             byte[] content = messageInfo.getResponse();
+            try {
+				String c = new String(content, "UTF-8").intern();
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
             JSONObject jsonObj = matchRegex(content);
             if (jsonObj.length() > 0) {
                 List<String> colorList = new ArrayList<String>();
@@ -332,6 +338,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		 */
 		@Override
 		public void setMessage(byte[] content, boolean isRequest) {
+			try {
+				String c = new String(content, "UTF-8").intern();
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
 			if (content.length > 0 && !isRequest) {
 				String result = "";
 				JSONObject jsonObj = matchRegex(content);
