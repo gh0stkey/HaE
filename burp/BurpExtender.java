@@ -271,8 +271,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                     String name = k.next();
                     JSONObject jsonObj2 = new JSONObject(jsonObj.get(name).toString());
                     boolean isHighlight = jsonObj2.getBoolean("highlight");
-                    boolean isLoaded = jsonObj2.getBoolean("loaded");
-                    if (isHighlight && isLoaded) {
+                    if (isHighlight) {
                         colorList.add(jsonObj2.getString("color"));
                     }
                 }
@@ -306,7 +305,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	
 		@Override
 		public boolean isEnabled(byte[] content, boolean isRequest) {
-			// 这里需要过一次正则匹配决定是否开启Tab
+			// 先判断是否是请求，再判断是否匹配到内容
 			if (!isRequest && matchRegex(content).length() != 0) {
 				return true;
 			}
@@ -342,9 +341,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 						String name = k.next();
 						JSONObject jsonObj1 = new JSONObject(jsonObj.get(name).toString());
 						boolean isExtract = jsonObj1.getBoolean("extract");
-						boolean isLoaded = jsonObj1.getBoolean("loaded");
-						if (isExtract && isLoaded) {
-							String tmpStr = String.format("[%s] %s \n", name, jsonObj1.getString("data")).intern();
+						if (isExtract) {
+							String tmpStr = String.format("[%s]\n%s\n\n", name, jsonObj1.getString("data")).intern();
 							result += tmpStr;
 						}
 					}
@@ -354,6 +352,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			currentMessage = content;
 		}
 	}
+	
 
 	private JSONObject matchRegex(byte[] content) {
 		JSONObject tabContent = new JSONObject();
@@ -374,28 +373,30 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				boolean isLoaded = jsonObj1.getBoolean("loaded");
 				String color = jsonObj1.getString("color");
 				List<String> result = new ArrayList<String>();
-				
-				Pattern pattern = Pattern.compile(regex);
-				Matcher matcher = pattern.matcher(contentString);
-				while (matcher.find()) {
-					// 添加匹配数据至list
-					// 强制用户使用()包裹正则
-					result.add(matcher.group(1));
+				if(isLoaded) {
+					Pattern pattern = Pattern.compile(regex);
+					Matcher matcher = pattern.matcher(contentString);
+					while (matcher.find()) {
+						// 添加匹配数据至list
+						// 强制用户使用()包裹正则
+						result.add(matcher.group(1));
+					}
+					// 去除重复内容
+					HashSet tmpList = new HashSet(result);
+					result.clear();
+					result.addAll(tmpList);
+					
+					if (!result.isEmpty()) {
+						jsonData.put("highlight", isHighligth);
+						jsonData.put("extract", isExtract);
+						jsonData.put("color", color);
+						jsonData.put("data", String.join("\n", result));
+						jsonData.put("loaded", isLoaded);
+						// 初始化格式
+						tabContent.put(name, jsonData);
+					}
 				}
-				// 去除重复内容
-				HashSet tmpList = new HashSet(result);
-				result.clear();
-				result.addAll(tmpList);
-				
-				if (!result.isEmpty()) {
-					jsonData.put("highlight", isHighligth);
-					jsonData.put("extract", isExtract);
-					jsonData.put("color", color);
-					jsonData.put("data", String.join(",", result));
-					jsonData.put("loaded", isLoaded);
-					// 初始化格式
-					tabContent.put(name, jsonData);
-				}
+
 		    }
 		    return tabContent;
 		} catch (Exception e) {

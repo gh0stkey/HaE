@@ -37,7 +37,7 @@ HaE支持三个动作：
 3. 颜色升级算法：利用下标的方式进行优先级排序，当满足2个同颜色条件则以优先级顺序上升颜色。（例如：**两个正则，颜色为橘黄色，该请求两个正则都匹配到了，那么将升级为红色**）
 4. 简单的配置文件格式选用JSON格式，格式为
     ```
-    {name: {"loaded": isLoaded:,"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}}
+    {name: {"loaded": isLoaded,"regex": regexText, "highlight": isHighlight, "extract": isExtract, "color": colorText}}
     ```
 5. 内置简单缓存，在“多正则、大数据”的场景下减少卡顿现象。
 
