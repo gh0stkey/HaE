@@ -89,7 +89,7 @@ Github项目地址（BUG、需求、正则欢迎提交）: https://github.com/gh
 
 ### 收录正则列表
 
-身份证号码（来自: https://github.com/gh0stkey/HaE/issues/3）: 
+身份证号码(来自: https://github.com/gh0stkey/HaE/issues/3): 
 
 ```
 [^0-9]([1-9]\d{5}(18|19|([23]\d))\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx])|([1-9]\d{5}\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{2}[0-9Xx])[^0-9]
@@ -101,3 +101,8 @@ Github项目地址（BUG、需求、正则欢迎提交）: https://github.com/gh
 ([\w-]+(?:\.[\w-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?)
 ```
 
+Elasticsearch未授权访问匹配(来自: https://github.com/gh0stkey/HaE/issues/7):
+
+```
+("cluster_uuid"\s*:\s*"[A-Za-z0-9_-]{22}")
+```
