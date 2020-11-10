@@ -6,7 +6,7 @@ Read Chinese simplified version ([README_zh](README_zh.md)).
 
 ## Introduction
 
-**HaE** is used to highlight HTTP requests and extract information from HTTP response messages.
+**HaE** is used to highlight HTTP requests and extract information from HTTP `response messages` or `request messages`.
 
 ![-w1070](images/16000706401522.jpg)
 
