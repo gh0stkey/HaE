@@ -49,7 +49,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	private IBurpExtenderCallbacks callbacks;
 	private static String configFilePath = "config.json";
 	private static String initFilePath = "init.hae";
-	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"highlight\":true,\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"extract\":true,\"color\":\"yellow\"}}";
+	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"scope\":\"response\",\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"action\":\"any\",\"color\":\"yellow\"}}";
 	private static String endColor = "";
 	private static String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
 	private static String[] scopeArray = new String[] {"response", "request"};
