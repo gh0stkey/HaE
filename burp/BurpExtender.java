@@ -52,7 +52,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"scope\":\"response\",\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"action\":\"any\",\"color\":\"yellow\"}}";
 	private static String endColor = "";
 	private static String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
-	private static String[] scopeArray = new String[] {"response", "request"};
+	private static String[] scopeArray = new String[] {"any", "response", "request"};
 	private static String[] actionArray = new String[] {"any", "extract", "highight"};
 	private static IMessageEditorTab HaETab;
 	private static PrintWriter stdout;
@@ -62,7 +62,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     {
     	this.callbacks = callbacks;
         // 设置插件名字和版本
-    	String version = "1.4";
+    	String version = "1.4.1";
     	
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         
@@ -412,7 +412,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				String color = jsonObj1.getString("color");
 				List<String> result = new ArrayList<String>();
 				
-				if(isLoaded && scope.equals(scopeString) && (action.equals(actionString) || action.equals("any"))) {
+				if(isLoaded && (scope.equals(scopeString) || scope.equals("any")) && (action.equals(actionString) || action.equals("any"))) {
 					Pattern pattern = Pattern.compile(regex);
 					Matcher matcher = pattern.matcher(contentString);
 					while (matcher.find()) {

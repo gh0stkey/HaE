@@ -41,7 +41,7 @@ HaE supports three actions:
 3. Color upgrade algorithm: **Two regulars expression, the colors are both orange, if the request are matched these, it will be upgraded to red.**
 4. The configuration file format uses JSON format, the format is
     ```
-    {name: {"loaded": isLoaded,"regex": regexText, "scope": request/response, "action": extract/highlight/any, "color": colorText}}
+    {name: {"loaded": isLoaded,"regex": regexText, "scope": request/response/any, "action": extract/highlight/any, "color": colorText}}
     ```
 5. Built-in simple cache to reduce the stuttering phenomenon in the `multi-regular, big data scenario`.
 
