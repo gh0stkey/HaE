@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.JLabel;
 
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
 	
@@ -48,9 +49,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	private IBurpExtenderCallbacks callbacks;
 	private static String configFilePath = "config.json";
 	private static String initFilePath = "init.hae";
-	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"highlight\":true,\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"extract\":true,\"color\":\"yellow\"}}";
+	private static String initConfigContent = "{\"Email\":{\"loaded\":true,\"scope\":\"response\",\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"action\":\"any\",\"color\":\"yellow\"}}";
 	private static String endColor = "";
 	private static String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
+	private static String[] scopeArray = new String[] {"any", "response", "request"};
+	private static String[] actionArray = new String[] {"any", "extract", "highight"};
 	private static IMessageEditorTab HaETab;
 	private static PrintWriter stdout;
 	
@@ -58,8 +61,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks)
     {
     	this.callbacks = callbacks;
-        // 设置插件名字
-        callbacks.setExtensionName("HaE - Highlighter and Extractor");
+        // 设置插件名字和版本
+    	String version = "1.4.1";
+    	
+        callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -137,7 +142,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		panel_2.add(panel_1, BorderLayout.NORTH);
 		panel_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "Actions", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		
-		JButton btnReloadRule = new JButton("Reload Rule");
+		JButton btnReloadRule = new JButton("Reload");
 		btnReloadRule.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				fillTable();
@@ -145,7 +150,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		});
 		panel_1.add(btnReloadRule);
 		
-		JButton btnNewRule = new JButton("New Rule");
+		JButton btnNewRule = new JButton("New");
 		btnNewRule.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				DefaultTableModel dtm = (DefaultTableModel) table.getModel();
@@ -154,14 +159,14 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				rules.add("New Rule");
 				rules.add("New Regex");
 				rules.add("red");
-				rules.add(true);
-				rules.add(true);
+				rules.add("response");
+				rules.add("any");
 				dtm.addRow(rules);
 			}
 		});
 		panel_1.add(btnNewRule);
 		
-		JButton btnDeleteRule = new JButton("Delete Rule");
+		JButton btnDeleteRule = new JButton("Delete");
 		btnDeleteRule.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int selectRows = table.getSelectedRows().length;
@@ -188,7 +193,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			new Object[][] {
 			},
 			new String[] {
-				"Loaded", "Name", "Regex", "Color", "isExtract", "isHighlight"
+				"Loaded", "Name", "Regex", "Color", "Scope", "Action"
 			}
 		));
 		scrollPane.setViewportView(table);
@@ -196,8 +201,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		table.getColumnModel().getColumn(2).setPreferredWidth(172);
 		table.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(new JComboBox(colorArray)));
 		table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JCheckBox()));
-		table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new JCheckBox()));
-		table.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+		table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new JComboBox(scopeArray)));
+		table.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(new JComboBox(actionArray)));
 		
 		JLabel lblNewLabel = new JLabel("@EvilChen Love YuChen.");
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -217,8 +222,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			    			jsonObj1.put("loaded", (boolean) dtm.getValueAt(i, 0));
 			    			jsonObj1.put("regex", (String) dtm.getValueAt(i, 2));
 			    			jsonObj1.put("color", (String) dtm.getValueAt(i, 3));
-			    			jsonObj1.put("extract", (boolean) dtm.getValueAt(i, 4));
-			    			jsonObj1.put("highlight", (boolean) dtm.getValueAt(i, 5));
+			    			jsonObj1.put("scope", (String) dtm.getValueAt(i, 4));
+			    			jsonObj1.put("action", (String) dtm.getValueAt(i, 5));
 			    			// 添加数据
 			    			jsonObj.put((String) dtm.getValueAt(i, 1), jsonObj1);
 						}
@@ -261,28 +266,34 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	@Override
     public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) {
 		// 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
-        if (!messageIsRequest && (toolFlag == 64 || toolFlag == 32 || toolFlag == 4)) {
-            byte[] content = messageInfo.getResponse();
-            JSONObject jsonObj = matchRegex(content);
-            if (jsonObj.length() > 0) {
-                List<String> colorList = new ArrayList<String>();
-                Iterator<String> k = jsonObj.keys();
-                while (k.hasNext()) {
-                    String name = k.next();
-                    JSONObject jsonObj2 = new JSONObject(jsonObj.get(name).toString());
-                    boolean isHighlight = jsonObj2.getBoolean("highlight");
-                    boolean isLoaded = jsonObj2.getBoolean("loaded");
-                    if (isHighlight && isLoaded) {
-                        colorList.add(jsonObj2.getString("color"));
-                    }
-                }
-                if (colorList.size() != 0) {
-                	colorUpgrade(getColorKeys(colorList));
-                    String color = endColor;
-                    messageInfo.setHighlight(color);
-                }
+		if (toolFlag == 64 || toolFlag == 32 || toolFlag == 4) {
+			JSONObject jsonObj = new JSONObject();
+	        if (messageIsRequest) {
+	            byte[] content = messageInfo.getRequest();
+	            try {
+					String c = new String(content, "UTF-8").intern();
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+	            jsonObj = matchRegex(content, "request", "highlight"); 
+	        } else {
+	            byte[] content = messageInfo.getResponse();
+	            try {
+					String c = new String(content, "UTF-8").intern();
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+	            jsonObj = matchRegex(content, "response", "highlight"); 
+	        }
+	        
+            List<String> colorList = highlightList(jsonObj);
+            if (colorList.size() != 0) {
+            	colorUpgrade(getColorKeys(colorList));
+                String color = endColor;
+                messageInfo.setHighlight(color);
             }
-        }
+		}
+
     }
 	
 	class MarkInfoTab implements IMessageEditorTab {
@@ -306,8 +317,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	
 		@Override
 		public boolean isEnabled(byte[] content, boolean isRequest) {
-			// 这里需要过一次正则匹配决定是否开启Tab
-			if (!isRequest && matchRegex(content).length() != 0) {
+			if (isRequest && matchRegex(content, "request", "extract").length() != 0) {
+				return true;
+			} else if (!isRequest && matchRegex(content, "response", "extract").length() != 0) {
 				return true;
 			}
 			return false;
@@ -333,29 +345,54 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		 */
 		@Override
 		public void setMessage(byte[] content, boolean isRequest) {
-			if (content.length > 0 && !isRequest) {
-				String result = "";
-				JSONObject jsonObj = matchRegex(content);
-				if (jsonObj.length() != 0) {
-					Iterator<String> k = jsonObj.keys();
-					while (k.hasNext()) {
-						String name = k.next();
-						JSONObject jsonObj1 = new JSONObject(jsonObj.get(name).toString());
-						boolean isExtract = jsonObj1.getBoolean("extract");
-						boolean isLoaded = jsonObj1.getBoolean("loaded");
-						if (isExtract && isLoaded) {
-							String tmpStr = String.format("[%s] %s \n", name, jsonObj1.getString("data")).intern();
-							result += tmpStr;
-						}
+			try {
+				String c = new String(content, "UTF-8").intern();
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			if (content.length > 0) {
+				if (isRequest) {
+					JSONObject jsonObj = matchRegex(content, "request", "extract");
+					if (jsonObj.length() != 0) {
+						String result = extractString(jsonObj);
+						 markInfoText.setText(result.getBytes());
+					}
+				} else {
+					JSONObject jsonObj = matchRegex(content, "response", "extract");
+					if (jsonObj.length() != 0) {
+						String result = extractString(jsonObj);
+						 markInfoText.setText(result.getBytes());
 					}
 				}
-		        markInfoText.setText(result.getBytes());
 			}
 			currentMessage = content;
 		}
 	}
-
-	private JSONObject matchRegex(byte[] content) {
+	
+	private String extractString(JSONObject jsonObj) {
+		String result = "";
+		Iterator<String> k = jsonObj.keys();
+		while (k.hasNext()) {
+			String name = k.next();
+			JSONObject jsonObj1 = new JSONObject(jsonObj.get(name).toString());
+			String tmpStr = String.format("[%s]\n%s\n\n", name, jsonObj1.getString("data")).intern();
+			result += tmpStr;
+		}
+		return result;
+	}
+	
+	private List<String> highlightList(JSONObject jsonObj) {
+		List<String> colorList = new ArrayList<String>();
+        Iterator<String> k = jsonObj.keys();
+        while (k.hasNext()) {
+            String name = k.next();
+            JSONObject jsonObj2 = new JSONObject(jsonObj.get(name).toString());
+            colorList.add(jsonObj2.getString("color"));
+        }
+		return colorList;
+	}
+	
+	private JSONObject matchRegex(byte[] content, String scopeString, String actionString) {
 		JSONObject tabContent = new JSONObject();
 		// 正则匹配提取内容
 		try {
@@ -369,33 +406,34 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		    	JSONObject jsonObj1 = new JSONObject(jsonObj.get(name).toString());
 		    	JSONObject jsonData = new JSONObject();
 				String regex = jsonObj1.getString("regex");
-				boolean isHighligth = jsonObj1.getBoolean("highlight");
-				boolean isExtract = jsonObj1.getBoolean("extract");
 				boolean isLoaded = jsonObj1.getBoolean("loaded");
+				String scope = jsonObj1.getString("scope");
+				String action = jsonObj1.getString("action");
 				String color = jsonObj1.getString("color");
 				List<String> result = new ArrayList<String>();
 				
-				Pattern pattern = Pattern.compile(regex);
-				Matcher matcher = pattern.matcher(contentString);
-				while (matcher.find()) {
-					// 添加匹配数据至list
-					// 强制用户使用()包裹正则
-					result.add(matcher.group(1));
+				if(isLoaded && (scope.equals(scopeString) || scope.equals("any")) && (action.equals(actionString) || action.equals("any"))) {
+					Pattern pattern = Pattern.compile(regex);
+					Matcher matcher = pattern.matcher(contentString);
+					while (matcher.find()) {
+						// 添加匹配数据至list
+						// 强制用户使用()包裹正则
+						result.add(matcher.group(1));
+					}
+					// 去除重复内容
+					HashSet tmpList = new HashSet(result);
+					result.clear();
+					result.addAll(tmpList);
+					
+					if (!result.isEmpty()) {
+						jsonData.put("color", color);
+						jsonData.put("data", String.join("\n", result));
+						jsonData.put("loaded", isLoaded);
+						// 初始化格式
+						tabContent.put(name, jsonData);
+					}
 				}
-				// 去除重复内容
-				HashSet tmpList = new HashSet(result);
-				result.clear();
-				result.addAll(tmpList);
-				
-				if (!result.isEmpty()) {
-					jsonData.put("highlight", isHighligth);
-					jsonData.put("extract", isExtract);
-					jsonData.put("color", color);
-					jsonData.put("data", String.join(",", result));
-					jsonData.put("loaded", isLoaded);
-					// 初始化格式
-					tabContent.put(name, jsonData);
-				}
+
 		    }
 		    return tabContent;
 		} catch (Exception e) {
@@ -540,16 +578,16 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			boolean loaded = jsonObj1.getBoolean("loaded");
 			String regex = jsonObj1.getString("regex");
 			String color = jsonObj1.getString("color");
-			boolean isExtract = jsonObj1.getBoolean("extract");
-			boolean isHighlight = jsonObj1.getBoolean("highlight");
+			String scope = jsonObj1.getString("scope");
+			String action = jsonObj1.getString("action");
 			// 填充数据
 			Vector rules = new Vector();
 			rules.add(loaded);
 			rules.add(name);
 			rules.add(regex);
 			rules.add(color);
-			rules.add(isExtract);
-			rules.add(isHighlight);
+			rules.add(scope);
+			rules.add(action);
 			dtm.addRow(rules);
 		}
 	}
