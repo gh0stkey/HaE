@@ -4,10 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.json.*;
+
+import jregex.Matcher;
+import jregex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -62,8 +63,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     {
     	this.callbacks = callbacks;
         // 设置插件名字和版本
-    	String version = "1.4.1";
-    	
+    	String version = "1.4.2";
+
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         
         // 定义输出
@@ -355,13 +356,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 					JSONObject jsonObj = matchRegex(content, "request", "extract");
 					if (jsonObj.length() != 0) {
 						String result = extractString(jsonObj);
-						 markInfoText.setText(result.getBytes());
+						markInfoText.setText(result.getBytes());
 					}
 				} else {
 					JSONObject jsonObj = matchRegex(content, "response", "extract");
 					if (jsonObj.length() != 0) {
 						String result = extractString(jsonObj);
-						 markInfoText.setText(result.getBytes());
+						markInfoText.setText(result.getBytes());
 					}
 				}
 			}
@@ -413,13 +414,14 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				List<String> result = new ArrayList<String>();
 				
 				if(isLoaded && (scope.equals(scopeString) || scope.equals("any")) && (action.equals(actionString) || action.equals("any"))) {
-					Pattern pattern = Pattern.compile(regex);
+					Pattern pattern = new Pattern(regex);
 					Matcher matcher = pattern.matcher(contentString);
 					while (matcher.find()) {
 						// 添加匹配数据至list
 						// 强制用户使用()包裹正则
 						result.add(matcher.group(1));
 					}
+					
 					// 去除重复内容
 					HashSet tmpList = new HashSet(result);
 					result.clear();
@@ -435,11 +437,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				}
 
 		    }
-		    return tabContent;
-		} catch (Exception e) {
-			return new JSONObject();
-		}
-
+		    
+		    
+		} catch (Exception e) {}
+		
+		return tabContent;
 	}
 
 	/*
