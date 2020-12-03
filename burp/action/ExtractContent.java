@@ -1,7 +1,6 @@
 package burp.action;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -9,6 +8,10 @@ import java.util.List;
 import org.json.JSONObject;
 
 import burp.file.ReadFile;
+import dk.brics.automaton.Automaton;
+import dk.brics.automaton.AutomatonMatcher;
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.RunAutomaton;
 import jregex.Matcher;
 import jregex.Pattern;
 
@@ -32,17 +35,31 @@ public class ExtractContent {
 				String scope = jsonObj1.getString("scope");
 				String action = jsonObj1.getString("action");
 				String color = jsonObj1.getString("color");
+				String engine = jsonObj1.getString("engine");
+				
 				List<String> result = new ArrayList<String>();
 				
 				if(isLoaded && (scope.equals(scopeString) || scope.equals("any")) && (action.equals(actionString) || action.equals("any"))) {
-					Pattern pattern = new Pattern(regex);
-					Matcher matcher = pattern.matcher(contentString);
-					while (matcher.find()) {
-						// 添加匹配数据至list
-						// 强制用户使用()包裹正则
-						result.add(matcher.group(1));
+					if (engine.equals("nfa")) {
+						Pattern pattern = new Pattern(regex);
+						Matcher matcher = pattern.matcher(contentString);
+						while (matcher.find()) {
+							// 添加匹配数据至list
+							// 强制用户使用()包裹正则
+							result.add(matcher.group(1));
+						}
+					} else {
+						RegExp regexpr = new RegExp(regex);
+						Automaton auto = regexpr.toAutomaton();
+				        RunAutomaton runAuto = new RunAutomaton(auto, true);
+				        AutomatonMatcher autoMatcher = runAuto.newMatcher(contentString);
+				        while (autoMatcher.find()) {
+							// 添加匹配数据至list
+							// 强制用户使用()包裹正则
+							result.add(autoMatcher.group());
+						}
 					}
-					
+
 					// 去除重复内容
 					HashSet tmpList = new HashSet(result);
 					result.clear();
