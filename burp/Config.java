@@ -1,7 +1,7 @@
 package burp;
 
 public class Config {
-	public static String initConfigContent = "{\"Email\":{\"loaded\":true,\"scope\":\"response\",\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"action\":\"any\",\"color\":\"yellow\", \"engine\":\"nfa\"}}";
+	public static String initConfigContent = "{\"Email\":{\"loaded\":true,\"scope\":\"response\",\"regex\":\"([\\\\w-]+(?:\\\\.[\\\\w-]+)*@(?:[\\\\w](?:[\\\\w-]*[\\\\w])?\\\\.)+[\\\\w](?:[\\\\w-]*[\\\\w])?)\",\"action\":\"any\",\"color\":\"yellow\",\"engine\":\"nfa\"}}";
 	
 	public static String[] colorArray = new String[] {"red", "orange", "yellow", "green", "cyan", "blue", "pink", "magenta", "gray"};
 	public static String[] scopeArray = new String[] {"any", "response", "request"};
