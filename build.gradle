@@ -19,6 +19,13 @@ sourceSets {
     }
 }
 
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+compileJava {
+	options.encoding = "UTF-8"
+}
+
 task fatJar(type: Jar) {
     baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
