@@ -30,6 +30,7 @@ public class FillTable {
 			String color = jsonObj1.getString("color");
 			String scope = jsonObj1.getString("scope");
 			String action = jsonObj1.getString("action");
+			String engine = jsonObj1.getString("engine");
 			// 填充数据
 			Vector rules = new Vector();
 			rules.add(loaded);
@@ -38,6 +39,7 @@ public class FillTable {
 			rules.add(color);
 			rules.add(scope);
 			rules.add(action);
+			rules.add(engine);
 			dtm.addRow(rules);
 		}
 	}

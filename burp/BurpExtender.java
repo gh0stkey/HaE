@@ -72,16 +72,16 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks)
     {
     	this.callbacks = callbacks;
-    this.helpers = callbacks.getHelpers();
+    BurpExtender.helpers = callbacks.getHelpers();
         // 设置插件名字和版本
-    	String version = "1.5";
+    	String version = "1.5.1";
 
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
         stdout.println("@Author: EvilChen");
-        stdout.println("@Blog: cn.gh0st.cn");
+        stdout.println("@Blog: gh0st.cn");
 
         // UI
 		SwingUtilities.invokeLater(new Runnable() {
@@ -174,7 +174,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				rules.add("red");
 				rules.add("response");
 				rules.add("any");
+				rules.add("nfa");
 				dtm.addRow(rules);
+				// 新增之后刷新Table，防止存在未刷新删除导致错位
+				ft.fillTable(configFilePath, table);
 			}
 		});
 		panel_1.add(btnNewRule);
@@ -206,7 +209,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			new Object[][] {
 			},
 			new String[] {
-				"Loaded", "Name", "Regex", "Color", "Scope", "Action"
+				"Loaded", "Name", "Regex", "Color", "Scope", "Action", "Engine"
 			}
 		));
 		scrollPane.setViewportView(table);
@@ -216,6 +219,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 		table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JCheckBox()));
 		table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new JComboBox(Config.scopeArray)));
 		table.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(new JComboBox(Config.actionArray)));
+		table.getColumnModel().getColumn(6).setCellEditor(new DefaultCellEditor(new JComboBox(Config.engineArray)));
 		
 		JLabel lblNewLabel = new JLabel("@EvilChen Love YuChen.");
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -237,6 +241,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 			    			jsonObj1.put("color", (String) dtm.getValueAt(i, 3));
 			    			jsonObj1.put("scope", (String) dtm.getValueAt(i, 4));
 			    			jsonObj1.put("action", (String) dtm.getValueAt(i, 5));
+			    			jsonObj1.put("engine", (String) dtm.getValueAt(i, 6));
 			    			// 添加数据
 			    			jsonObj.put((String) dtm.getValueAt(i, 1), jsonObj1);
 						}
@@ -290,11 +295,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				return;
 			}
 	        if (messageIsRequest) {
-	            try {
-					String c = new String(content, "UTF-8").intern();
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
 	            jsonObj = ec.matchRegex(content, "request", "highlight", configFilePath); 
 	        } else {
 	            content = messageInfo.getResponse();
@@ -303,11 +303,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 	            // 正则判断
 	            if (mh.matchMIME(mimeList)) {
 					return;
-				}
-	            try {
-					String c = new String(content, "UTF-8").intern();
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
 				}
 	            jsonObj = ec.matchRegex(content, "response", "highlight", configFilePath); 
 	        }
@@ -358,7 +353,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 				return false;
 			}
 			
-            
 			if (isRequest) {
 				JSONObject jsonObj = ec.matchRegex(content, "request", "extract", configFilePath);
 				if (jsonObj.length() != 0) {

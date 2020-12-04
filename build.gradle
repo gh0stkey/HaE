@@ -8,6 +8,7 @@ dependencies {
     compile 'net.portswigger.burp.extender:burp-extender-api:1.7.13'
     compile 'net.sourceforge.jregex:jregex:1.2_01'
     compile 'org.json:json:20200518'
+    compile 'dk.brics.automaton:automaton:1.11-8'
 }
 
 sourceSets {
