@@ -2,7 +2,7 @@
 
 HaE相关作者 (来自米斯特安全团队 www.acmesec.cn) ：
 
-UI作者: [@0chencc](https://github.com/0Chencc)
+架构作者: [@0chencc](https://github.com/0Chencc)
 核心功能作者: [@EvilChen](https://github.com/gh0stkey)
 
 ## 公共规则网站
@@ -82,8 +82,13 @@ https://gh0st.cn/HaE/
 
 ...还有诸多使用方法等待大家去发掘。
 
+## 使用视频
+
+123
+
 ## 文末
 
 随笔: 正义感是一个不可丢失的东西。
 
 Github项目地址（BUG、需求、正则欢迎提交）: https://github.com/gh0stkey/HaE
+
