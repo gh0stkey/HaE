@@ -221,7 +221,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
     protected Boolean isRenamesucc = false;
     protected LoadConfigFile loadfile = new LoadConfigFile();
     protected LoadRule lr = new LoadRule(loadfile.getConfigPath());
-    protected SetRuleConfig setruleconfig = new SetRuleConfig();
+    protected SetRuleConfig setRuleConfig = new SetRuleConfig();
     protected final Action startEditing = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
             editingIdx = tabbedPane.getSelectedIndex();
@@ -243,7 +243,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
             if (editingIdx >= 0 && !title.isEmpty()) {
                 String oldname = tabbedPane.getTitleAt(editingIdx);
                 tabbedPane.setTitleAt(editingIdx, title);
-                setruleconfig.rename(oldname,title);
+                setRuleConfig.rename(oldname,title);
             }
             cancelEditing.actionPerformed(null);
         }
@@ -298,7 +298,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
     }
     public void newTab(){
         Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "gray", "any", "nfa"}};
-        insertTab(tabbedPane,setruleconfig.newRules(),data);
+        insertTab(tabbedPane,setRuleConfig.newRules(),data);
     }
     public void insertTab(@NotNull JTabbedPane pane,String title,Object[][] data){
         pane.addTab(title,new RulePane(data,pane));

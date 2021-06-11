@@ -98,7 +98,7 @@ public class SetRuleConfig {
         lr = new LoadRule(loadfile.getConfigPath());
         config = lr.getConfig();
         String name = "New ";
-        Object[][] data = new Object[][]{{false,"newName","newRegex","gray","any","nfa"}};
+        Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "gray", "any", "nfa"}};
         while (config.containsKey(name+i)){
             i++;
         }

@@ -27,18 +27,19 @@ public class RulePane extends JPanel {
         RuleSetting add = new RuleSetting();
         int isOk = JOptionPane.showConfirmDialog(null,add,"RuleSetting - Add Rule",JOptionPane.OK_OPTION);
         if(isOk == 0){
-            model.addRow(new Object[0]);
-            model.setValueAt(false,(model.getRowCount()-1),0);
-            model.setValueAt(add.Name.getText(),(model.getRowCount()-1),1);
-            model.setValueAt(add.Regex.getText(),(model.getRowCount()-1),2);
-            model.setValueAt(add.ColorSelect.getSelectedItem().toString(),(model.getRowCount()-1),3);
-            model.setValueAt(add.ScopeSelect.getSelectedItem().toString(),(model.getRowCount()-1),4);
-            model.setValueAt(add.EngineSelect.getSelectedItem().toString(),(model.getRowCount()-1),5);
+            Vector data = new Vector();
+            data.add(false);
+            data.add(add.Name.getText());
+            data.add(add.Regex.getText());
+            data.add(add.ColorSelect.getSelectedItem().toString());
+            data.add(add.ScopeSelect.getSelectedItem().toString());
+            data.add(add.EngineSelect.getSelectedItem().toString());
+            model.insertRow(model.getRowCount(),data);
             model = (DefaultTableModel) table.getModel();
-            int select = table.convertRowIndexToModel(table.getSelectedRow());
-            setruleconfig.add((Vector) model.getDataVector().get(select),pane.getTitleAt(pane.getSelectedIndex()));
+            setruleconfig.add(data,pane.getTitleAt(pane.getSelectedIndex()));
         }
     }
+
     private void RuleEditMouseClicked(MouseEvent e,JTabbedPane pane){
         if (table.getSelectedRowCount()>=1){
             RuleSetting edit = new RuleSetting();
@@ -60,18 +61,19 @@ public class RulePane extends JPanel {
             }
         }
     }
+
     private void RuleRemoveMouseClicked(MouseEvent e,JTabbedPane pane){
         if (table.getSelectedRowCount()>=1){
             int isOk = JOptionPane.showConfirmDialog(null,"Are your sure?","RuleSetting - Delete Rule",JOptionPane.OK_OPTION);
             if (isOk==0){
-                model.removeRow(table.convertRowIndexToModel(table.getSelectedRow()));
-                table.remove(table.getSelectedRow());
-                model = (DefaultTableModel) table.getModel();
                 int select = table.convertRowIndexToModel(table.getSelectedRow());
+                model.removeRow(select);
+                model = (DefaultTableModel) table.getModel();
                 setruleconfig.remove(select,pane.getTitleAt(pane.getSelectedIndex()));
             }
         }
     }
+
     private void RuleTableChange(TableModelEvent e,JTabbedPane pane) {
         if (e.getColumn()==0&&table.getSelectedRow()!=-1&&!isEdit){
             model = (DefaultTableModel) table.getModel();

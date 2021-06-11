@@ -33,7 +33,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.0";
+        String version = "2.0.1";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -133,37 +133,47 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
-            try {
-                // 流量清洗
-                String urlString = helpers.analyzeRequest(controller.getHttpService(), controller.getRequest()).getUrl().toString();
-                urlString = urlString.indexOf("?") > 0 ? urlString.substring(0, urlString.indexOf("?")) : urlString;
-                // 正则判断
-                if (mh.matchSuffix(urlString)) {
+            Map<String, Map<String, Object>> obj;
+
+            if (isRequest) {
+                try {
+                    // 流量清洗
+                    String urlString = helpers.analyzeRequest(controller.getHttpService(), controller.getRequest()).getUrl().toString();
+                    urlString = urlString.indexOf("?") > 0 ? urlString.substring(0, urlString.indexOf("?")) : urlString;
+                    // 正则判断
+                    if (mh.matchSuffix(urlString)) {
+                        return false;
+                    }
+                } catch (Exception e) {
                     return false;
                 }
-            } catch (Exception e) {
-                return false;
-            }
 
-            // 获取报文头
-            List<String> tmpHeaders = helpers.analyzeRequest(controller.getHttpService(), content).getHeaders();
-            String headers = String.join("\n", tmpHeaders);
-            // 获取报文主体
-            int bodyOffset = helpers.analyzeRequest(controller.getHttpService(), content).getBodyOffset();
-            byte[] byteRequest = controller.getRequest();
-            byte[] body = Arrays.copyOfRange(byteRequest, bodyOffset, byteRequest.length);
+                // 获取报文头
+                List<String> tmpHeaders = helpers.analyzeRequest(controller.getHttpService(), content).getHeaders();
+                String headers = String.join("\n", tmpHeaders);
+                // 获取报文主体
+                int bodyOffset = helpers.analyzeRequest(controller.getHttpService(), content).getBodyOffset();
+                byte[] byteRequest = controller.getRequest();
+                byte[] body = Arrays.copyOfRange(byteRequest, bodyOffset, byteRequest.length);
 
-            Map<String, Map<String, Object>> obj;
-            if (isRequest) {
                 obj = ec.matchRegex(content, headers, body, "request");
-                if (obj.size() != 0) {
+                if (obj.size() > 0) {
                     String result = da.extractString(obj);
                     extractRequestContent = result.getBytes();
                     return true;
                 }
             } else {
-                obj = ec.matchRegex(content, headers, body, "response");
-                if (obj.size() != 0) {
+
+                // 获取报文头
+                List<String> tmpHeaders1 = helpers.analyzeResponse(content).getHeaders();
+                String headers1 = String.join("\n", tmpHeaders1);
+                // 获取报文主体
+                int bodyOffset1 = helpers.analyzeResponse(content).getBodyOffset();
+                byte[] byteRequest1 = controller.getResponse();
+                byte[] body = Arrays.copyOfRange(byteRequest1, bodyOffset1, byteRequest1.length);
+
+                obj = ec.matchRegex(content, headers1, body, "response");
+                if (obj.size() > 0) {
                     String result = da.extractString(obj);
                     extractResponseContent = result.getBytes();
                     return true;

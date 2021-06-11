@@ -14,20 +14,10 @@ public class Rule {
     private String Color;
     private String Engine;
     private String Scope;
-    private String Action;
 
     public Boolean getLoaded() {
         return Loaded;
     }
-
-    public void setLoaded(Boolean loaded) {
-        this.Loaded = loaded;
-    }
-
-    public String getAction() {
-        return Action;
-    }
-
     public String getColor() {
         return Color;
     }
@@ -47,6 +37,11 @@ public class Rule {
     public String getScope() {
         return Scope;
     }
+
+    public void setLoaded(Boolean loaded) {
+        this.Loaded = loaded;
+    }
+
 
     public void setColor(String color) {
         this.Color = color;
