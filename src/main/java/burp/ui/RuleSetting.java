@@ -23,7 +23,7 @@ public class RuleSetting extends JPanel {
         Name = new JTextField();
         ScopeSelect = new JComboBox<>();
         EngineSelect = new JComboBox<>();
-        label7 = new JLabel();
+        label6 = new JLabel();
         ColorSelect = new JComboBox<>();
 
         //======== this ========
@@ -32,24 +32,24 @@ public class RuleSetting extends JPanel {
         //---- label5 ----
         label5.setText("Engine:");
         add(label5);
-        label5.setBounds(10, 175, 50, 17);
+        label5.setBounds(new Rectangle(new Point(10, 175), label5.getPreferredSize()));
 
         //---- label4 ----
         label4.setText("Scope:");
         add(label4);
-        label4.setBounds(10, 135, 50, 17);
+        label4.setBounds(new Rectangle(new Point(10, 135), label4.getPreferredSize()));
         add(Regex);
         Regex.setBounds(70, 50, 265, 30);
 
         //---- label3 ----
         label3.setText("Regex:");
         add(label3);
-        label3.setBounds(10, 55, 50, 17);
+        label3.setBounds(new Rectangle(new Point(10, 55), label3.getPreferredSize()));
 
         //---- label2 ----
         label2.setText("Name:");
         add(label2);
-        label2.setBounds(10, 15, 50, 17);
+        label2.setBounds(new Rectangle(new Point(10, 15), label2.getPreferredSize()));
         add(Name);
         Name.setBounds(70, 10, 265, 30);
 
@@ -64,9 +64,9 @@ public class RuleSetting extends JPanel {
         EngineSelect.setBounds(70, 170, 265, EngineSelect.getPreferredSize().height);
 
         //---- label7 ----
-        label7.setText("Color:");
-        add(label7);
-        label7.setBounds(new Rectangle(new Point(10, 95), label7.getPreferredSize()));
+        label6.setText("Color:");
+        add(label6);
+        label6.setBounds(new Rectangle(new Point(10, 95), label6.getPreferredSize()));
 
         //---- ColorSelect ----
         ColorSelect.setModel(new DefaultComboBoxModel<>(Config.colorArray));
@@ -99,7 +99,7 @@ public class RuleSetting extends JPanel {
     public JTextField Name;
     public JComboBox<String> ScopeSelect;
     public JComboBox<String> EngineSelect;
-    private JLabel label7;
+    private JLabel label6;
     public JComboBox<String> ColorSelect;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 }
