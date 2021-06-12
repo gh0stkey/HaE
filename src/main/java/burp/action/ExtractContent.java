@@ -38,7 +38,7 @@ public class ExtractContent {
                 String scope = objects[4].toString();
                 String engine = objects[5].toString();
                 // 判断规则是否开启与作用域
-                if (loaded && (scopeString.contains(scope) || scope.equals("any"))) {
+                if (loaded && (scope.contains(scopeString) || scope.equals("any"))) {
                     switch (scope) {
                         case "any":
                         case "request":
