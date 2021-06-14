@@ -18,8 +18,8 @@ import java.util.Map;
 public class LoadRule {
     private static String filePath = "Config.yml";
     public LoadRule(String configfile){
-        init();
         filePath = configfile;
+        init();
     }
 
     // 初始化配置
