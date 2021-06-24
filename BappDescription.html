@@ -1,0 +1,7 @@
+<p>The plugin can custom regular expression to match HTTP response messages. You can decide for yourself whether the corresponding request that meets the custom regular expression match needs to be highlighted and information extracted.</p>
+
+<p>Note: The use of HaE requires a basic regular expression foundation for testers. Since the Java regular expression library is not as elegant or convenient as Python, when using regular expressions, HaE requires users to use () to extract what they need The expression content contains; for example, if you want to match a response message of a Shiro application, the normal matching rule is rememberMe=delete, if you want to extract this content, you need to become (rememberMe=delete).</p> 
+
+<p>Instructions:</p>
+<p>Load: Extender - Extensions - Add - Select File - Next</p>
+<p>The configuration file is initialized when HaE is loaded for the first time. The default configuration file has a built-in regular expression: Email. The initialized configuration file will be placed in the same directory as the BurpSuite Jar package.</p>

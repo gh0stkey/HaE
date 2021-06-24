@@ -1,0 +1,12 @@
+Uuid: a7609ae2055342e9b6ffcf7cbcacf019
+ExtensionType: 1
+Name: Highlighter And Extractor
+RepoName: highlighter-and-extractor
+ScreenVersion: 2.0.4
+SerialVersion: 6
+MinPlatformVersion: 0
+ProOnly: False
+Author: gh0stkey
+ShortDescription: Highlighter and Extractor (HaE) is used to highlight HTTP requests and extract information from HTTP response messages.
+EntryPoint: build/libs/HaE-all.jar
+BuildCommand: gradle fatJar
