@@ -1,9 +1,8 @@
 # HaE - Highlighter and Extractor
 
-HaE相关作者 (来自米斯特安全团队 www.acmesec.cn) ：
+核心功能作者: [@EvilChen](https://github.com/gh0stkey)
 
 架构作者: [@0chencc](https://github.com/0Chencc)
-核心功能作者: [@EvilChen](https://github.com/gh0stkey)
 
 ## 公共规则网站
 
