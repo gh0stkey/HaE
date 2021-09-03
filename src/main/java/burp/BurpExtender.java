@@ -33,7 +33,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.0.4";
+        String version = "2.0.6";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -73,18 +73,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         // 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
         if (toolFlag == 64 || toolFlag == 32 || toolFlag == 4) {
             Map<String, Map<String, Object>> obj;
-            byte[] content = messageInfo.getRequest();
-            // 获取报文头
-            List<String> tmpHeaders = helpers.analyzeRequest(messageInfo.getHttpService(), content).getHeaders();
-            String headers = String.join("\n", tmpHeaders);
-
-            // 获取报文主体
-            int bodyOffset = helpers.analyzeRequest(messageInfo.getHttpService(), content).getBodyOffset();
-            byte[] byteRequest = messageInfo.getRequest();
-            byte[] body = Arrays.copyOfRange(byteRequest, bodyOffset, byteRequest.length);
-
             // 流量清洗
-            String urlString = helpers.analyzeRequest(messageInfo.getHttpService(), content).getUrl().toString();
+            String urlString = helpers.analyzeRequest(messageInfo.getHttpService(), messageInfo.getRequest()).getUrl().toString();
             urlString = urlString.indexOf("?") > 0 ? urlString.substring(0, urlString.indexOf("?")) : urlString;
 
             // 正则判断
@@ -93,10 +83,28 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
 
             if (messageIsRequest) {
-                obj = ec.matchRegex(content, headers, body, "request");
+                byte[] byteRequest = messageInfo.getRequest();
+                // 获取报文头
+                List<String> requestTmpHeaders = helpers.analyzeRequest(messageInfo.getHttpService(), byteRequest).getHeaders();
+                String requestHeaders = String.join("\n", requestTmpHeaders);
+
+                // 获取报文主体
+                int requestBodyOffset = helpers.analyzeRequest(messageInfo.getHttpService(), byteRequest).getBodyOffset();
+                byte[] requestBody = Arrays.copyOfRange(byteRequest, requestBodyOffset, byteRequest.length);
+
+                obj = ec.matchRegex(byteRequest, requestHeaders, requestBody, "request");
             } else {
-                content = messageInfo.getResponse();
-                obj = ec.matchRegex(content, headers, body, "response");
+                byte[] byteResponse = messageInfo.getResponse();
+
+                // 获取报文头
+                List<String> responseTmpHeaders = helpers.analyzeRequest(messageInfo.getHttpService(), byteResponse).getHeaders();
+                String responseHeaders = String.join("\n", responseTmpHeaders);
+
+                // 获取报文主体
+                int responseBodyOffset = helpers.analyzeResponse(byteResponse).getBodyOffset();
+                byte[] responseBody = Arrays.copyOfRange(byteResponse, responseBodyOffset, byteResponse.length);
+
+                obj = ec.matchRegex(byteResponse, responseHeaders, responseBody, "response");
             }
 
             List<String> colorList = da.highlightList(obj);
@@ -147,32 +155,31 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 } catch (Exception e) {
                     return false;
                 }
+                IRequestInfo iRequestInfo = helpers.analyzeRequest(controller.getHttpService(), content);
 
                 // 获取报文头
-                List<String> tmpHeaders = helpers.analyzeRequest(controller.getHttpService(), content).getHeaders();
-                String headers = String.join("\n", tmpHeaders);
+                List<String> requestTmpHeaders = iRequestInfo.getHeaders();
+                String requestHeaders = String.join("\n", requestTmpHeaders);
                 // 获取报文主体
-                int bodyOffset = helpers.analyzeRequest(controller.getHttpService(), content).getBodyOffset();
-                byte[] byteRequest = controller.getRequest();
-                byte[] body = Arrays.copyOfRange(byteRequest, bodyOffset, byteRequest.length);
+                int requestBodyOffset = iRequestInfo.getBodyOffset();
+                byte[] requestBody = Arrays.copyOfRange(content, requestBodyOffset, content.length);
 
-                obj = ec.matchRegex(content, headers, body, "request");
+                obj = ec.matchRegex(content, requestHeaders, requestBody, "request");
                 if (obj.size() > 0) {
                     String result = da.extractString(obj);
                     extractRequestContent = result.getBytes();
                     return true;
                 }
             } else {
-
+                IResponseInfo iResponseInfo = helpers.analyzeResponse(content);
                 // 获取报文头
-                List<String> tmpHeaders1 = helpers.analyzeResponse(content).getHeaders();
-                String headers1 = String.join("\n", tmpHeaders1);
+                List<String> responseTmpHeaders = iResponseInfo.getHeaders();
+                String responseHeaders = String.join("\n", responseTmpHeaders);
                 // 获取报文主体
-                int bodyOffset1 = helpers.analyzeResponse(content).getBodyOffset();
-                byte[] byteRequest1 = controller.getResponse();
-                byte[] body = Arrays.copyOfRange(byteRequest1, bodyOffset1, byteRequest1.length);
+                int responseBodyOffset = iResponseInfo.getBodyOffset();
+                byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
 
-                obj = ec.matchRegex(content, headers1, body, "response");
+                obj = ec.matchRegex(content, responseHeaders, responseBody, "response");
                 if (obj.size() > 0) {
                     String result = da.extractString(obj);
                     extractResponseContent = result.getBytes();

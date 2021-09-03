@@ -1,9 +1,8 @@
 # HaE - Highlighter and Extractor
 
-HaE相关作者 (来自米斯特安全团队 www.acmesec.cn) ：
+核心功能作者: [@EvilChen](https://github.com/gh0stkey)
 
 架构作者: [@0chencc](https://github.com/0Chencc)
-核心功能作者: [@EvilChen](https://github.com/gh0stkey)
 
 ## 公共规则网站
 
@@ -85,3 +84,11 @@ https://gh0st.cn/HaE/
 随笔: 正义感是一个不可丢失的东西。
 
 Github项目地址（BUG、需求、正则欢迎提交）: https://github.com/gh0stkey/HaE
+
+## 404StarLink 2.0 - Galaxy
+
+![404StarLink Logo](https://github.com/knownsec/404StarLink-Project/raw/master/logo.png)
+
+`HaE` 是 404Team [星链计划2.0](https://github.com/knownsec/404StarLink2.0-Galaxy) 中的一环，如果对 `HaE` 有任何疑问又或是想要找小伙伴交流，可以参考星链计划的加群方式。
+
+- [https://github.com/knownsec/404StarLink2.0-Galaxy#community](https://github.com/knownsec/404StarLink2.0-Galaxy#community)

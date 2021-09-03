@@ -28,7 +28,7 @@ public class ExtractContent {
             String matchContent = "";
             for (Object[] objects : rules.get(i)) {
                 // 遍历获取规则
-                List<String> result = new ArrayList<String>();
+                List<String> result = new ArrayList<>();
                 Map<String, Object> tmpMap = new HashMap<>();
 
                 String name = objects[1].toString();
