@@ -6,6 +6,7 @@ import burp.ui.MainUI;
 import javax.swing.*;
 import java.awt.*;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.io.PrintWriter;
@@ -16,11 +17,10 @@ import java.util.Map;
  */
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
-    private MainUI main = new MainUI();
+    private final MainUI main = new MainUI();
     private static PrintWriter stdout;
     private IBurpExtenderCallbacks callbacks;
     private static IExtensionHelpers helpers;
-    private static IMessageEditorTab HaETab;
     MatchHTTP mh = new MatchHTTP();
     ExtractContent ec = new ExtractContent();
     DoAction da = new DoAction();
@@ -33,7 +33,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.0.6";
+        String version = "2.0.7";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -41,12 +41,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         stdout.println("@Core Author: EvilChen");
         stdout.println("@Github: https://github.com/gh0stkey/HaE");
         // UI
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                initialize();
-            }
-        });
+        SwingUtilities.invokeLater(this::initialize);
 
         callbacks.registerHttpListener(BurpExtender.this);
         callbacks.registerMessageEditorTabFactory(BurpExtender.this);
@@ -109,7 +104,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
             List<String> colorList = da.highlightList(obj);
             if (colorList.size() != 0) {
-                String color = uc.getEndColor(gck.getColorKeys(colorList, Config.colorArray), Config.colorArray);
+                String color = uc.getEndColor(gck.getColorKeys(colorList));
                 messageInfo.setHighlight(color);
             }
         }
@@ -117,7 +112,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     }
 
     class MarkInfoTab implements IMessageEditorTab {
-        private ITextEditor markInfoText;
+        private final ITextEditor markInfoText;
         private byte[] currentMessage;
         private final IMessageEditorController controller;
         private byte[] extractRequestContent;
@@ -209,11 +204,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          */
         @Override
         public void setMessage(byte[] content, boolean isRequest) {
-            try {
-                String c = new String(content, "UTF-8").intern();
-            } catch (UnsupportedEncodingException e) {
-                stdout.println(e);
-            }
+            String c = new String(content, StandardCharsets.UTF_8).intern();
             if (content.length > 0) {
                 if (isRequest) {
                     markInfoText.setText(extractRequestContent);
@@ -227,7 +218,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     @Override
     public IMessageEditorTab createNewInstance(IMessageEditorController controller, boolean editable) {
-        HaETab = new MarkInfoTab(controller, editable);
-        return HaETab;
+        return new MarkInfoTab(controller, editable);
     }
 }

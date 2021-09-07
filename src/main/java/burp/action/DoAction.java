@@ -22,7 +22,7 @@ public class DoAction {
     }
 
     public List<String> highlightList(Map<String, Map<String, Object>> obj) {
-        List<String> colorList = new ArrayList<String>();
+        List<String> colorList = new ArrayList<>();
         obj.keySet().forEach(i->{
             Map<String, Object> tmpMap = obj.get(i);
             String color = tmpMap.get("color").toString();
