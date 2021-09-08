@@ -7,6 +7,7 @@ import org.yaml.snakeyaml.representer.Representer;
 import org.yaml.snakeyaml.nodes.Tag;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,16 +18,15 @@ import java.util.Map;
 
 public class LoadRule {
     private static String filePath = "Config.yml";
-    public LoadRule(String configfile){
-        filePath = configfile;
+    public LoadRule(String configFile){
+        filePath = configFile;
         init();
     }
 
     // 初始化配置
     public void init(){
-        File settingyaml = new File(filePath);
-        if (!(settingyaml.exists() && settingyaml.isFile())){
-            Map<String,Object[][]> r = new HashMap<>();
+        File yamlFile = new File(filePath);
+        if (!(yamlFile.exists() && yamlFile.isFile())){
             Rule rule = new Rule();
             rule.setLoaded(true);
             rule.setName("Email");
@@ -50,10 +50,10 @@ public class LoadRule {
             representer.addClassTag(Config.class, Tag.MAP);
 
             Yaml yaml = new Yaml(new Constructor(),representer,dop);
-            LoadConfigFile loadfile = new LoadConfigFile();
-            File f = new File(loadfile.getConfigPath());
+            new LoadConfigFile();
+            File f = new File(LoadConfigFile.getConfigPath());
             try{
-                Writer ws = new OutputStreamWriter(new FileOutputStream(f),"UTF-8");
+                Writer ws = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
                 yaml.dump(config,ws);
             }catch (Exception ex){
                 ex.printStackTrace();
@@ -65,7 +65,7 @@ public class LoadRule {
         InputStream inorder = null;
         {
             try {
-                inorder = new FileInputStream(new File(filePath));
+                inorder = new FileInputStream(filePath);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }

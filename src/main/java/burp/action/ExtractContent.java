@@ -1,6 +1,6 @@
 package burp.action;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import dk.brics.automaton.Automaton;
@@ -18,12 +18,11 @@ import burp.yaml.LoadConfigFile;
  */
 
 public class ExtractContent {
-    private LoadConfigFile lcf = new LoadConfigFile();
-    private LoadRule lr = new LoadRule(lcf.getConfigPath());
 
     public Map<String, Map<String, Object>> matchRegex(byte[] content, String headers, byte[] body, String scopeString) {
         Map<String, Map<String, Object>> map = new HashMap<>(); // 最终返回的结果
-        Map<String,Object[][]> rules = lr.getConfig();
+        new LoadRule(LoadConfigFile.getConfigPath());
+        Map<String,Object[][]> rules = LoadRule.getConfig();
         rules.keySet().forEach(i -> {
             String matchContent = "";
             for (Object[] objects : rules.get(i)) {
@@ -43,11 +42,7 @@ public class ExtractContent {
                         case "any":
                         case "request":
                         case "response":
-                            try {
-                                matchContent = new String(content, "UTF-8").intern();
-                            } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
-                            }
+                            matchContent = new String(content, StandardCharsets.UTF_8).intern();
                             break;
                         case "request header":
                         case "response header":
@@ -55,11 +50,7 @@ public class ExtractContent {
                             break;
                         case "request body":
                         case "response body":
-                            try {
-                                matchContent = new String(body, "UTF-8").intern();
-                            } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
-                            }
+                            matchContent = new String(body, StandardCharsets.UTF_8).intern();
                             break;
                     }
 
@@ -72,8 +63,8 @@ public class ExtractContent {
                             result.add(matcher.group(1));
                         }
                     } else {
-                        RegExp regexpr = new RegExp(regex);
-                        Automaton auto = regexpr.toAutomaton();
+                        RegExp regexp = new RegExp(regex);
+                        Automaton auto = regexp.toAutomaton();
                         RunAutomaton runAuto = new RunAutomaton(auto, true);
                         AutomatonMatcher autoMatcher = runAuto.newMatcher(matchContent);
                         while (autoMatcher.find()) {

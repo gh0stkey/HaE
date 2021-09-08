@@ -3,7 +3,10 @@ package burp.yaml;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
+import burp.Config;
+
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +15,7 @@ import java.util.Map;
  */
 
 public class LoadConfigFile {
-    private static Yaml yaml = new Yaml();
+    private static final Yaml yaml = new Yaml();
     private static final String SettingPath = "Setting.yml";
     private static final String ConfigPath = "Config.yml";
 
@@ -28,7 +31,7 @@ public class LoadConfigFile {
             r.put("configPath", ConfigPath);
             r.put("excludeSuffix", getExcludeSuffix());
             try{
-                Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath),"UTF-8");
+                Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath), StandardCharsets.UTF_8);
                 yaml.dump(r, ws);
             }catch (Exception ex){
                 ex.printStackTrace();
@@ -44,11 +47,11 @@ public class LoadConfigFile {
             return r.get("excludeSuffix").toString();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return "css|jpeg|gif|jpg|png|pdf|rar|zip|docx|doc|svg|jpeg|ico|woff|woff2|ttf|otf";
+            return Config.excludeSuffix;
         }
     }
 
-    public String getConfigPath(){
+    public static String getConfigPath(){
         try {
             InputStream inorder = new FileInputStream(SettingPath);
             Map<String,Object> r;
@@ -65,7 +68,7 @@ public class LoadConfigFile {
         r.put("excludeSuffix", excludeSuffix);
         r.put("configPath", getConfigPath());
         try{
-            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath),"UTF-8");
+            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
         }catch (Exception ex){
             ex.printStackTrace();
@@ -77,7 +80,7 @@ public class LoadConfigFile {
         r.put("configPath", filePath);
         r.put("excludeSuffix", getExcludeSuffix());
         try{
-            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath),"UTF-8");
+            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
         }catch (Exception ex){
             ex.printStackTrace();

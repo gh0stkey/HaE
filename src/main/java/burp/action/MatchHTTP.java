@@ -15,10 +15,6 @@ public class MatchHTTP {
     public boolean matchSuffix(String str) {
         Pattern pattern = new Pattern(String.format("[\\w]+[\\.](%s)", lc.getExcludeSuffix()), REFlags.IGNORE_CASE);
         Matcher matcher = pattern.matcher(str);
-        if(matcher.find()){
-            return true;
-        }else{
-            return false;
-        }
+        return matcher.find();
     }
 }
