@@ -21,13 +21,18 @@ public class DoAction {
         return result[0];
     }
 
-    public List<String> highlightList(Map<String, Map<String, Object>> obj) {
+    public List<List<String>> highlightAndComment(Map<String, Map<String, Object>> obj) {
         List<String> colorList = new ArrayList<>();
+        List<String> commentList = new ArrayList<>();
+        List<List<String>> result = new ArrayList<>();
         obj.keySet().forEach(i->{
             Map<String, Object> tmpMap = obj.get(i);
             String color = tmpMap.get("color").toString();
             colorList.add(color);
+            commentList.add(i);
         });
-        return colorList;
+        result.add(colorList);
+        result.add(commentList);
+        return result;
     }
 }
