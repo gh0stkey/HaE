@@ -3,7 +3,7 @@ ExtensionType: 1
 Name: Highlighter And Extractor
 RepoName: highlighter-and-extractor
 ScreenVersion: 2.0.7
-SerialVersion: 8
+SerialVersion: 9
 MinPlatformVersion: 0
 ProOnly: False
 Author: gh0stkey
