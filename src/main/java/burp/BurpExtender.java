@@ -5,7 +5,6 @@ import burp.ui.MainUI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -33,12 +32,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.0.7";
+        String version = "2.1";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
-        stdout.println("@UI Author: 0chencc");
         stdout.println("@Core Author: EvilChen");
+        stdout.println("@UI Author: 0chencc");
         stdout.println("@Github: https://github.com/gh0stkey/HaE");
         // UI
         SwingUtilities.invokeLater(this::initialize);
@@ -102,10 +101,18 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 obj = ec.matchRegex(byteResponse, responseHeaders, responseBody, "response");
             }
 
-            List<String> colorList = da.highlightList(obj);
+            List<List<String>> resultList = da.highlightAndComment(obj);
+            List<String> colorList = resultList.get(0);
+            stdout.println(colorList);
+            List<String> commentList = resultList.get(1);
             if (colorList.size() != 0) {
                 String color = uc.getEndColor(gck.getColorKeys(colorList));
                 messageInfo.setHighlight(color);
+            }
+
+            if (commentList.size() != 0) {
+                String originalComment = messageInfo.getComment();
+                messageInfo.setComment(String.join(", ", commentList));
             }
         }
 
