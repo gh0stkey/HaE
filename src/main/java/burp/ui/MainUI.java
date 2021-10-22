@@ -1,9 +1,7 @@
 package burp.ui;
 
-import org.jetbrains.annotations.NotNull;
-import burp.yaml.LoadConfigFile;
-import burp.yaml.LoadRule;
-import burp.yaml.SetRuleConfig;
+import burp.yaml.LoadConfig;
+import burp.yaml.SetConfig;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -20,19 +18,21 @@ import java.util.Map;
  */
 
 public class MainUI extends JPanel{
+    private final LoadConfig loadConn = new LoadConfig();
+
     public MainUI() {
         initComponents();
     }
     public void closeTabActionPerformed(ActionEvent e){
         if (tabbedPane1.getTabCount()>2){
             if (tabbedPane1.getSelectedIndex()!=0){
-                SetRuleConfig setruleconfig = new SetRuleConfig();
-                setruleconfig.deleteRules(tabbedPane1.getTitleAt(tabbedPane1.getSelectedIndex()));
+                SetConfig setConn = new SetConfig();
+                setConn.deleteRules(tabbedPane1.getTitleAt(tabbedPane1.getSelectedIndex()));
                 tabbedPane1.remove(tabbedPane1.getSelectedIndex());
                 tabbedPane1.setSelectedIndex(tabbedPane1.getSelectedIndex()-1);
             }else{
-                SetRuleConfig setruleconfig = new SetRuleConfig();
-                setruleconfig.deleteRules(tabbedPane1.getTitleAt(tabbedPane1.getSelectedIndex()));
+                SetConfig setConn = new SetConfig();
+                setConn.deleteRules(tabbedPane1.getTitleAt(tabbedPane1.getSelectedIndex()));
                 tabbedPane1.remove(tabbedPane1.getSelectedIndex());
                 tabbedPane1.setSelectedIndex(tabbedPane1.getSelectedIndex());
             }
@@ -40,22 +40,21 @@ public class MainUI extends JPanel{
     }
 
     private void SelectFileMouseClicked(MouseEvent e) {
-        JFileChooser chooseconfig = new JFileChooser();
-        chooseconfig.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        JFileChooser selectFile = new JFileChooser();
+        selectFile.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Yaml File (.yml/.yaml)","yaml", "yml");
-        chooseconfig.setFileFilter(filter);
-        int selectframe = chooseconfig.showDialog(new JLabel(),"Select");
+        selectFile.setFileFilter(filter);
+        int selectframe = selectFile.showDialog(new JLabel(),"Select");
         if (selectframe == JFileChooser.APPROVE_OPTION){
-            String configpath = chooseconfig.getSelectedFile().toString();
+            String configpath = selectFile.getSelectedFile().toString();
             reloadRule(configpath);
-            loadfile.setConfigPath(configpath);
+            loadConn.setConfigPath(configpath);
         }
-        configfilepathtext.setText(loadfile.getConfigPath());
+        configFilepathtext.setText(loadConn.getConfigPath());
     }
-    private void reloadRule(String configfile){
+    private void reloadRule(String configFile){
         tabbedPane1.removeAll();
-        LoadRule loadrule = new LoadRule(configfile);
-        Map<String,Object[][]> config = loadrule.getConfig();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
         tabbedPane1.addTab("...",new JLabel());
@@ -63,8 +62,7 @@ public class MainUI extends JPanel{
     }
     private void reloadRule(){
         tabbedPane1.removeAll();
-        LoadRule loadrule = new LoadRule(loadfile.getConfigPath());
-        Map<String,Object[][]> config = loadrule.getConfig();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1))
         );
@@ -77,14 +75,14 @@ public class MainUI extends JPanel{
     }
     private void ESSaveMouseClicked(MouseEvent e) {
         // TODO add your code here
-        LoadConfigFile lcf = new LoadConfigFile();
-        lcf.setExcludeSuffix(EStext.getText());
+        LoadConfig loadCon = new LoadConfig();
+        loadCon.setExcludeSuffix(EStext.getText());
     }
     private void initComponents() {
         tabbedPane2 = new JTabbedPane();
         tabbedPane1 = new JTabbedPane();
         panel3 = new JPanel();
-        configfilepathtext = new JTextField();
+        configFilepathtext = new JTextField();
         label1 = new JLabel();
         SelectFile = new JButton();
         reload = new JButton();
@@ -111,9 +109,9 @@ public class MainUI extends JPanel{
                 ((GridBagLayout)panel3.getLayout()).columnWeights = new double[] {0.0, 1.0, 0.0, 0.0, 1.0E-4};
                 ((GridBagLayout)panel3.getLayout()).rowWeights = new double[] {0.0, 0.0, 1.0E-4};
 
-                //---- configfilepathtext ----
-                configfilepathtext.setEditable(false);
-                panel3.add(configfilepathtext, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+                //---- configFilepathtext ----
+                configFilepathtext.setEditable(false);
+                panel3.add(configFilepathtext, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         new Insets(5, 0, 5, 5), 0, 0));
 
@@ -175,16 +173,14 @@ public class MainUI extends JPanel{
                 new Insets(0, 0, 0, 0), 0, 0));
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
 
-        LoadRule loadRule = new LoadRule(loadfile.getConfigPath());
-        Map<String,Object[][]> config = loadRule.getConfig();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
 
         tabbedPane1.addTab("...",new JLabel());
 
         //TabTitleEditListener ruleSwitch = new TabTitleEditListener(tabbedPane1);
-        configfilepathtext.setText(loadfile.getConfigPath());
-        LoadConfigFile lcf =new LoadConfigFile();
-        EStext.setText(lcf.getExcludeSuffix());
+        configFilepathtext.setText(LoadConfig.getConfigPath());
+        EStext.setText(loadConn.getExcludeSuffix());
         ruleSwitch = new TabTitleEditListener(tabbedPane1);
         tabbedPane1.addChangeListener(ruleSwitch);
         tabbedPane1.addMouseListener(ruleSwitch);
@@ -196,7 +192,7 @@ public class MainUI extends JPanel{
     private JTabbedPane tabbedPane2;
     private JTabbedPane tabbedPane1;
     private JPanel panel3;
-    private JTextField configfilepathtext;
+    private JTextField configFilepathtext;
     private JLabel label1;
     private JButton SelectFile;
     private JButton reload;
@@ -207,7 +203,6 @@ public class MainUI extends JPanel{
     protected static JPopupMenu tabMenu = new JPopupMenu();
     private JMenuItem closeTab = new JMenuItem("Delete");
     private TabTitleEditListener ruleSwitch;
-    private LoadConfigFile loadfile = new LoadConfigFile();
 }
 
 class TabTitleEditListener extends MouseAdapter implements ChangeListener, DocumentListener {
@@ -218,16 +213,14 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
     protected Boolean listen = true;
     protected Dimension dim;
     protected Component tabComponent;
-    protected Boolean isRenamesucc = false;
-    protected LoadConfigFile loadfile = new LoadConfigFile();
-    protected LoadRule lr = new LoadRule(loadfile.getConfigPath());
-    protected SetRuleConfig setRuleConfig = new SetRuleConfig();
+    protected Boolean isRenameOk = false;
+    protected SetConfig setConfig = new SetConfig();
     protected final Action startEditing = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
             editingIdx = tabbedPane.getSelectedIndex();
             tabComponent = tabbedPane.getTabComponentAt(editingIdx);
             tabbedPane.setTabComponentAt(editingIdx, editor);
-            isRenamesucc = true;
+            isRenameOk = true;
             editor.setVisible(true);
             editor.setText(tabbedPane.getTitleAt(editingIdx));
             editor.selectAll();
@@ -241,9 +234,9 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
         @Override public void actionPerformed(ActionEvent e) {
             String title = editor.getText().trim();
             if (editingIdx >= 0 && !title.isEmpty()) {
-                String oldname = tabbedPane.getTitleAt(editingIdx);
+                String oldName = tabbedPane.getTitleAt(editingIdx);
                 tabbedPane.setTitleAt(editingIdx, title);
-                setRuleConfig.rename(oldname,title);
+                setConfig.rename(oldName,title);
             }
             cancelEditing.actionPerformed(null);
         }
@@ -284,7 +277,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
             @Override public void stateChanged(ChangeEvent e) {
                 if (e.getSource() instanceof JTabbedPane && listen) {
                     JTabbedPane pane = (JTabbedPane) e.getSource();
-                    if (!isRenamesucc){
+                    if (!isRenameOk){
                         if (pane.getSelectedIndex() == pane.getComponentCount()-1){
                     newTab();
                 }
@@ -298,9 +291,9 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
     }
     public void newTab(){
         Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "gray", "any", "nfa"}};
-        insertTab(tabbedPane,setRuleConfig.newRules(),data);
+        insertTab(tabbedPane, setConfig.newRules(),data);
     }
-    public void insertTab(@NotNull JTabbedPane pane,String title,Object[][] data){
+    public void insertTab(JTabbedPane pane,String title,Object[][] data){
         pane.addTab(title,new RulePane(data,pane));
         pane.remove(pane.getSelectedIndex());
         pane.addTab("...",new JLabel());

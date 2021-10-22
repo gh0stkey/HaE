@@ -70,7 +70,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 content = messageInfo.getResponse();
             }
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            List<String> result = pm.processMessageByContent(helpers, messageInfo.getHttpService(), content, messageIsRequest, true);
+            IHttpService iHttpService = null;
+            try {
+                iHttpService = messageInfo.getHttpService();
+            } catch(Exception e) {
+                // stdout.println("iHttpService Error: " + e);
+            }
+            List<String> result = pm.processMessageByContent(helpers, iHttpService, content, messageIsRequest, true);
             if (result != null && !result.isEmpty() && result.size() > 0) {
                 String originalColor = messageInfo.getHighlight();
                 String originalComment = messageInfo.getComment();
@@ -117,8 +123,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            List<String> result = pm.processMessageByContent(helpers, controller.getHttpService(), content, isRequest, false);
-
+            IHttpService iHttpService = null;
+            try {
+                iHttpService = controller.getHttpService();
+            } catch(Exception e) {
+                // stdout.println("iHttpService Error: " + e);
+            }
+            List<String> result = pm.processMessageByContent(helpers, iHttpService, content, isRequest, false);
             if (result != null && !result.isEmpty()) {
                 if (isRequest) {
                     extractRequestContent = result.get(0).getBytes();

@@ -3,15 +3,13 @@ package burp.action;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import burp.yaml.LoadConfig;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import jregex.Matcher;
 import jregex.Pattern;
-
-import burp.yaml.LoadRule;
-import burp.yaml.LoadConfigFile;
 
 /*
  * @author EvilChen
@@ -21,8 +19,7 @@ public class ExtractContent {
 
     public Map<String, Map<String, Object>> matchRegex(byte[] content, String headers, byte[] body, String scopeString) {
         Map<String, Map<String, Object>> map = new HashMap<>(); // 最终返回的结果
-        new LoadRule(LoadConfigFile.getConfigPath());
-        Map<String,Object[][]> rules = LoadRule.getConfig();
+        Map<String,Object[][]> rules = LoadConfig.getRules();
         rules.keySet().forEach(i -> {
             String matchContent = "";
             for (Object[] objects : rules.get(i)) {

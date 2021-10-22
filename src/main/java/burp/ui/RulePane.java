@@ -1,6 +1,6 @@
 package burp.ui;
 
-import burp.yaml.SetRuleConfig;
+import burp.yaml.SetConfig;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -20,7 +20,7 @@ public class RulePane extends JPanel {
     public RulePane(Object[][] data,JTabbedPane pane) {
         initComponents(data,pane);
     }
-    private SetRuleConfig setruleconfig = new SetRuleConfig();
+    private SetConfig setruleconfig = new SetConfig();
     private Boolean isEdit = false;
     private void RuleAddMouseClicked(MouseEvent e, JTabbedPane pane) {
         // TODO add your code here

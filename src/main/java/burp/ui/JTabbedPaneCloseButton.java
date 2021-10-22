@@ -60,10 +60,8 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
 
     /* Button */
     public class CloseButtonTab extends JPanel {
-        private Component tab;
 
         public CloseButtonTab(final Component tab, String title, Icon icon) {
-            this.tab = tab;
             setOpaque(false);
             FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 3, 3);
             setLayout(flowLayout);
@@ -79,7 +77,7 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
     /* ClickListener */
     public class CloseListener implements MouseListener
     {
-        private Component tab;
+        private final Component tab;
 
         public CloseListener(Component tab){
             this.tab=tab;
