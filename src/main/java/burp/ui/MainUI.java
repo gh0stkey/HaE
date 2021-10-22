@@ -73,6 +73,7 @@ public class MainUI extends JPanel{
     private void reloadMouseClicked(MouseEvent e) {
         reloadRule();
     }
+
     private void ESSaveMouseClicked(MouseEvent e) {
         // TODO add your code here
         LoadConfig loadCon = new LoadConfig();
