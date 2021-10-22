@@ -63,7 +63,7 @@ public class LoadConfigFile {
         }
     }
 
-    public void setExcludeSuffix(@NotNull String excludeSuffix){
+    public void setExcludeSuffix(String excludeSuffix){
         Map<String,Object> r = new HashMap<>();
         r.put("excludeSuffix", excludeSuffix);
         r.put("configPath", getConfigPath());
@@ -75,7 +75,7 @@ public class LoadConfigFile {
         }
     }
 
-    public void setConfigPath(@NotNull String filePath){
+    public void setConfigPath(String filePath){
         Map<String,Object> r = new HashMap<>();
         r.put("configPath", filePath);
         r.put("excludeSuffix", getExcludeSuffix());
