@@ -25,10 +25,6 @@ public class LoadConfig {
         File yamlSetting = new File(SettingPath);
         if (!(yamlSetting.exists() && yamlSetting.isFile())) {
             initSetting();
-        }
-
-        yamlSetting = new File(ConfigPath);
-        if (!(yamlSetting.exists() && yamlSetting.isFile())) {
             initRules();
         }
     }
@@ -71,8 +67,7 @@ public class LoadConfig {
         representer.addClassTag(Config.class, Tag.MAP);
 
         Yaml yaml = new Yaml(new Constructor(),representer,dop);
-        new LoadConfig();
-        File f = new File(getConfigPath());
+        File f = new File(ConfigPath);
         try{
             Writer ws = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
             yaml.dump(config,ws);
