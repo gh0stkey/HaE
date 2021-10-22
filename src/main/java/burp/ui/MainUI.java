@@ -51,10 +51,11 @@ public class MainUI extends JPanel{
             loadConn.setConfigPath(configpath);
         }
         configFilepathtext.setText(loadConn.getConfigPath());
+        reloadRule();
     }
     private void reloadRule(String configFile){
         tabbedPane1.removeAll();
-        Map<String,Object[][]> config = LoadConfig.getRules();
+        Map<String,Object[][]> config = loadConn.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
         tabbedPane1.addTab("...",new JLabel());
@@ -62,7 +63,7 @@ public class MainUI extends JPanel{
     }
     private void reloadRule(){
         tabbedPane1.removeAll();
-        Map<String,Object[][]> config = LoadConfig.getRules();
+        Map<String,Object[][]> config = loadConn.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1))
         );
@@ -174,13 +175,13 @@ public class MainUI extends JPanel{
                 new Insets(0, 0, 0, 0), 0, 0));
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
 
-        Map<String,Object[][]> config = LoadConfig.getRules();
+        Map<String,Object[][]> config = loadConn.getRules();
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
 
         tabbedPane1.addTab("...",new JLabel());
 
         //TabTitleEditListener ruleSwitch = new TabTitleEditListener(tabbedPane1);
-        configFilepathtext.setText(LoadConfig.getConfigPath());
+        configFilepathtext.setText(loadConn.getConfigPath());
         EStext.setText(loadConn.getExcludeSuffix());
         ruleSwitch = new TabTitleEditListener(tabbedPane1);
         tabbedPane1.addChangeListener(ruleSwitch);
