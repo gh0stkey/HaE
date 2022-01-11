@@ -29,23 +29,26 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.1.2";
+        String version = "2.1.3";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
         stdout.println("@Core Author: EvilChen");
         stdout.println("@UI Author: 0chencc");
         stdout.println("@Github: https://github.com/gh0stkey/HaE");
+        stdout.println("@Team: OverSpace Security Team");
         // UI
         SwingUtilities.invokeLater(this::initialize);
 
         callbacks.registerHttpListener(BurpExtender.this);
         callbacks.registerMessageEditorTabFactory(BurpExtender.this);
     }
+
     private void initialize(){
         callbacks.customizeUiComponent(main);
         callbacks.addSuiteTab(BurpExtender.this);
     }
+
     @Override
     public String getTabCaption(){
         return "HaE";
@@ -69,14 +72,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             } else {
                 content = messageInfo.getResponse();
             }
+
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            IHttpService iHttpService = null;
-            try {
-                iHttpService = messageInfo.getHttpService();
-            } catch(Exception e) {
-                // stdout.println("iHttpService Error: " + e);
-            }
-            List<String> result = pm.processMessageByContent(helpers, iHttpService, content, messageIsRequest, true);
+            List<String> result = pm.processMessageByContent(helpers, content, messageIsRequest, true);
             if (result != null && !result.isEmpty() && result.size() > 0) {
                 String originalColor = messageInfo.getHighlight();
                 String originalComment = messageInfo.getComment();
@@ -97,6 +95,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     }
 
+
     class MarkInfoTab implements IMessageEditorTab {
         private final ITextEditor markInfoText;
         private byte[] currentMessage;
@@ -106,8 +105,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         public MarkInfoTab(IMessageEditorController controller, boolean editable) {
             this.controller = controller;
-            markInfoText = callbacks.createTextEditor();
-            markInfoText.setEditable(editable);
+            this.markInfoText = callbacks.createTextEditor();
+            this.markInfoText.setEditable(editable);
         }
 
         @Override
@@ -117,45 +116,37 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public Component getUiComponent() {
-            return markInfoText.getComponent();
+            return this.markInfoText.getComponent();
         }
 
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            IHttpService iHttpService = null;
-            try {
-                iHttpService = controller.getHttpService();
-            } catch(Exception e) {
-                // stdout.println("iHttpService Error: " + e);
-            }
-            List<String> result = pm.processMessageByContent(helpers, iHttpService, content, isRequest, false);
+            List<String> result = pm.processMessageByContent(helpers, content, isRequest, false);
             if (result != null && !result.isEmpty()) {
                 if (isRequest) {
-                    extractRequestContent = result.get(0).getBytes();
+                    this.extractRequestContent = result.get(0).getBytes();
                 } else {
-                    extractResponseContent = result.get(0).getBytes();
+                    this.extractResponseContent = result.get(0).getBytes();
                 }
                 return true;
             }
-
             return false;
-
         }
 
         @Override
         public byte[] getMessage() {
-            return currentMessage;
+            return this.currentMessage;
         }
 
         @Override
         public boolean isModified() {
-            return markInfoText.isTextModified();
+            return this.markInfoText.isTextModified();
         }
 
         @Override
         public byte[] getSelectedData() {
-            return markInfoText.getSelectedText();
+            return this.markInfoText.getSelectedText();
         }
 
         /*
@@ -166,12 +157,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             String c = new String(content, StandardCharsets.UTF_8).intern();
             if (content.length > 0) {
                 if (isRequest) {
-                    markInfoText.setText(extractRequestContent);
+                    this.markInfoText.setText(this.extractRequestContent);
                 } else {
-                    markInfoText.setText(extractResponseContent);
+                    this.markInfoText.setText(this.extractResponseContent);
                 }
             }
-            currentMessage = content;
+            this.currentMessage = content;
         }
     }
 

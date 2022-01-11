@@ -80,21 +80,20 @@ public class LoadConfig {
     public static String getConfigPath(){
         try {
             InputStream inorder = new FileInputStream(SettingPath);
-            Map<String,Object> r;
-            r = yaml.load(inorder);
+            Map<String,Object> r = yaml.load(inorder);
             return r.get("configPath").toString();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return ConfigPath;
         }
+
     }
 
     // 获取不包含的后缀名
     public String getExcludeSuffix(){
         try {
             InputStream inorder = new FileInputStream(SettingPath);
-            Map<String,Object> r;
-            r = yaml.load(inorder);
+            Map<String,Object> r = yaml.load(inorder);
             return r.get("excludeSuffix").toString();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

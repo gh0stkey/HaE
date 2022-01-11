@@ -50,12 +50,12 @@ public class MainUI extends JPanel{
             reloadRule(configpath);
             loadConn.setConfigPath(configpath);
         }
-        configFilepathtext.setText(loadConn.getConfigPath());
+        configFilepathtext.setText(LoadConfig.getConfigPath());
         reloadRule();
     }
     private void reloadRule(String configFile){
         tabbedPane1.removeAll();
-        Map<String,Object[][]> config = loadConn.getRules();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
         tabbedPane1.addTab("...",new JLabel());
@@ -63,7 +63,7 @@ public class MainUI extends JPanel{
     }
     private void reloadRule(){
         tabbedPane1.removeAll();
-        Map<String,Object[][]> config = loadConn.getRules();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         ruleSwitch.setListen(false);
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1))
         );
@@ -175,13 +175,13 @@ public class MainUI extends JPanel{
                 new Insets(0, 0, 0, 0), 0, 0));
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
 
-        Map<String,Object[][]> config = loadConn.getRules();
+        Map<String,Object[][]> config = LoadConfig.getRules();
         config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
 
         tabbedPane1.addTab("...",new JLabel());
 
         //TabTitleEditListener ruleSwitch = new TabTitleEditListener(tabbedPane1);
-        configFilepathtext.setText(loadConn.getConfigPath());
+        configFilepathtext.setText(LoadConfig.getConfigPath());
         EStext.setText(loadConn.getExcludeSuffix());
         ruleSwitch = new TabTitleEditListener(tabbedPane1);
         tabbedPane1.addChangeListener(ruleSwitch);
@@ -275,12 +275,12 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
         editor.getDocument().addDocumentListener(this);
         tabbedPane.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "start-editing");
         tabbedPane.getActionMap().put("start-editing", startEditing);
-            }
-            @Override public void stateChanged(ChangeEvent e) {
-                if (e.getSource() instanceof JTabbedPane && listen) {
-                    JTabbedPane pane = (JTabbedPane) e.getSource();
-                    if (!isRenameOk){
-                        if (pane.getSelectedIndex() == pane.getComponentCount()-1){
+    }
+    @Override public void stateChanged(ChangeEvent e) {
+        if (e.getSource() instanceof JTabbedPane && listen) {
+            JTabbedPane pane = (JTabbedPane) e.getSource();
+            if (!isRenameOk){
+                if (pane.getSelectedIndex() == pane.getComponentCount()-1){
                     newTab();
                 }
             }else{

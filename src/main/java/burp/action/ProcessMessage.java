@@ -15,14 +15,19 @@ public class ProcessMessage {
     GetColorKey gck = new GetColorKey();
     UpgradeColor uc = new UpgradeColor();
 
-    public List<String> processMessageByContent(IExtensionHelpers helpers, IHttpService httpService, byte[] content, boolean isRequest, boolean messageInfo) {
+    public List<String> processMessageByContent(IExtensionHelpers helpers, byte[] content, boolean isRequest, boolean messageInfo) {
         List<String> result = new ArrayList<>();;
         Map<String, Map<String, Object>> obj;
 
         if (isRequest) {
+
+            // 获取报文头
+            List<String> requestTmpHeaders = helpers.analyzeRequest(content).getHeaders();
+            String requestHeaders = String.join("\n", requestTmpHeaders);
+
             try {
                 // 流量清洗
-                String urlString = helpers.analyzeRequest(httpService, content).getUrl().toString();
+                String urlString = requestTmpHeaders.get(0).split(" ")[1];
                 urlString = urlString.indexOf("?") > 0 ? urlString.substring(0, urlString.indexOf("?")) : urlString;
 
                 // 正则判断
@@ -32,12 +37,10 @@ public class ProcessMessage {
             } catch (Exception e) {
                 return result;
             }
-            // 获取报文头
-            List<String> requestTmpHeaders = helpers.analyzeRequest(httpService, content).getHeaders();
-            String requestHeaders = String.join("\n", requestTmpHeaders);
+
 
             // 获取报文主体
-            int requestBodyOffset = helpers.analyzeRequest(httpService, content).getBodyOffset();
+            int requestBodyOffset = helpers.analyzeRequest(content).getBodyOffset();
             byte[] requestBody = Arrays.copyOfRange(content, requestBodyOffset, content.length);
 
             obj = ec.matchRegex(content, requestHeaders, requestBody, "request");

@@ -92,12 +92,16 @@ public class SetConfig {
         int i = 0;
         ruleConfig = LoadConfig.getRules();
         String name = "New ";
-        Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "gray", "any", "nfa"}};
+        Object[][] data = new Object[][]{
+                {
+                    false, "New Name", "(New Regex)", "gray", "any", "nfa"
+                }
+        };
         while (ruleConfig.containsKey(name + i)) {
             i++;
         }
-        ruleConfig.put(name+i, data);
+        ruleConfig.put(name + i, data);
         this.format();
-        return name+i;
+        return name + i;
     }
 }
