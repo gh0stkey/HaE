@@ -3,6 +3,7 @@ package burp.action;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import burp.Config;
 import burp.yaml.LoadConfig;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
@@ -19,10 +20,9 @@ public class ExtractContent {
 
     public Map<String, Map<String, Object>> matchRegex(byte[] content, String headers, byte[] body, String scopeString) {
         Map<String, Map<String, Object>> map = new HashMap<>(); // 最终返回的结果
-        Map<String,Object[][]> rules = LoadConfig.getRules();
-        rules.keySet().forEach(i -> {
+        Config.ruleConfig.keySet().forEach(i -> {
             String matchContent = "";
-            for (Object[] objects : rules.get(i)) {
+            for (Object[] objects : Config.ruleConfig.get(i)) {
                 // 遍历获取规则
                 List<String> result = new ArrayList<>();
                 Map<String, Object> tmpMap = new HashMap<>();
@@ -34,7 +34,7 @@ public class ExtractContent {
                 String scope = objects[4].toString();
                 String engine = objects[5].toString();
                 // 判断规则是否开启与作用域
-                if (loaded && (scope.contains(scopeString) || scope.equals("any"))) {
+                if (loaded && (scope.contains(scopeString) || "any".equals(scope))) {
                     switch (scope) {
                         case "any":
                         case "request":
@@ -49,9 +49,11 @@ public class ExtractContent {
                         case "response body":
                             matchContent = new String(body, StandardCharsets.UTF_8).intern();
                             break;
+                        default:
+                            break;
                     }
 
-                    if (engine.equals("nfa")) {
+                    if ("nfa".equals(engine)) {
                         Pattern pattern = new Pattern(regex);
                         Matcher matcher = pattern.matcher(matchContent);
                         while (matcher.find()) {

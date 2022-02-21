@@ -1,5 +1,6 @@
 package burp.yaml;
 
+import burp.Config;
 import burp.yaml.template.Rule;
 import burp.yaml.template.Rules;
 import org.yaml.snakeyaml.DumperOptions;
@@ -17,8 +18,6 @@ import java.util.*;
 
 public class SetConfig {
 
-    private Map<String, Object[][]> ruleConfig = LoadConfig.getRules();
-
     public void format() {
         DumperOptions dop = new DumperOptions();
         dop.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -28,12 +27,12 @@ public class SetConfig {
         RulesConfig con = new RulesConfig();
         List<Rules> rls = new ArrayList<>();
 
-        ruleConfig.keySet().forEach(i->
+        Config.ruleConfig.keySet().forEach(i->
         {
             Rules rlsTmp = new Rules();
             rlsTmp.setType(i);
             List<Rule> rl = new ArrayList<>();
-            for (Object[] objects : ruleConfig.get(i)) {
+            for (Object[] objects : Config.ruleConfig.get(i)) {
                 Rule rlTmp = new Rule();
                 rlTmp.setName((String) objects[1]);
                 rlTmp.setLoaded((Boolean) objects[0]);
@@ -57,50 +56,44 @@ public class SetConfig {
     }
 
     public void edit(Vector data, int select, String type) {
-        ruleConfig = LoadConfig.getRules();
-        ruleConfig.get(type)[select] = data.toArray();
+        Config.ruleConfig.get(type)[select] = data.toArray();
         this.format();
     }
 
     public void add(Vector data, String type) {
-        ruleConfig = LoadConfig.getRules();
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(ruleConfig.get(type)));
+        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.ruleConfig.get(type)));
         x.add(data.toArray());
-        ruleConfig.put(type,x.toArray(new Object[x.size()][]));
+        Config.ruleConfig.put(type,x.toArray(new Object[x.size()][]));
         this.format();
     }
     public void remove(int select,String type) {
-        ruleConfig = LoadConfig.getRules();
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(ruleConfig.get(type)));
+        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.ruleConfig.get(type)));
         x.remove(select);
-        ruleConfig.put(type,x.toArray(new Object[x.size()][]));
+        Config.ruleConfig.put(type,x.toArray(new Object[x.size()][]));
         this.format();
     }
 
     public void rename(String oldName, String newName) {
-        ruleConfig = LoadConfig.getRules();
-        ruleConfig.put(newName, ruleConfig.remove(oldName));
+        Config.ruleConfig.put(newName, Config.ruleConfig.remove(oldName));
         this.format();
     }
 
     public void deleteRules(String Rules) {
-        ruleConfig = LoadConfig.getRules();
-        ruleConfig.remove(Rules);
+        Config.ruleConfig.remove(Rules);
         this.format();
     }
     public String newRules() {
         int i = 0;
-        ruleConfig = LoadConfig.getRules();
         String name = "New ";
         Object[][] data = new Object[][]{
                 {
                     false, "New Name", "(New Regex)", "gray", "any", "nfa"
                 }
         };
-        while (ruleConfig.containsKey(name + i)) {
+        while (Config.ruleConfig.containsKey(name + i)) {
             i++;
         }
-        ruleConfig.put(name + i, data);
+        Config.ruleConfig.put(name + i, data);
         this.format();
         return name + i;
     }

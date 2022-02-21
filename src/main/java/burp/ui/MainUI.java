@@ -1,5 +1,6 @@
 package burp.ui;
 
+import burp.Config;
 import burp.yaml.LoadConfig;
 import burp.yaml.SetConfig;
 
@@ -47,25 +48,18 @@ public class MainUI extends JPanel{
         int selectframe = selectFile.showDialog(new JLabel(),"Select");
         if (selectframe == JFileChooser.APPROVE_OPTION){
             String configpath = selectFile.getSelectedFile().toString();
-            reloadRule(configpath);
+            reloadRule();
             loadConn.setConfigPath(configpath);
         }
         configFilepathtext.setText(LoadConfig.getConfigPath());
         reloadRule();
     }
-    private void reloadRule(String configFile){
-        tabbedPane1.removeAll();
-        Map<String,Object[][]> config = LoadConfig.getRules();
-        ruleSwitch.setListen(false);
-        config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
-        tabbedPane1.addTab("...",new JLabel());
-        ruleSwitch.setListen(true);
-    }
+
     private void reloadRule(){
         tabbedPane1.removeAll();
-        Map<String,Object[][]> config = LoadConfig.getRules();
         ruleSwitch.setListen(false);
-        config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1))
+        Map<String,Object[][]> rules = LoadConfig.getRules();
+        rules.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(Config.ruleConfig.get(i),tabbedPane1))
         );
         tabbedPane1.addTab("...",new JLabel());
         ruleSwitch.setListen(true);
@@ -76,7 +70,6 @@ public class MainUI extends JPanel{
     }
 
     private void ESSaveMouseClicked(MouseEvent e) {
-        // TODO add your code here
         LoadConfig loadCon = new LoadConfig();
         loadCon.setExcludeSuffix(EStext.getText());
     }
@@ -175,8 +168,7 @@ public class MainUI extends JPanel{
                 new Insets(0, 0, 0, 0), 0, 0));
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
 
-        Map<String,Object[][]> config = LoadConfig.getRules();
-        config.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(config.get(i),tabbedPane1)));
+        Config.ruleConfig.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(Config.ruleConfig.get(i),tabbedPane1)));
 
         tabbedPane1.addTab("...",new JLabel());
 
