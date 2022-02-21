@@ -1,4 +1,4 @@
-package burp.yaml;
+package burp.yaml.template;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,20 +62,23 @@ public class Rule {
     public void setScope(String scope) {
         this.Scope = scope;
     }
-    public Object[] getRuleObject(){
-        return new Object[]{Loaded, Name, Regex, Color, Scope, Engine};
+
+    public Object[] getRuleObject() {
+        return new Object[] { Loaded, Name, Regex, Color, Scope, Engine };
     }
-    public Map<String,Object> getRuleObjMap(){
+
+    public Map<String, Object> getRuleObjMap(){
         Map<String,Object> r = new HashMap<>();
-        r.put("Loaded",Loaded);
-        r.put("Name",Name);
-        r.put("Regex",Regex);
-        r.put("Color",Color);
-        r.put("Scope",Scope);
-        r.put("Engine",Engine);
+        r.put("Loaded", Loaded);
+        r.put("Name", Name);
+        r.put("Regex", Regex);
+        r.put("Color", Color);
+        r.put("Scope", Scope);
+        r.put("Engine", Engine);
         return r;
     }
-    public String toString(){
-        return "{ \nLoaded: "+Loaded+"\nName: "+Name+"\nRegex: "+Regex+"\nColor: "+Color+"\nScope: "+Scope+"\nEngine: "+Engine+"\n}";
+
+    public String toString() {
+        return "{ \nLoaded: " + Loaded + "\nName: " + Name + "\nRegex: " + Regex + "\nColor: " + Color + "\nScope: " + Scope + "\nEngine: " + Engine + "\n}";
     }
 }
