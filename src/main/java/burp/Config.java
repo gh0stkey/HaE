@@ -39,5 +39,5 @@ public class Config {
             "gray"
     };
 
-    public static Map<String,Object[][]> ruleConfig = LoadConfig.getRules();
+    public static Map<String,Object[][]> ruleConfig = null;
 }
