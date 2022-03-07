@@ -27,6 +27,7 @@ public class LoadConfig {
             initSetting();
             initRules();
         }
+        Config.ruleConfig = LoadConfig.getRules();
     }
 
     // 初始化设置信息
@@ -91,14 +92,21 @@ public class LoadConfig {
 
     // 获取不包含的后缀名
     public String getExcludeSuffix(){
-        try {
-            InputStream inorder = new FileInputStream(SettingPath);
-            Map<String,Object> r = yaml.load(inorder);
-            return r.get("excludeSuffix").toString();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return Config.excludeSuffix;
+        String excludeSuffix = "";
+        File yamlSetting = new File(SettingPath);
+        if (yamlSetting.exists() && yamlSetting.isFile()) {
+            try {
+                InputStream inorder = new FileInputStream(SettingPath);
+                Map<String,Object> r = yaml.load(inorder);
+                excludeSuffix = r.get("excludeSuffix").toString();
+            } catch (Exception e) {
+                // e.printStackTrace();
+                excludeSuffix = "";
+            }
+        } else {
+            excludeSuffix = Config.excludeSuffix;
         }
+        return excludeSuffix;
     }
 
     // 获取规则配置
