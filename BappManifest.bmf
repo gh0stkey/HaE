@@ -2,8 +2,8 @@ Uuid: a7609ae2055342e9b6ffcf7cbcacf019
 ExtensionType: 1
 Name: Highlighter And Extractor
 RepoName: highlighter-and-extractor
-ScreenVersion: 2.1.4
-SerialVersion: 12
+ScreenVersion: 2.1.5
+SerialVersion: 13
 MinPlatformVersion: 0
 ProOnly: False
 Author: gh0stkey
