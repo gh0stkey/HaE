@@ -48,7 +48,7 @@ https://gh0st.cn/HaE/
 
 访问该地址，在`Proxy - HTTP History`中可以看见高亮请求，响应标签页中含有`MarkINFO`标签，其中将匹配到的信息提取了出来。
 
-![-w1047](images/16000720732854.jpg)
+![-w1047](images/16000720732854.png)
 
 
 ## 正则优化
