@@ -45,23 +45,26 @@ public class MainUI extends JPanel{
         selectFile.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Yaml File (.yml/.yaml)","yaml", "yml");
         selectFile.setFileFilter(filter);
-        int selectframe = selectFile.showDialog(new JLabel(),"Select");
-        if (selectframe == JFileChooser.APPROVE_OPTION){
-            String configpath = selectFile.getSelectedFile().toString();
+        int selectFrame = selectFile.showDialog(new JLabel(),"Select");
+        if (selectFrame == JFileChooser.APPROVE_OPTION){
+            String configPath = selectFile.getSelectedFile().toString();
             reloadRule();
-            loadConn.setConfigPath(configpath);
+            loadConn.setConfigPath(configPath);
+            configFilepathtext.setText(configPath);
         }
-        configFilepathtext.setText(LoadConfig.getConfigPath());
-        reloadRule();
     }
 
     private void reloadRule(){
         tabbedPane1.removeAll();
         ruleSwitch.setListen(false);
         Map<String,Object[][]> rules = LoadConfig.getRules();
-        rules.keySet().forEach(i->tabbedPane1.addTab(i,new RulePane(Config.ruleConfig.get(i),tabbedPane1))
+        rules.keySet().forEach(
+                i->tabbedPane1.addTab(
+                        i,
+                        new RulePane(rules.get(i), tabbedPane1)
+                )
         );
-        tabbedPane1.addTab("...",new JLabel());
+        tabbedPane1.addTab("...", new JLabel());
         ruleSwitch.setListen(true);
     }
 

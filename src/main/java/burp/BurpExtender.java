@@ -3,6 +3,7 @@ package burp;
 import burp.action.*;
 import burp.ui.MainUI;
 
+import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * @author EvilChen
+ * @author EvilChen & 0chencc
  */
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
@@ -29,14 +30,13 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.1.5";
+        String version = "2.2";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
         stdout.println("@Core Author: EvilChen");
         stdout.println("@Architecture Author: 0chencc");
         stdout.println("@Github: https://github.com/gh0stkey/HaE");
-        stdout.println("@Team: OverSpace Security Team");
         // UI
         SwingUtilities.invokeLater(this::initialize);
 
@@ -74,7 +74,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
 
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            List<String> result = pm.processMessageByContent(helpers, content, messageIsRequest, true);
+            List<Map<String, String>> result = pm.processMessageByContent(helpers, content, messageIsRequest, true);
             if (result != null && !result.isEmpty() && result.size() > 0) {
                 String originalColor = messageInfo.getHighlight();
                 String originalComment = messageInfo.getComment();
@@ -82,31 +82,27 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 if (originalColor != null) {
                     colorList.add(originalColor);
                 }
-                colorList.add(result.get(0));
+                colorList.add(result.get(0).get("color"));
                 String color = uc.getEndColor(gck.getColorKeys(colorList));
 
                 messageInfo.setHighlight(color);
-                String addComment = String.join(", ", result.get(1));
+                String addComment = String.join(", ", result.get(1).get("comment"));
                 String resComment = originalComment != null ? String.format("%s, %s", originalComment, addComment) : addComment;
 
                 messageInfo.setComment(resComment);
             }
         }
-
     }
 
-
     class MarkInfoTab implements IMessageEditorTab {
-        private final ITextEditor markInfoText;
+        private final JTabbedPane jTabbedPane = new JTabbedPane();
         private byte[] currentMessage;
         private final IMessageEditorController controller;
-        private byte[] extractRequestContent;
-        private byte[] extractResponseContent;
+        private Map<String, String> extractRequestMap;
+        private Map<String, String> extractResponseMap;
 
         public MarkInfoTab(IMessageEditorController controller, boolean editable) {
             this.controller = controller;
-            this.markInfoText = callbacks.createTextEditor();
-            this.markInfoText.setEditable(editable);
         }
 
         @Override
@@ -116,18 +112,19 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public Component getUiComponent() {
-            return this.markInfoText.getComponent();
+            return this.jTabbedPane;
         }
 
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            List<String> result = pm.processMessageByContent(helpers, content, isRequest, false);
+            List<Map<String, String>> result = pm.processMessageByContent(helpers, content, isRequest, false);
             if (result != null && !result.isEmpty()) {
+                Map<String, String> dataMap = result.get(0);
                 if (isRequest) {
-                    this.extractRequestContent = result.get(0).getBytes();
+                    extractRequestMap = dataMap;
                 } else {
-                    this.extractResponseContent = result.get(0).getBytes();
+                    extractResponseMap = dataMap;
                 }
                 return true;
             }
@@ -141,12 +138,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public boolean isModified() {
-            return this.markInfoText.isTextModified();
+            return false;
         }
 
         @Override
         public byte[] getSelectedData() {
-            return this.markInfoText.getSelectedText();
+            return null;
         }
 
         /*
@@ -156,15 +153,29 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         public void setMessage(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
             if (content.length > 0) {
+                this.jTabbedPane.removeAll();
                 if (isRequest) {
-                    this.markInfoText.setText(this.extractRequestContent);
+                    makeTable(extractRequestMap);
                 } else {
-                    this.markInfoText.setText(this.extractResponseContent);
+                    makeTable(extractResponseMap);
                 }
             }
             this.currentMessage = content;
         }
+
+        public void makeTable(Map<String, String> dataMap) {
+            dataMap.keySet().forEach(i->{
+                String[] extractData = dataMap.get(i).split("\n");
+                Object[][] data = new Object[extractData.length][1];
+                for (int x = 0; x < extractData.length; x++) {
+                    data[x][0] = extractData[x];
+                }
+                this.jTabbedPane.addTab(i, new JScrollPane(new JTable(data, new Object[] {"Information"})));
+            });
+        }
     }
+
+
 
     @Override
     public IMessageEditorTab createNewInstance(IMessageEditorController controller, boolean editable) {

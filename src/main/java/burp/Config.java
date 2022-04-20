@@ -25,7 +25,6 @@ public class Config {
             "dfa"
     };
 
-    public static String outputTplString = "[%s]\n%s\n\n";
 
     public static String[] colorArray = new String[] {
             "red",

@@ -23,7 +23,6 @@ public class RulePane extends JPanel {
     private SetConfig setruleconfig = new SetConfig();
     private Boolean isEdit = false;
     private void RuleAddMouseClicked(MouseEvent e, JTabbedPane pane) {
-        // TODO add your code here
         RuleSetting add = new RuleSetting();
         int isOk = JOptionPane.showConfirmDialog(null,add,"RuleSetting - Add Rule",JOptionPane.OK_OPTION);
         if(isOk == 0){
@@ -178,6 +177,7 @@ public class RulePane extends JPanel {
     // JFormDesigner - End of variables declaration  //GEN-END:variables
     private final String[] title = new String[]{"Loaded", "Name", "Regex", "Color", "Scope", "Engine"};
     private DefaultTableModel model = new DefaultTableModel() {
+        @Override
         public Class<?> getColumnClass ( int column){
             if (column == 0) {
                 return Boolean.class;
@@ -185,6 +185,8 @@ public class RulePane extends JPanel {
                 return String.class;
             }
         }
+
+        @Override
         public boolean isCellEditable(int row,int column){
             if (column ==0){
                 return true;

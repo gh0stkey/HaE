@@ -1,5 +1,6 @@
 package burp.action;
 
+import java.util.HashMap;
 import java.util.Map;
 import burp.Config;
 import java.util.ArrayList;
@@ -10,15 +11,14 @@ import java.util.List;
  */
 
 public class DoAction {
-    public String extractString(Map<String, Map<String, Object>> obj) {
-        String[] result = {""};
+    public Map<String, String> extractString(Map<String, Map<String, Object>> obj) {
+        Map<String, String> resultMap = new HashMap<String, String>();
         obj.keySet().forEach(i->{
             Map<String, Object> tmpMap = obj.get(i);
             String data = tmpMap.get("data").toString();
-            String tmpStr = String.format(Config.outputTplString, i, data).intern();
-            result[0] += tmpStr;
+            resultMap.put(i, String.format("%s\n", data).intern());
         });
-        return result[0];
+        return resultMap;
     }
 
     public List<List<String>> highlightAndComment(Map<String, Map<String, Object>> obj) {

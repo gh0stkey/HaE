@@ -5,6 +5,7 @@ import burp.IHttpService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +16,8 @@ public class ProcessMessage {
     GetColorKey gck = new GetColorKey();
     UpgradeColor uc = new UpgradeColor();
 
-    public List<String> processMessageByContent(IExtensionHelpers helpers, byte[] content, boolean isRequest, boolean messageInfo) {
-        List<String> result = new ArrayList<>();;
+    public List<Map<String, String>> processMessageByContent(IExtensionHelpers helpers, byte[] content, boolean isRequest, boolean messageInfo) {
+        List<Map<String, String>> result = new ArrayList<>();;
         Map<String, Map<String, Object>> obj;
 
         if (isRequest) {
@@ -73,8 +74,14 @@ public class ProcessMessage {
             List<String> commentList = resultList.get(1);
             if (colorList.size() != 0 && commentList.size() != 0) {
                 String color = uc.getEndColor(gck.getColorKeys(colorList));
-                result.add(color);
-                result.add(String.join(", ", commentList));
+                Map<String, String> colorMap = new HashMap<String, String>(){{
+                    put("color", color);
+                }};
+                Map<String, String> commentMap = new HashMap<String, String>(){{
+                    put("comment", String.join(", ", commentList));
+                }};
+                result.add(colorMap);
+                result.add(commentMap);
             }
         } else {
             if (obj.size() > 0) {
