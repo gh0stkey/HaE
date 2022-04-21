@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /*
  * @author EvilChen & 0chencc
@@ -30,7 +32,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.2";
+        String version = "2.2.1";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -96,7 +98,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     class MarkInfoTab implements IMessageEditorTab {
         private final JTabbedPane jTabbedPane = new JTabbedPane();
-        private byte[] currentMessage;
+        private JTable jTable = new JTable();
         private final IMessageEditorController controller;
         private Map<String, String> extractRequestMap;
         private Map<String, String> extractResponseMap;
@@ -112,6 +114,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public Component getUiComponent() {
+            jTabbedPane.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent arg0) {
+                    jTable = (JTable) ((JScrollPane)jTabbedPane.getSelectedComponent()).getViewport().getView();
+                }
+            });
             return this.jTabbedPane;
         }
 
@@ -133,7 +141,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public byte[] getMessage() {
-            return this.currentMessage;
+            return null;
         }
 
         @Override
@@ -143,7 +151,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public byte[] getSelectedData() {
-            return null;
+            int[] selectRows = jTable.getSelectedRows();
+            StringBuilder selectData = new StringBuilder();
+            for (int row : selectRows) {
+                selectData.append(jTable.getValueAt(row, 0).toString()).append("\n");
+            }
+            return helpers.stringToBytes(selectData.toString());
         }
 
         /*
@@ -153,17 +166,17 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         public void setMessage(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
             if (content.length > 0) {
-                this.jTabbedPane.removeAll();
                 if (isRequest) {
                     makeTable(extractRequestMap);
                 } else {
                     makeTable(extractResponseMap);
                 }
             }
-            this.currentMessage = content;
+
         }
 
         public void makeTable(Map<String, String> dataMap) {
+            this.jTabbedPane.removeAll();
             dataMap.keySet().forEach(i->{
                 String[] extractData = dataMap.get(i).split("\n");
                 Object[][] data = new Object[extractData.length][1];
