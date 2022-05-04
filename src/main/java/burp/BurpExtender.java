@@ -189,11 +189,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 }
                 int indexOfTab = this.jTabbedPane.indexOfTab(i);
                 JScrollPane jScrollPane = new JScrollPane(new JTable(data, new Object[] {"Information"}));
+                this.jTabbedPane.addTab(i, jScrollPane);
                 // 使用removeAll会导致UI出现空白的情况，为了改善用户侧体验，采用remove的方式进行删除
                 if (indexOfTab != -1) {
                     this.jTabbedPane.remove(indexOfTab);
                 }
-                this.jTabbedPane.addTab(i, jScrollPane);
             });
         }
     }
