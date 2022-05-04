@@ -4,9 +4,13 @@
 
 架构作者: [@0chencc](https://github.com/0Chencc)
 
-## 公共规则网站
+## 公共规则 & 打赏
 
-https://gh0st.cn/HaE/
+公共规则下载地址：https://gh0st.cn/HaE/
+
+如果你觉得HaE好用，可以打赏一下作者，给作者持续更新下去的动力！
+
+![](images/reward.jpeg)
 
 ## 介绍
 
