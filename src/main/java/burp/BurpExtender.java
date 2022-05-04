@@ -32,7 +32,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.2.1";
+        String version = "2.2.2";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -149,6 +149,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             return false;
         }
 
+        /*
+         * 快捷键复制功能
+         */
         @Override
         public byte[] getSelectedData() {
             int[] selectRows = jTable.getSelectedRows();
@@ -172,18 +175,25 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                     makeTable(extractResponseMap);
                 }
             }
-
         }
 
+        /*
+         * 创建MarkInfo表单
+         */
         public void makeTable(Map<String, String> dataMap) {
-            this.jTabbedPane.removeAll();
             dataMap.keySet().forEach(i->{
                 String[] extractData = dataMap.get(i).split("\n");
                 Object[][] data = new Object[extractData.length][1];
                 for (int x = 0; x < extractData.length; x++) {
                     data[x][0] = extractData[x];
                 }
-                this.jTabbedPane.addTab(i, new JScrollPane(new JTable(data, new Object[] {"Information"})));
+                int indexOfTab = this.jTabbedPane.indexOfTab(i);
+                JScrollPane jScrollPane = new JScrollPane(new JTable(data, new Object[] {"Information"}));
+                // 使用removeAll会导致UI出现空白的情况，为了改善用户侧实验，采用remove的方式进行删除
+                if (indexOfTab != -1) {
+                    this.jTabbedPane.remove(indexOfTab);
+                }
+                this.jTabbedPane.addTab(i, jScrollPane);
             });
         }
     }
