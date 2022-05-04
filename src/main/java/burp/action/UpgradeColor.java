@@ -4,13 +4,13 @@ import burp.Config;
 
 import java.util.*;
 
-/*
+/**
  * @author EvilChen
  */
 
 public class UpgradeColor {
     private String endColor = "";
-    /*
+    /**
      * 颜色升级递归算法
      */
     private void colorUpgrade(List<Integer> colorList) {

@@ -13,7 +13,7 @@ import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-/*
+/**
  * @author EvilChen & 0chencc
  */
 
@@ -61,7 +61,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         return main;
     }
 
-    /*
+    /**
      * 使用processHttpMessage用来做Highlighter
      */
     @Override
@@ -149,7 +149,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             return false;
         }
 
-        /*
+        /**
          * 快捷键复制功能
          */
         @Override
@@ -162,7 +162,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             return helpers.stringToBytes(selectData.toString());
         }
 
-        /*
+        /**
          * 使用setMessage用来做Extractor
          */
         @Override
@@ -177,7 +177,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
         }
 
-        /*
+        /**
          * 创建MarkInfo表单
          */
         public void makeTable(Map<String, String> dataMap) {

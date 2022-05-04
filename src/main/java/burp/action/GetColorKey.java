@@ -4,12 +4,12 @@ import burp.Config;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
+/**
  * @author EvilChen
  */
 
 public class GetColorKey {
-    /*
+    /**
      * 颜色下标获取
      */
     public List<Integer> getColorKeys(List<String> keys){

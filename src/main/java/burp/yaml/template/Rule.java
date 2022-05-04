@@ -3,7 +3,7 @@ package burp.yaml.template;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
+/**
  * @author LinChen
  */
 

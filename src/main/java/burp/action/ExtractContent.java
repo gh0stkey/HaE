@@ -12,7 +12,7 @@ import dk.brics.automaton.RunAutomaton;
 import jregex.Matcher;
 import jregex.Pattern;
 
-/*
+/**
  * @author EvilChen
  */
 

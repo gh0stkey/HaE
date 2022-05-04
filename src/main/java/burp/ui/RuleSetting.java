@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import burp.Config;
 
-/*
+/**
  * @author LinChen
  */
 
