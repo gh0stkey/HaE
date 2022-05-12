@@ -32,7 +32,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.2.2";
+        String version = "2.2.3";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -159,7 +159,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             for (int row : selectRows) {
                 selectData.append(jTable.getValueAt(row, 0).toString()).append("\n");
             }
-            return helpers.stringToBytes(selectData.toString());
+            // 便于单行复制，去除最后一个换行符
+            String revData = selectData.reverse().toString().replaceFirst("\n", "");
+            StringBuilder retData = new StringBuilder(revData).reverse();
+            return helpers.stringToBytes(retData.toString());
         }
 
         /**

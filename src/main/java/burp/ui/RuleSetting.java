@@ -14,67 +14,56 @@ public class RuleSetting extends JPanel {
     }
 
     public void initComponents() {
-        // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
-        label5 = new JLabel();
-        label4 = new JLabel();
-        Regex = new JTextField();
-        label3 = new JLabel();
-        label2 = new JLabel();
+        engineLabel = new JLabel();
+        scopeLabel = new JLabel();
+        regexTextField = new JTextField();
+        regexLabel = new JLabel();
+        nameLabel = new JLabel();
         Name = new JTextField();
-        ScopeSelect = new JComboBox<>();
-        EngineSelect = new JComboBox<>();
-        label6 = new JLabel();
-        ColorSelect = new JComboBox<>();
+        scopeComboBox = new JComboBox<>();
+        engineComboBox = new JComboBox<>();
+        colorLabel = new JLabel();
+        colorComboBox = new JComboBox<>();
 
-        //======== this ========
         setLayout(null);
 
-        //---- label5 ----
-        label5.setText("Engine:");
-        add(label5);
-        label5.setBounds(new Rectangle(new Point(10, 175), label5.getPreferredSize()));
+        engineLabel.setText("Engine:");
+        add(engineLabel);
+        engineLabel.setBounds(new Rectangle(new Point(10, 175), engineLabel.getPreferredSize()));
 
-        //---- label4 ----
-        label4.setText("Scope:");
-        add(label4);
-        label4.setBounds(new Rectangle(new Point(10, 135), label4.getPreferredSize()));
-        add(Regex);
-        Regex.setBounds(70, 50, 265, 30);
+        scopeLabel.setText("Scope:");
+        add(scopeLabel);
+        scopeLabel.setBounds(new Rectangle(new Point(10, 135), scopeLabel.getPreferredSize()));
+        add(regexTextField);
+        regexTextField.setBounds(70, 50, 265, 30);
 
-        //---- label3 ----
-        label3.setText("Regex:");
-        add(label3);
-        label3.setBounds(new Rectangle(new Point(10, 55), label3.getPreferredSize()));
+        regexLabel.setText("Regex:");
+        add(regexLabel);
+        regexLabel.setBounds(new Rectangle(new Point(10, 55), regexLabel.getPreferredSize()));
 
-        //---- label2 ----
-        label2.setText("Name:");
-        add(label2);
-        label2.setBounds(new Rectangle(new Point(10, 15), label2.getPreferredSize()));
+        nameLabel.setText("Name:");
+        add(nameLabel);
+        nameLabel.setBounds(new Rectangle(new Point(10, 15), nameLabel.getPreferredSize()));
         add(Name);
         Name.setBounds(70, 10, 265, 30);
 
-        //---- ScopeSelect ----
-        ScopeSelect.setModel(new DefaultComboBoxModel<>(Config.scopeArray));
-        add(ScopeSelect);
-        ScopeSelect.setBounds(70, 130, 265, ScopeSelect.getPreferredSize().height);
+        scopeComboBox.setModel(new DefaultComboBoxModel<>(Config.scopeArray));
+        add(scopeComboBox);
+        scopeComboBox.setBounds(70, 130, 265, scopeComboBox.getPreferredSize().height);
 
-        //---- EngineSelect ----
-        EngineSelect.setModel(new DefaultComboBoxModel<>(Config.engineArray));
-        add(EngineSelect);
-        EngineSelect.setBounds(70, 170, 265, EngineSelect.getPreferredSize().height);
+        engineComboBox.setModel(new DefaultComboBoxModel<>(Config.engineArray));
+        add(engineComboBox);
+        engineComboBox.setBounds(70, 170, 265, engineComboBox.getPreferredSize().height);
 
-        //---- label7 ----
-        label6.setText("Color:");
-        add(label6);
-        label6.setBounds(new Rectangle(new Point(10, 95), label6.getPreferredSize()));
+        colorLabel.setText("Color:");
+        add(colorLabel);
+        colorLabel.setBounds(new Rectangle(new Point(10, 95), colorLabel.getPreferredSize()));
 
-        //---- ColorSelect ----
-        ColorSelect.setModel(new DefaultComboBoxModel<>(Config.colorArray));
-        add(ColorSelect);
-        ColorSelect.setBounds(70, 90, 265, ColorSelect.getPreferredSize().height);
+        colorComboBox.setModel(new DefaultComboBoxModel<>(Config.colorArray));
+        add(colorComboBox);
+        colorComboBox.setBounds(70, 90, 265, colorComboBox.getPreferredSize().height);
 
         {
-            // compute preferred size
             Dimension preferredSize = new Dimension();
             for(int i = 0; i < getComponentCount(); i++) {
                 Rectangle bounds = getComponent(i).getBounds();
@@ -87,19 +76,16 @@ public class RuleSetting extends JPanel {
             setMinimumSize(preferredSize);
             setPreferredSize(preferredSize);
         }
-        // JFormDesigner - End of component initialization  //GEN-END:initComponents
     }
 
-    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
-    private JLabel label5;
-    private JLabel label4;
-    public JTextField Regex;
-    private JLabel label3;
-    private JLabel label2;
+    private JLabel engineLabel;
+    private JLabel scopeLabel;
+    public JTextField regexTextField;
+    private JLabel regexLabel;
+    private JLabel nameLabel;
     public JTextField Name;
-    public JComboBox<String> ScopeSelect;
-    public JComboBox<String> EngineSelect;
-    private JLabel label6;
-    public JComboBox<String> ColorSelect;
-    // JFormDesigner - End of variables declaration  //GEN-END:variables
+    public JComboBox<String> scopeComboBox;
+    public JComboBox<String> engineComboBox;
+    private JLabel colorLabel;
+    public JComboBox<String> colorComboBox;
 }

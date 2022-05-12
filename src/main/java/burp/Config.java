@@ -4,7 +4,6 @@ package burp;
  * @author EvilChen
  */
 
-import burp.yaml.LoadConfig;
 import java.util.Map;
 
 public class Config {
@@ -24,7 +23,6 @@ public class Config {
             "nfa",
             "dfa"
     };
-
 
     public static String[] colorArray = new String[] {
             "red",
