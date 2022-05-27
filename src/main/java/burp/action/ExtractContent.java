@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import burp.Config;
-import burp.yaml.LoadConfig;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
@@ -33,6 +32,7 @@ public class ExtractContent {
                 String color = objects[3].toString();
                 String scope = objects[4].toString();
                 String engine = objects[5].toString();
+                boolean sensitive = (Boolean) objects[6];
                 // 判断规则是否开启与作用域
                 if (loaded && (scope.contains(scopeString) || "any".equals(scope))) {
                     switch (scope) {
@@ -54,7 +54,13 @@ public class ExtractContent {
                     }
 
                     if ("nfa".equals(engine)) {
-                        Pattern pattern = new Pattern(regex);
+                        Pattern pattern;
+                        // 判断规则是否大小写敏感
+                        if (sensitive) {
+                            pattern = new Pattern(regex);
+                        } else {
+                            pattern = new Pattern(regex, Pattern.IGNORE_CASE);
+                        }
                         Matcher matcher = pattern.matcher(matchContent);
                         while (matcher.find()) {
                             // 添加匹配数据至list

@@ -52,6 +52,8 @@ public class LoadConfig {
         rule.setEngine("nfa");
         rule.setScope("response");
         rule.setRegex("(([a-zA-Z0-9][_|\\.])*[a-zA-Z0-9]+@([a-zA-Z0-9][-|_|\\.])*[a-zA-Z0-9]+\\.((?!js|css|jpg|jpeg|png|ico)[a-zA-Z]{2,}))");
+        rule.setSensitive(false);
+
         Rules rules = new Rules();
         rules.setType("Basic Information");
         ArrayList<Rule> rl = new ArrayList<>();

@@ -14,6 +14,7 @@ public class Rule {
     private String Color;
     private String Engine;
     private String Scope;
+    private Boolean Sensitive;
 
     public Boolean getLoaded() {
         return Loaded;
@@ -38,6 +39,9 @@ public class Rule {
         return Scope;
     }
 
+    public Boolean getSensitive(){
+        return Sensitive = Sensitive;
+    }
     public void setLoaded(Boolean loaded) {
         this.Loaded = loaded;
     }
@@ -62,9 +66,12 @@ public class Rule {
     public void setScope(String scope) {
         this.Scope = scope;
     }
+    public void setSensitive(Boolean sensitive){
+        this.Sensitive = sensitive;
+    }
 
     public Object[] getRuleObject() {
-        return new Object[] { Loaded, Name, Regex, Color, Scope, Engine };
+        return new Object[] { Loaded, Name, Regex, Color, Scope, Engine,Sensitive };
     }
 
     public Map<String, Object> getRuleObjMap(){
@@ -75,10 +82,12 @@ public class Rule {
         r.put("Color", Color);
         r.put("Scope", Scope);
         r.put("Engine", Engine);
+        r.put("Sensitive", Sensitive);
         return r;
     }
 
+    @Override
     public String toString() {
-        return "{ \nLoaded: " + Loaded + "\nName: " + Name + "\nRegex: " + Regex + "\nColor: " + Color + "\nScope: " + Scope + "\nEngine: " + Engine + "\n}";
+        return "{ \nLoaded: " + Loaded + "\nName: " + Name + "\nRegex: " + Regex + "\nColor: " + Color + "\nScope: " + Scope + "\nEngine: " + Engine + "\nSensitive: " + Sensitive + "\n }";
     }
 }

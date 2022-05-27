@@ -2,6 +2,7 @@ package burp.ui;
 
 import burp.yaml.SetConfig;
 
+import java.awt.event.ComponentListener;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -24,38 +25,46 @@ public class RulePane extends JPanel {
     private Boolean isEdit = false;
 
     private void ruleAddMouseClicked(MouseEvent e, JTabbedPane pane) {
-        RuleSetting add = new RuleSetting();
-        int isOk = JOptionPane.showConfirmDialog(null, add, "RuleSetting - Add Rule", JOptionPane.OK_OPTION);
-        if(isOk == 0){
-            Vector data = new Vector();
-            data.add(false);
-            data.add(add.Name.getText());
-            data.add(add.regexTextField.getText());
-            data.add(add.colorComboBox.getSelectedItem().toString());
-            data.add(add.scopeComboBox.getSelectedItem().toString());
-            data.add(add.engineComboBox.getSelectedItem().toString());
-            model.insertRow(model.getRowCount(), data);
+        RuleSetting ruleSettingPanel = new RuleSetting();
+        int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "RuleSetting - Add Rule", JOptionPane.OK_OPTION);
+        if(showState == 0){
+            Vector ruleData = new Vector();
+            ruleData.add(false);
+            ruleData.add(ruleSettingPanel.ruleNameTextField.getText());
+            ruleData.add(ruleSettingPanel.regexTextField.getText());
+            ruleData.add(ruleSettingPanel.colorComboBox.getSelectedItem().toString());
+            ruleData.add(ruleSettingPanel.scopeComboBox.getSelectedItem().toString());
+            ruleData.add(ruleSettingPanel.engineComboBox.getSelectedItem().toString());
+            ruleData.add(ruleSettingPanel.sensitiveComboBox.getSelectedItem());
+            model.insertRow(model.getRowCount(), ruleData);
             model = (DefaultTableModel) ruleTable.getModel();
-            setConfig.add(data, pane.getTitleAt(pane.getSelectedIndex()));
+            setConfig.add(ruleData, pane.getTitleAt(pane.getSelectedIndex()));
         }
     }
 
     private void ruleEditMouseClicked(MouseEvent e, JTabbedPane pane){
         if (ruleTable.getSelectedRowCount() >= 1){
-            RuleSetting edit = new RuleSetting();
-            edit.Name.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 1).toString());
-            edit.regexTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 2).toString());
-            edit.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 3).toString());
-            edit.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 4).toString());
-            edit.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
-            int isOk = JOptionPane.showConfirmDialog(null, edit, "RuleSetting - Edit Rule", JOptionPane.OK_OPTION);
-            if (isOk == 0){
+            RuleSetting ruleSettingPanel = new RuleSetting();
+            ruleSettingPanel.ruleNameTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 1).toString());
+            ruleSettingPanel.regexTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 2).toString());
+            ruleSettingPanel.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 3).toString());
+            ruleSettingPanel.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 4).toString());
+            ruleSettingPanel.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
+            ruleSettingPanel.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),6).toString());
+
+            ruleSettingPanel.sensitiveComboBox.setEnabled(
+                ruleSettingPanel.engineComboBox.getSelectedItem().toString().equals("nfa")
+            );
+
+            int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "RuleSetting - Edit Rule", JOptionPane.OK_OPTION);
+            if (showState == 0){
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
-                model.setValueAt(edit.Name.getText(), select, 1);
-                model.setValueAt(edit.regexTextField.getText(), select, 2);
-                model.setValueAt(edit.colorComboBox.getSelectedItem().toString(), select, 3);
-                model.setValueAt(edit.scopeComboBox.getSelectedItem().toString(), select, 4);
-                model.setValueAt(edit.engineComboBox.getSelectedItem().toString(), select, 5);
+                model.setValueAt(ruleSettingPanel.ruleNameTextField.getText(), select, 1);
+                model.setValueAt(ruleSettingPanel.regexTextField.getText(), select, 2);
+                model.setValueAt(ruleSettingPanel.colorComboBox.getSelectedItem().toString(), select, 3);
+                model.setValueAt(ruleSettingPanel.scopeComboBox.getSelectedItem().toString(), select, 4);
+                model.setValueAt(ruleSettingPanel.engineComboBox.getSelectedItem().toString(), select, 5);
+                model.setValueAt(ruleSettingPanel.sensitiveComboBox.getSelectedItem(), select, 6);
                 model = (DefaultTableModel) ruleTable.getModel();
                 setConfig.edit((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
             }
@@ -110,9 +119,9 @@ public class RulePane extends JPanel {
             }
         });
 
-        add(addButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, 
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
-            new Insets(15, 5, 3, 2), 0, 0));
+        add(addButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(15, 5, 3, 2), 0, 0));
 
         //---- editButton ----
         editButton.setText("Edit");
@@ -126,9 +135,9 @@ public class RulePane extends JPanel {
             }
         });
 
-        add(editButton, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, 
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
-            new Insets(0, 5, 3, 2), 0, 0));
+        add(editButton, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(0, 5, 3, 2), 0, 0));
 
         //======== scrollPane ========
         {
@@ -142,9 +151,9 @@ public class RulePane extends JPanel {
             scrollPane.setViewportView(ruleTable);
         }
 
-        add(scrollPane, new GridBagConstraints(1, 0, 1, 4, 0.0, 0.0, 
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
-            new Insets(15, 5, 5, 5), 0, 0));
+        add(scrollPane, new GridBagConstraints(1, 0, 1, 4, 0.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(15, 5, 5, 5), 0, 0));
 
         //---- removeButton ----
         removeButton.setText("Remove");
@@ -159,9 +168,9 @@ public class RulePane extends JPanel {
             }
         });
 
-        add(removeButton, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, 
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
-            new Insets(0, 5, 3, 2), 0, 0));
+        add(removeButton, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(0, 5, 3, 2), 0, 0));
 
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
         ruleTable.setModel(model);
@@ -183,7 +192,7 @@ public class RulePane extends JPanel {
     public JTable ruleTable;
     public JButton removeButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
-    private final String[] title = new String[]{"Loaded", "Name", "Regex", "Color", "Scope", "Engine"};
+    private final String[] title = new String[]{"Loaded", "Name", "Regex", "Color", "Scope", "Engine", "Sensitive"};
     private DefaultTableModel model = new DefaultTableModel() {
         @Override
         public Class<?> getColumnClass (int column){

@@ -32,7 +32,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.2.3";
+        String version = "2.3";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -189,6 +189,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 Object[][] data = new Object[extractData.length][1];
                 for (int x = 0; x < extractData.length; x++) {
                     data[x][0] = extractData[x];
+                    stdout.println(extractData[x]);
                 }
                 int indexOfTab = this.jTabbedPane.indexOfTab(i);
                 JScrollPane jScrollPane = new JScrollPane(new JTable(data, new Object[] {"Information"}));
