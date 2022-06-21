@@ -1,6 +1,6 @@
 # HaE - Highlighter and Extractor
 
-核心功能作者: [@EvilChen](https://github.com/gh0stkey)
+核心功能作者: [@EvilChen](https://github.com/gh0stkey)（中孚信息元亨实验室）
 
 架构作者: [@0chencc](https://github.com/0Chencc)
 
