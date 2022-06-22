@@ -10,7 +10,7 @@
 
 如果你觉得HaE好用，可以打赏一下作者，给作者持续更新下去的动力！
 
-![](images/reward.jpeg)
+<img src="images/reward.jpeg" style="zoom: 20%;" />
 
 ## 介绍
 
