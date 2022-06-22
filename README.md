@@ -10,7 +10,9 @@
 
 如果你觉得HaE好用，可以打赏一下作者，给作者持续更新下去的动力！
 
-<img src="images/reward.jpeg" style="zoom: 20%;" />
+<div align=center>
+<img src="images/reward.jpeg" style="width: 30%" />
+</div>
 
 ## 介绍
 
