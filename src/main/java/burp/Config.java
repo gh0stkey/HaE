@@ -4,6 +4,8 @@ package burp;
  * @author EvilChen
  */
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Config {
@@ -37,4 +39,6 @@ public class Config {
     };
 
     public static Map<String,Object[][]> ruleConfig = null;
+
+    public static Map<String, Map<String, List<String>>> globalDataMap = new HashMap<>();
 }

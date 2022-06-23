@@ -50,7 +50,7 @@ public class RulePane extends JPanel {
             ruleSettingPanel.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 3).toString());
             ruleSettingPanel.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 4).toString());
             ruleSettingPanel.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
-            ruleSettingPanel.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),6).toString());
+            ruleSettingPanel.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),6));
 
             ruleSettingPanel.sensitiveComboBox.setEnabled(
                 ruleSettingPanel.engineComboBox.getSelectedItem().toString().equals("nfa")

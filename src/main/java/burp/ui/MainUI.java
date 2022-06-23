@@ -79,7 +79,7 @@ public class MainUI extends JPanel{
         loadCon.setExcludeSuffix(excludeSuffixTextField.getText());
     }
     private void initComponents() {
-        rulesTabbedPane = new JTabbedPane();
+        mainTabbedPane = new JTabbedPane();
         ruleTabbedPane = new JTabbedPane();
         rulePanel = new JPanel();
         configTextField = new JTextField();
@@ -97,7 +97,7 @@ public class MainUI extends JPanel{
         ((GridBagLayout)getLayout()).rowWeights = new double[] {1.0, 1.0E-4};
 
         {
-            rulesTabbedPane.addTab("Rules", ruleTabbedPane);
+            mainTabbedPane.addTab("Rules", ruleTabbedPane);
 
             {
                 rulePanel.setLayout(new GridBagLayout());
@@ -158,9 +158,10 @@ public class MainUI extends JPanel{
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         new Insets(0, 0, 0, 5), 0, 0));
             }
-            rulesTabbedPane.addTab("Config", rulePanel);
+            mainTabbedPane.addTab("Config", rulePanel);
+            mainTabbedPane.addTab("Databoard", databoardPanel);
         }
-        add(rulesTabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+        add(mainTabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(0, 0, 0, 0), 0, 0));
 
@@ -178,7 +179,7 @@ public class MainUI extends JPanel{
         tabMenu.add(closeTabMenuItem);
     }
 
-    private JTabbedPane rulesTabbedPane;
+    private JTabbedPane mainTabbedPane;
     private JTabbedPane ruleTabbedPane;
     private JPanel rulePanel;
     private JTextField configTextField;
@@ -188,7 +189,7 @@ public class MainUI extends JPanel{
     private JLabel excludeSuffixLabel;
     private JTextField excludeSuffixTextField;
     private JButton excludeSuffixSaveButton;
-
+    private Databoard databoardPanel = new Databoard();
     protected static JPopupMenu tabMenu = new JPopupMenu();
     private JMenuItem closeTabMenuItem = new JMenuItem("Delete");
     private TabTitleEditListener ruleSwitch;

@@ -17,18 +17,26 @@ import org.yaml.snakeyaml.nodes.Tag;
 
 public class LoadConfig {
     private static final Yaml yaml = new Yaml();
-    private static final String SettingPath = "Setting.yml";
-    private static final String ConfigPath = "Config.yml";
+    private static String HaEConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
+    private static String SettingPath = String.format("%s/%s", HaEConfigPath, "Setting.yml");
+    private static String ConfigPath =  String.format("%s/%s", HaEConfigPath, "Config.yml");
 
     public LoadConfig() {
         // 构造函数，初始化配置
-        File yamlSetting = new File(SettingPath);
-        if (!(yamlSetting.exists() && yamlSetting.isFile())) {
+
+        File HaEConfigPathFile = new File(HaEConfigPath);
+        if (!(HaEConfigPathFile.exists() && HaEConfigPathFile.isDirectory())) {
+            HaEConfigPathFile.mkdirs();
+        }
+
+        File settingPathFile = new File(SettingPath);
+        if (!(settingPathFile.exists() && settingPathFile.isFile())) {
             initSetting();
             initRules();
         }
         Config.ruleConfig = LoadConfig.getRules();
     }
+
 
     // 初始化设置信息
     public void initSetting() {
