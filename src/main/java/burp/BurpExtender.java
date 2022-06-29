@@ -3,6 +3,7 @@ package burp;
 import burp.action.*;
 import burp.ui.MainUI;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.4";
+        String version = "2.4.1";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -115,6 +116,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         private final IMessageEditorController controller;
         private Map<String, String> extractRequestMap;
         private Map<String, String> extractResponseMap;
+        private ArrayList<String> titleList = new ArrayList<>();
 
         public MarkInfoTab(IMessageEditorController controller, boolean editable) {
             this.controller = controller;
@@ -197,6 +199,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          * 创建MarkInfo表单
          */
         public void makeTable(Map<String, String> dataMap) {
+            ArrayList<String> lTitleList = new ArrayList<>();
             dataMap.keySet().forEach(i->{
                 String[] extractData = dataMap.get(i).split("\n");
                 Object[][] data = new Object[extractData.length][1];
@@ -204,14 +207,23 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                     data[x][0] = extractData[x];
                     // stdout.println(extractData[x]);
                 }
-                int indexOfTab = this.jTabbedPane.indexOfTab(i);
-                JScrollPane jScrollPane = new JScrollPane(new JTable(data, new Object[] {"Information"}));
+                JScrollPane jScrollPane = new JScrollPane(new JTable(data, new Object[]{"Information"}));
+                lTitleList.add(i);
                 this.jTabbedPane.addTab(i, jScrollPane);
-                // 使用removeAll会导致UI出现空白的情况，为了改善用户侧体验，采用remove的方式进行删除
+            });
+
+            /*
+             * 使用removeAll会导致MarkInfo UI出现空白的情况，为了改善用户侧体验，采用remove的方式进行删除；
+             * 采用全局ArrayList的方式遍历删除Tab，以此应对BurpSuite缓存机制导致的MarkInfo UI错误展示。
+             */
+            titleList.forEach(t->{
+                int indexOfTab = this.jTabbedPane.indexOfTab(t);
                 if (indexOfTab != -1) {
-                    this.jTabbedPane.remove(indexOfTab);
+                    this.jTabbedPane.removeTabAt(indexOfTab);
                 }
             });
+
+            titleList = lTitleList;
         }
     }
 

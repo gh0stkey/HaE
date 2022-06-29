@@ -94,7 +94,7 @@ public class ExtractContent {
             }
         });
 
-        // host: {Name, List}
+        // 将提取的数据存放到全局变量中
         if (!host.isEmpty()) {
             map.keySet().forEach(i -> {
                 Map<String, Object> tmpMap = map.get(i);

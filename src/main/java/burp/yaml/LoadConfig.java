@@ -23,7 +23,6 @@ public class LoadConfig {
 
     public LoadConfig() {
         // 构造函数，初始化配置
-
         File HaEConfigPathFile = new File(HaEConfigPath);
         if (!(HaEConfigPathFile.exists() && HaEConfigPathFile.isDirectory())) {
             HaEConfigPathFile.mkdirs();
@@ -146,18 +145,6 @@ public class LoadConfig {
         return resRule;
     }
 
-    // 设置配置路径
-    public void setConfigPath(String filePath){
-        Map<String,Object> r = new HashMap<>();
-        r.put("configPath", filePath);
-        r.put("excludeSuffix", getExcludeSuffix());
-        try{
-            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath), StandardCharsets.UTF_8);
-            yaml.dump(r, ws);
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-    }
 
     // 设置不包含的后缀名
     public void setExcludeSuffix(String excludeSuffix){

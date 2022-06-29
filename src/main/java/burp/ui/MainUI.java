@@ -4,12 +4,15 @@ import burp.Config;
 import burp.yaml.LoadConfig;
 import burp.yaml.SetConfig;
 
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import java.io.FileOutputStream;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
@@ -32,7 +35,7 @@ public class MainUI extends JPanel{
                 setConn.deleteRules(ruleTabbedPane.getTitleAt(ruleTabbedPane.getSelectedIndex()));
                 ruleTabbedPane.remove(ruleTabbedPane.getSelectedIndex());
                 ruleTabbedPane.setSelectedIndex(ruleTabbedPane.getSelectedIndex()-1);
-            }else{
+            } else {
                 SetConfig setConn = new SetConfig();
                 setConn.deleteRules(ruleTabbedPane.getTitleAt(ruleTabbedPane.getSelectedIndex()));
                 ruleTabbedPane.remove(ruleTabbedPane.getSelectedIndex());
@@ -41,18 +44,23 @@ public class MainUI extends JPanel{
         }
     }
 
-    private void selectFileMouseClicked(MouseEvent e) {
-        JFileChooser selectFile = new JFileChooser();
-        selectFile.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Yaml File (.yml/.yaml)","yaml", "yml");
-        selectFile.setFileFilter(filter);
-        int selectFrame = selectFile.showDialog(new JLabel(),"Select");
-        if (selectFrame == JFileChooser.APPROVE_OPTION){
-            String configPath = selectFile.getSelectedFile().toString();
-            reloadRule();
-            loadConn.setConfigPath(configPath);
-            configTextField.setText(configPath);
+    private void onlineUpdateMouseClicked(MouseEvent e) {
+        String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Config.yml";
+        OkHttpClient httpClient = new OkHttpClient();
+        Request httpRequest = new Request.Builder().url(url).get().build();
+        try {
+            Response httpResponse = httpClient.newCall(httpRequest).execute();
+            // 获取官方规则文件，在线更新写入
+            String configFile = configTextField.getText();
+            FileOutputStream fileOutputStream = new FileOutputStream(configFile);
+            fileOutputStream.write(httpResponse.body().bytes());
+            JOptionPane.showMessageDialog(null, "Config file updated successfully!", "Error",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ignored) {
+            JOptionPane.showMessageDialog(null, "Please check your network!", "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
+
         new LoadConfig();
     }
 
@@ -84,7 +92,7 @@ public class MainUI extends JPanel{
         rulePanel = new JPanel();
         configTextField = new JTextField();
         configLabel = new JLabel();
-        selectFileButton = new JButton();
+        onlineUpdateButton = new JButton();
         reloadButton = new JButton();
         excludeSuffixLabel = new JLabel();
         excludeSuffixTextField = new JTextField();
@@ -111,19 +119,19 @@ public class MainUI extends JPanel{
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         new Insets(5, 0, 5, 5), 0, 0));
 
-                configLabel.setText("Config File Path:");
+                configLabel.setText("Config Path:");
                 rulePanel.add(configLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                         GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
                         new Insets(5, 5, 5, 5), 0, 0));
 
-                selectFileButton.setText("Select File ...");
-                selectFileButton.addMouseListener(new MouseAdapter() {
+                onlineUpdateButton.setText("Online Update");
+                onlineUpdateButton.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        selectFileMouseClicked(e);
+                        onlineUpdateMouseClicked(e);
                     }
                 });
-                rulePanel.add(selectFileButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
+                rulePanel.add(onlineUpdateButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         new Insets(5, 0, 5, 5), 0, 0));
 
@@ -139,7 +147,7 @@ public class MainUI extends JPanel{
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         new Insets(5, 0, 5, 5), 0, 0));
 
-                excludeSuffixLabel.setText("ExcludeSuffix:");
+                excludeSuffixLabel.setText("Exclude Suffix:");
                 rulePanel.add(excludeSuffixLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
                         GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE,
                         new Insets(0, 5, 5, 5), 0, 0));
@@ -184,7 +192,7 @@ public class MainUI extends JPanel{
     private JPanel rulePanel;
     private JTextField configTextField;
     private JLabel configLabel;
-    private JButton selectFileButton;
+    private JButton onlineUpdateButton;
     private JButton reloadButton;
     private JLabel excludeSuffixLabel;
     private JTextField excludeSuffixTextField;
