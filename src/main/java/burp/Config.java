@@ -1,10 +1,11 @@
 package burp;
 
-/*
+/**
  * @author EvilChen
  */
 
-import burp.yaml.LoadConfig;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Config {
@@ -25,7 +26,6 @@ public class Config {
             "dfa"
     };
 
-
     public static String[] colorArray = new String[] {
             "red",
             "orange",
@@ -39,4 +39,6 @@ public class Config {
     };
 
     public static Map<String,Object[][]> ruleConfig = null;
+
+    public static Map<String, Map<String, List<String>>> globalDataMap = new HashMap<>();
 }

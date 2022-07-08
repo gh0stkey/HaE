@@ -4,7 +4,7 @@ import burp.yaml.template.Rule;
 
 import java.util.List;
 
-/*
+/**
  * @author LinChen
  */
 
@@ -28,9 +28,9 @@ public class Rules {
         this.rule = rule;
     }
 
-    public void setRuleObj(){
+    public void setRuleObj(){}
 
-    }
+    @Override
     public String toString(){
         return "{ type: "+type+"\n config: "+ rule +"}\n";
     }

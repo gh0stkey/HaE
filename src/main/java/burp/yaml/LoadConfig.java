@@ -17,18 +17,25 @@ import org.yaml.snakeyaml.nodes.Tag;
 
 public class LoadConfig {
     private static final Yaml yaml = new Yaml();
-    private static final String SettingPath = "Setting.yml";
-    private static final String ConfigPath = "Config.yml";
+    private static String HaEConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
+    private static String SettingPath = String.format("%s/%s", HaEConfigPath, "Setting.yml");
+    private static String ConfigPath =  String.format("%s/%s", HaEConfigPath, "Config.yml");
 
     public LoadConfig() {
         // 构造函数，初始化配置
-        File yamlSetting = new File(SettingPath);
-        if (!(yamlSetting.exists() && yamlSetting.isFile())) {
+        File HaEConfigPathFile = new File(HaEConfigPath);
+        if (!(HaEConfigPathFile.exists() && HaEConfigPathFile.isDirectory())) {
+            HaEConfigPathFile.mkdirs();
+        }
+
+        File settingPathFile = new File(SettingPath);
+        if (!(settingPathFile.exists() && settingPathFile.isFile())) {
             initSetting();
             initRules();
         }
         Config.ruleConfig = LoadConfig.getRules();
     }
+
 
     // 初始化设置信息
     public void initSetting() {
@@ -52,6 +59,8 @@ public class LoadConfig {
         rule.setEngine("nfa");
         rule.setScope("response");
         rule.setRegex("(([a-zA-Z0-9][_|\\.])*[a-zA-Z0-9]+@([a-zA-Z0-9][-|_|\\.])*[a-zA-Z0-9]+\\.((?!js|css|jpg|jpeg|png|ico)[a-zA-Z]{2,}))");
+        rule.setSensitive(false);
+
         Rules rules = new Rules();
         rules.setType("Basic Information");
         ArrayList<Rule> rl = new ArrayList<>();
@@ -136,18 +145,6 @@ public class LoadConfig {
         return resRule;
     }
 
-    // 设置配置路径
-    public void setConfigPath(String filePath){
-        Map<String,Object> r = new HashMap<>();
-        r.put("configPath", filePath);
-        r.put("excludeSuffix", getExcludeSuffix());
-        try{
-            Writer ws = new OutputStreamWriter(new FileOutputStream(SettingPath), StandardCharsets.UTF_8);
-            yaml.dump(r, ws);
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-    }
 
     // 设置不包含的后缀名
     public void setExcludeSuffix(String excludeSuffix){

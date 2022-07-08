@@ -1,8 +1,6 @@
 package burp.action;
 
 import burp.IExtensionHelpers;
-import burp.IHttpService;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,7 +14,7 @@ public class ProcessMessage {
     GetColorKey gck = new GetColorKey();
     UpgradeColor uc = new UpgradeColor();
 
-    public List<Map<String, String>> processMessageByContent(IExtensionHelpers helpers, byte[] content, boolean isRequest, boolean messageInfo) {
+    public List<Map<String, String>> processMessageByContent(IExtensionHelpers helpers, byte[] content, boolean isRequest, boolean messageInfo, String host) {
         List<Map<String, String>> result = new ArrayList<>();;
         Map<String, Map<String, Object>> obj;
 
@@ -44,7 +42,7 @@ public class ProcessMessage {
             int requestBodyOffset = helpers.analyzeRequest(content).getBodyOffset();
             byte[] requestBody = Arrays.copyOfRange(content, requestBodyOffset, content.length);
 
-            obj = ec.matchRegex(content, requestHeaders, requestBody, "request");
+            obj = ec.matchRegex(content, requestHeaders, requestBody, "request", host);
         } else {
             try {
                 // 流量清洗
@@ -65,26 +63,26 @@ public class ProcessMessage {
             int responseBodyOffset = helpers.analyzeResponse(content).getBodyOffset();
             byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
 
-            obj = ec.matchRegex(content, responseHeaders, responseBody, "response");
+            obj = ec.matchRegex(content, responseHeaders, responseBody, "response", host);
         }
 
-        if (messageInfo) {
-            List<List<String>> resultList = da.highlightAndComment(obj);
-            List<String> colorList = resultList.get(0);
-            List<String> commentList = resultList.get(1);
-            if (colorList.size() != 0 && commentList.size() != 0) {
-                String color = uc.getEndColor(gck.getColorKeys(colorList));
-                Map<String, String> colorMap = new HashMap<String, String>(){{
-                    put("color", color);
-                }};
-                Map<String, String> commentMap = new HashMap<String, String>(){{
-                    put("comment", String.join(", ", commentList));
-                }};
-                result.add(colorMap);
-                result.add(commentMap);
-            }
-        } else {
-            if (obj.size() > 0) {
+        if (obj.size() > 0) {
+            if (messageInfo) {
+                List<List<String>> resultList = da.highlightAndComment(obj);
+                List<String> colorList = resultList.get(0);
+                List<String> commentList = resultList.get(1);
+                if (colorList.size() != 0 && commentList.size() != 0) {
+                    String color = uc.getEndColor(gck.getColorKeys(colorList));
+                    Map<String, String> colorMap = new HashMap<String, String>(){{
+                        put("color", color);
+                    }};
+                    Map<String, String> commentMap = new HashMap<String, String>(){{
+                        put("comment", String.join(", ", commentList));
+                    }};
+                    result.add(colorMap);
+                    result.add(commentMap);
+                }
+            } else {
                 result.add(da.extractString(obj));
             }
         }

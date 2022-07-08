@@ -40,6 +40,7 @@ public class SetConfig {
                 rlTmp.setColor((String) objects[3]);
                 rlTmp.setScope((String) objects[4]);
                 rlTmp.setEngine((String) objects[5]);
+                rlTmp.setSensitive((Boolean) objects[6]);
                 rl.add(rlTmp);
             }
             rlsTmp.setRule(rl);
@@ -87,7 +88,7 @@ public class SetConfig {
         String name = "New ";
         Object[][] data = new Object[][]{
                 {
-                    false, "New Name", "(New Regex)", "gray", "any", "nfa"
+                    false, "New Name", "(New Regex)", "gray", "any", "nfa", false
                 }
         };
         while (Config.ruleConfig.containsKey(name + i)) {

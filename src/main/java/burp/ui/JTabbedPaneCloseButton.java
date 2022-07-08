@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-/*
+/**
  * @author 6dc
  *
  * A class which creates a JTabbedPane and auto sets a close button when you add a tab
@@ -18,7 +18,7 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
         super();
     }
 
-    /* Override Addtab in order to add the close Button everytime */
+    /** Override Addtab in order to add the close Button everytime */
     @Override
     public void addTab(String title, Icon icon, Component component, String tip) {
         super.addTab(title, icon, component, tip);
@@ -45,7 +45,7 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
         }
     }
 
-    /* addTabNoExit */
+    /** addTabNoExit */
     public void addTabNoExit(String title, Icon icon, Component component, String tip) {
         super.addTab(title, icon, component, tip);
     }
@@ -58,7 +58,7 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
         addTabNoExit(title, null, component);
     }
 
-    /* Button */
+    /** Button */
     public class CloseButtonTab extends JPanel {
 
         public CloseButtonTab(final Component tab, String title, Icon icon) {
@@ -74,7 +74,7 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
             add(button);
         }
     }
-    /* ClickListener */
+    /** ClickListener */
     public class CloseListener implements MouseListener
     {
         private final Component tab;

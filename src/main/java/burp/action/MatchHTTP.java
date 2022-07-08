@@ -5,7 +5,7 @@ import jregex.Pattern;
 import jregex.REFlags;
 import burp.yaml.LoadConfig;
 
-/*
+/**
  * @author EvilChen
  */
 
