@@ -2,15 +2,14 @@ package burp.ui;
 
 import burp.yaml.SetConfig;
 
-import java.awt.event.ComponentListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Vector;
 
 /**
@@ -24,7 +23,7 @@ public class RulePane extends JPanel {
     private SetConfig setConfig = new SetConfig();
     private Boolean isEdit = false;
 
-    private void ruleAddMouseClicked(MouseEvent e, JTabbedPane pane) {
+    private void ruleAddActionPerformed(ActionEvent e, JTabbedPane pane) {
         RuleSetting ruleSettingPanel = new RuleSetting();
         int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "RuleSetting - Add Rule", JOptionPane.OK_OPTION);
         if(showState == 0){
@@ -42,7 +41,7 @@ public class RulePane extends JPanel {
         }
     }
 
-    private void ruleEditMouseClicked(MouseEvent e, JTabbedPane pane){
+    private void ruleEditActionPerformed(ActionEvent e, JTabbedPane pane){
         if (ruleTable.getSelectedRowCount() >= 1){
             RuleSetting ruleSettingPanel = new RuleSetting();
             ruleSettingPanel.ruleNameTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 1).toString());
@@ -71,7 +70,7 @@ public class RulePane extends JPanel {
         }
     }
 
-    private void ruleRemoveMouseClicked(MouseEvent e, JTabbedPane pane){
+    private void ruleRemoveActionPerformed(ActionEvent e, JTabbedPane pane){
         if (ruleTable.getSelectedRowCount() >= 1){
             int isOk = JOptionPane.showConfirmDialog(null, "Are your sure?", "RuleSetting - Delete Rule", JOptionPane.OK_OPTION);
             if (isOk == 0){
@@ -109,11 +108,11 @@ public class RulePane extends JPanel {
         //---- addButton ----
         addButton.setText("Add");
 
-        addButton.addMouseListener(new MouseAdapter() {
+        addButton.addActionListener(new ActionListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 isEdit = true;
-                ruleAddMouseClicked(e, pane);
+                ruleAddActionPerformed(e, pane);
                 model = (DefaultTableModel) ruleTable.getModel();
                 isEdit = false;
             }
@@ -125,11 +124,11 @@ public class RulePane extends JPanel {
 
         //---- editButton ----
         editButton.setText("Edit");
-        editButton.addMouseListener(new MouseAdapter() {
+        editButton.addActionListener(new ActionListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 isEdit = true;
-                ruleEditMouseClicked(e, pane);
+                ruleEditActionPerformed(e, pane);
                 model = (DefaultTableModel) ruleTable.getModel();
                 isEdit = false;
             }
@@ -158,11 +157,11 @@ public class RulePane extends JPanel {
         //---- removeButton ----
         removeButton.setText("Remove");
 
-        removeButton.addMouseListener(new MouseAdapter() {
+        removeButton.addActionListener(new ActionListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 isEdit = true;
-                ruleRemoveMouseClicked(e, pane);
+                ruleRemoveActionPerformed(e, pane);
                 model = (DefaultTableModel) ruleTable.getModel();
                 isEdit = false;
             }

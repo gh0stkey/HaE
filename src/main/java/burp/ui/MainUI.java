@@ -44,7 +44,7 @@ public class MainUI extends JPanel{
         }
     }
 
-    private void onlineUpdateMouseClicked(MouseEvent e) {
+    private void onlineUpdateActionPerformed(ActionEvent e) {
         String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Config.yml";
         OkHttpClient httpClient = new OkHttpClient();
         Request httpRequest = new Request.Builder().url(url).get().build();
@@ -62,6 +62,7 @@ public class MainUI extends JPanel{
         }
 
         new LoadConfig();
+        reloadRule();
     }
 
     private void reloadRule(){
@@ -78,11 +79,11 @@ public class MainUI extends JPanel{
         ruleSwitch.setListen(true);
     }
 
-    private void reloadMouseClicked(MouseEvent e) {
+    private void reloadActionPerformed(ActionEvent e) {
         reloadRule();
     }
 
-    private void excludeSuffixSaveMouseClicked(MouseEvent e) {
+    private void excludeSuffixSaveActionPerformed(ActionEvent e) {
         LoadConfig loadCon = new LoadConfig();
         loadCon.setExcludeSuffix(excludeSuffixTextField.getText());
     }
@@ -125,23 +126,13 @@ public class MainUI extends JPanel{
                         new Insets(5, 5, 5, 5), 0, 0));
 
                 onlineUpdateButton.setText("Online Update");
-                onlineUpdateButton.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        onlineUpdateMouseClicked(e);
-                    }
-                });
+                onlineUpdateButton.addActionListener(this::onlineUpdateActionPerformed);
                 rulePanel.add(onlineUpdateButton, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         new Insets(5, 0, 5, 5), 0, 0));
 
                 reloadButton.setText("Reload");
-                reloadButton.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        reloadMouseClicked(e);
-                    }
-                });
+                reloadButton.addActionListener(this::reloadActionPerformed);
                 rulePanel.add(reloadButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0,
 
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
@@ -156,12 +147,7 @@ public class MainUI extends JPanel{
                         new Insets(0, 0, 0, 5), 0, 0));
 
                 excludeSuffixSaveButton.setText("Save");
-                excludeSuffixSaveButton.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        excludeSuffixSaveMouseClicked(e);
-                    }
-                });
+                excludeSuffixSaveButton.addActionListener(this::excludeSuffixSaveActionPerformed);
                 rulePanel.add(excludeSuffixSaveButton, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         new Insets(0, 0, 0, 5), 0, 0));
@@ -183,7 +169,7 @@ public class MainUI extends JPanel{
         ruleSwitch = new TabTitleEditListener(ruleTabbedPane);
         ruleTabbedPane.addChangeListener(ruleSwitch);
         ruleTabbedPane.addMouseListener(ruleSwitch);
-        closeTabMenuItem.addActionListener(e -> closeTabActionPerformed(e));
+        closeTabMenuItem.addActionListener(this::closeTabActionPerformed);
         tabMenu.add(closeTabMenuItem);
     }
 

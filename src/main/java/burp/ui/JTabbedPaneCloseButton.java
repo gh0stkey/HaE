@@ -60,7 +60,6 @@ public class JTabbedPaneCloseButton extends JTabbedPane {
 
     /** Button */
     public class CloseButtonTab extends JPanel {
-
         public CloseButtonTab(final Component tab, String title, Icon icon) {
             setOpaque(false);
             FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 3, 3);

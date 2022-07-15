@@ -34,12 +34,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.4.1";
+        String version = "2.4.2";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
-        stdout.println("@Core Author: EvilChen");
-        stdout.println("@Architecture Author: 0chencc");
+        stdout.println("@First Author: EvilChen");
+        stdout.println("@Second Author: 0chencc");
         stdout.println("@Github: https://github.com/gh0stkey/HaE");
         // UI
         SwingUtilities.invokeLater(this::initialize);
