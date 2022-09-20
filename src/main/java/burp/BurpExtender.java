@@ -3,8 +3,8 @@ package burp;
 import burp.action.*;
 import burp.ui.MainUI;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +34,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.4.2";
+        String version = "2.4.3";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -102,8 +102,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 String color = uc.getEndColor(gck.getColorKeys(colorList));
 
                 messageInfo.setHighlight(color);
+
                 String addComment = String.join(", ", result.get(1).get("comment"));
-                String resComment = originalComment != null ? String.format("%s, %s", originalComment, addComment) : addComment;
+                stdout.println(addComment);
+                String resComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
 
                 messageInfo.setComment(resComment);
             }
