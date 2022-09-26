@@ -143,7 +143,12 @@ public class Databoard extends JPanel {
                 if (!input.isEmpty()){
                     for (String host : getHostByList()) {
                         if (host.toLowerCase().contains(input.toLowerCase())) {
-                            comboBoxModel.addElement(host);
+                            if (host.length() == input.length()){
+                                comboBoxModel.insertElementAt(host,0);
+                                comboBoxModel.setSelectedItem(host);
+                            }else{
+                                comboBoxModel.addElement(host);
+                            }
                         }
                     }
                 }
