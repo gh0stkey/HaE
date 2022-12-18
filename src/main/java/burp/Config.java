@@ -13,6 +13,8 @@ public class Config {
 
     public static String[] scopeArray = new String[] {
             "any",
+            "any header",
+            "any body",
             "response",
             "response header",
             "response body",

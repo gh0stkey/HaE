@@ -33,23 +33,25 @@ public class ExtractContent {
                 String engine = objects[5].toString();
                 boolean sensitive = (Boolean) objects[6];
                 // 判断规则是否开启与作用域
-                if (loaded && (scope.contains(scopeString) || "any".equals(scope))) {
+                if (loaded && (scope.contains(scopeString) || scope.contains("any"))) {
                     switch (scope) {
                         case "any":
                         case "request":
                         case "response":
                             matchContent = new String(content, StandardCharsets.UTF_8).intern();
                             break;
+                        case "any header":
                         case "request header":
                         case "response header":
                             matchContent = headers;
                             break;
+                        case "any body":
                         case "request body":
                         case "response body":
                             matchContent = new String(body, StandardCharsets.UTF_8).intern();
                             break;
                         default:
-                            break;
+                            return;
                     }
 
                     if ("nfa".equals(engine)) {

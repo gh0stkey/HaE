@@ -1,5 +1,6 @@
 package burp.action;
 
+import burp.BurpExtender;
 import burp.IExtensionHelpers;
 import java.util.ArrayList;
 import java.util.Arrays;

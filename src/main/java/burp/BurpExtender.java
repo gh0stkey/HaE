@@ -143,6 +143,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         public boolean isEnabled(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
             List<Map<String, String>> result = pm.processMessageByContent(helpers, content, isRequest, false, "");
+
             if (result != null && !result.isEmpty()) {
                 Map<String, String> dataMap = result.get(0);
                 if (isRequest) {
