@@ -1,6 +1,8 @@
 package burp.ui;
 
 import burp.Config;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +16,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 /**
- * @author LinChen
+ * @author LinChen && EvilChen
  */
 
 public class Databoard extends JPanel {
@@ -22,11 +24,33 @@ public class Databoard extends JPanel {
         initComponents();
     }
 
+    /**
+     * 清空数据
+     */
+    private void clearActionPerformed(ActionEvent e) {
+        // 清空页面
+        dataTabbedPane.removeAll();
+        // 判断通配符Host/单一Host
+        String host = hostTextField.getText();
+        if(host.contains("*")){
+            Map<String, Map<String, List<String>>> ruleMap = Config.globalDataMap;
+            Map<String, List<String>> selectHost = new HashMap<>();
+            ruleMap.keySet().forEach(i -> {
+                if (i.contains(host.replace("*.", ""))) {
+                    Config.globalDataMap.remove(i);
+                }
+            });
+        } else {
+            Config.globalDataMap.remove(host);
+        }
+    }
+
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
         hostLabel = new JLabel();
         hostTextField = new JTextField();
         dataTabbedPane = new JTabbedPane();
+        clearButton = new JButton();
 
         //======== this ========
         setLayout(new GridBagLayout());
@@ -43,7 +67,11 @@ public class Databoard extends JPanel {
         add(hostTextField, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
-
+        clearButton.setText("Clear");
+        clearButton.addActionListener(this::clearActionPerformed);
+        add(clearButton,  new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(8, 0, 5, 5), 0, 0));
         add(dataTabbedPane, new GridBagConstraints(1, 1, 3, 2, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 0, 5), 0, 0));
@@ -56,9 +84,7 @@ public class Databoard extends JPanel {
      */
     private static List<String> getHostByList(){
         List<String> hostList = new ArrayList<>();
-        Config.globalDataMap.keySet().forEach(i -> {
-            hostList.add(i);
-        });
+        hostList.addAll(Config.globalDataMap.keySet());
         return hostList;
     }
 
@@ -164,9 +190,36 @@ public class Databoard extends JPanel {
     private static void getInfoByHost(@NotNull JComboBox hostComboBox, JTabbedPane tabbedPane, JTextField textField) {
         if (hostComboBox.getSelectedItem() != null) {
             Map<String, Map<String, List<String>>> ruleMap = Config.globalDataMap;
-            Map<String, List<String>> selectUrl = ruleMap.get(hostComboBox.getSelectedItem());
+            Map<String, List<String>> selectHost = new HashMap<>();
+            String host = hostComboBox.getSelectedItem().toString();
+            if (host.contains("*")) {
+                // 通配符数据
+                Map<String, List<String>> finalSelectHost = selectHost;
+                ruleMap.keySet().forEach(i -> {
+                    if (i.contains(host.replace("*.", ""))) {
+                        ruleMap.get(i).keySet().forEach(e -> {
+                            if (finalSelectHost.containsKey(e)) {
+                                // 合并操作
+                                List<String> newList = new ArrayList<>(finalSelectHost.get(e));
+                                newList.addAll(ruleMap.get(i).get(e));
+                                // 去重操作
+                                HashSet tmpList = new HashSet(newList);
+                                newList.clear();
+                                newList.addAll(tmpList);
+                                // 添加操作
+                                finalSelectHost.put(e, newList);
+                            } else {
+                                finalSelectHost.put(e, ruleMap.get(i).get(e));
+                            }
+                        });
+                    }
+                });
+            } else {
+                selectHost = ruleMap.get(host);
+            }
+
             tabbedPane.removeAll();
-            for(Map.Entry<String, List<String>> entry: selectUrl.entrySet()){
+            for(Map.Entry<String, List<String>> entry: selectHost.entrySet()){
                 tabbedPane.addTab(entry.getKey(), new JScrollPane(new HitRuleDataList(entry.getValue())));
             }
             textField.setText(hostComboBox.getSelectedItem().toString());
@@ -177,6 +230,7 @@ public class Databoard extends JPanel {
     private JLabel hostLabel;
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
+    private JButton clearButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
     // 是否自动匹配Host

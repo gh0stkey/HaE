@@ -34,7 +34,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.4.4";
+        String version = "2.4.5";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -104,7 +104,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 messageInfo.setHighlight(color);
 
                 String addComment = String.join(", ", result.get(1).get("comment"));
-                stdout.println(addComment);
                 String resComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
 
                 messageInfo.setComment(resComment);

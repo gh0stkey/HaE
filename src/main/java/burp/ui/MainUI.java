@@ -18,7 +18,7 @@ import java.awt.event.*;
 import java.util.Map;
 
 /**
- * @author LinChen
+ * @author LinChen && EvilChen
  */
 
 public class MainUI extends JPanel{
@@ -45,24 +45,29 @@ public class MainUI extends JPanel{
     }
 
     private void onlineUpdateActionPerformed(ActionEvent e) {
-        String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Config.yml";
-        OkHttpClient httpClient = new OkHttpClient();
-        Request httpRequest = new Request.Builder().url(url).get().build();
-        try {
-            Response httpResponse = httpClient.newCall(httpRequest).execute();
-            // 获取官方规则文件，在线更新写入
-            String configFile = configTextField.getText();
-            FileOutputStream fileOutputStream = new FileOutputStream(configFile);
-            fileOutputStream.write(httpResponse.body().bytes());
-            JOptionPane.showMessageDialog(null, "Config file updated successfully!", "Error",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ignored) {
-            JOptionPane.showMessageDialog(null, "Please check your network!", "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+        // 添加提示框防止用户误触导致配置更新
+        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update config?", "Info",
+                JOptionPane.YES_NO_CANCEL_OPTION);
+        if (retCode == JOptionPane.YES_OPTION) {
+            String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Config.yml";
+            OkHttpClient httpClient = new OkHttpClient();
+            Request httpRequest = new Request.Builder().url(url).get().build();
+            try {
+                Response httpResponse = httpClient.newCall(httpRequest).execute();
+                // 获取官方规则文件，在线更新写入
+                String configFile = configTextField.getText();
+                FileOutputStream fileOutputStream = new FileOutputStream(configFile);
+                fileOutputStream.write(httpResponse.body().bytes());
+                JOptionPane.showMessageDialog(null, "Config file updated successfully!", "Error",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ignored) {
+                JOptionPane.showMessageDialog(null, "Please check your network!", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
 
-        new LoadConfig();
-        reloadRule();
+            new LoadConfig();
+            reloadRule();
+        }
     }
 
     private void reloadRule(){

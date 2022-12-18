@@ -99,15 +99,16 @@ public class ExtractContent {
             map.keySet().forEach(i -> {
                 Map<String, Object> tmpMap = map.get(i);
                 List<String> dataList = Arrays.asList(tmpMap.get("data").toString().split("\n"));
+                // 组合通配符Host
+                String anyHost = host.replace(host.split("\\.")[0], "*");
                 // 判断Host是否存在，如存在则进行数据更新，反之则新增数据
                 if (Config.globalDataMap.containsKey(host)) {
                     Map<String, List<String>> gRuleMap = Config.globalDataMap.get(host);
                     // 判断匹配规则是否存在（逻辑同Host判断）
                     if (gRuleMap.containsKey(i)) {
                         List<String> gDataList = gRuleMap.get(i);
-                        List<String> mergeDataList = new ArrayList<>();
+                        List<String> mergeDataList = new ArrayList<>(gDataList);
                         // 合并两个List
-                        mergeDataList.addAll(gDataList);
                         mergeDataList.addAll(dataList);
                         // 去重操作
                         HashSet tmpList = new HashSet(mergeDataList);
@@ -118,9 +119,14 @@ public class ExtractContent {
                     } else {
                         gRuleMap.put(i, dataList);
                     }
-                } else {
+                } else if (!Config.globalDataMap.containsKey(anyHost)) {
+                    // 添加通配符Host
+                    Config.globalDataMap.put(anyHost, new HashMap<>());
+                }
+                else {
                     Map<String, List<String>> ruleMap = new HashMap<>();
                     ruleMap.put(i, dataList);
+                    // 添加单一Host
                     Config.globalDataMap.put(host, ruleMap);
                 }
             });
