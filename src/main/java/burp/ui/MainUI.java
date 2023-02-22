@@ -49,7 +49,7 @@ public class MainUI extends JPanel{
         int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update config?", "Info",
                 JOptionPane.YES_NO_CANCEL_OPTION);
         if (retCode == JOptionPane.YES_OPTION) {
-            String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Config.yml";
+            String url = "https://cdn.jsdelivr.net/gh/gh0stkey/HaE@gh-pages/Config.yml";
             OkHttpClient httpClient = new OkHttpClient();
             Request httpRequest = new Request.Builder().url(url).get().build();
             try {
