@@ -89,6 +89,7 @@ public class ExtractContent {
                         result.clear();
                         result.addAll(tmpList);
 
+                        String nameAndSize = String.format("%s (%s)", name, result.size());
                         if (!result.isEmpty()) {
                             tmpMap.put("color", color);
                             String dataStr = String.join("\n", result);
@@ -97,40 +98,37 @@ public class ExtractContent {
                             // 添加到全局变量中，便于Databoard检索
                             if (!host.isEmpty()) {
                                 String[] splitHost = host.split("\\.");
-                                String anyHost = splitHost.length > 2 ? host.replace(splitHost[0], "*") : "";
+                                String anyHost = (splitHost.length > 2 && !host.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")) ? host.replace(splitHost[0], "*") : "";
                                 List<String> dataList = Arrays.asList(dataStr.split("\n"));
                                 if (Config.globalDataMap.containsKey(host)) {
-                                    Map<String, List<String>> gRuleMap = Config.globalDataMap.get(host);
-                                    // 判断匹配规则是否存在（逻辑同Host判断）
+                                    Map<String, List<String>> gRuleMap = new HashMap<>(Config.globalDataMap.get(host));
                                     if (gRuleMap.containsKey(name)) {
                                         List<String> gDataList = gRuleMap.get(name);
-                                        List<String> mergeDataList = new ArrayList<>(gDataList);
-                                        // 合并两个List
-                                        mergeDataList.addAll(dataList);
-                                        // 去重操作
-                                        tmpList = new HashSet(mergeDataList);
-                                        mergeDataList.clear();
-                                        mergeDataList.addAll(tmpList);
-                                        // 替换操作
-                                        gRuleMap.replace(name, gDataList, mergeDataList);
+                                        gDataList.addAll(dataList);
+                                        gDataList = new ArrayList<>(new HashSet<>(gDataList));
+                                        gRuleMap.replace(name, gDataList);
                                     } else {
                                         gRuleMap.put(name, dataList);
                                     }
-                                } else if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
-                                    // 添加通配符Host，实际数据从查询哪里将所有数据提取
-                                    Config.globalDataMap.put(anyHost, new HashMap<>());
-                                } else if (!Config.globalDataMap.containsKey("*")) {
-                                    // 添加通配符全匹配Host，同上
-                                    Config.globalDataMap.put("*", new HashMap<>());
+                                    Config.globalDataMap.remove(host);
+                                    Config.globalDataMap.put(host, gRuleMap);
                                 } else {
                                     Map<String, List<String>> ruleMap = new HashMap<>();
                                     ruleMap.put(name, dataList);
                                     // 添加单一Host
                                     Config.globalDataMap.put(host, ruleMap);
                                 }
+
+                                if (!Config.globalDataMap.containsKey(anyHost) && anyHost.length() > 0) {
+                                    // 添加通配符Host，实际数据从查询哪里将所有数据提取
+                                    Config.globalDataMap.put(anyHost, new HashMap<>());
+                                } else if (!Config.globalDataMap.containsKey("*")) {
+                                    // 添加通配符全匹配，同上
+                                    Config.globalDataMap.put("*", new HashMap<>());
+                                }
                             }
 
-                            map.put(name, tmpMap);
+                            map.put(nameAndSize, tmpMap);
 
                         }
                     }
@@ -139,7 +137,7 @@ public class ExtractContent {
                 try {
                     t.join();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    BurpExtender.stdout.println(e);
                 }
 
 

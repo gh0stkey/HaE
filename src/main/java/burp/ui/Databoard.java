@@ -218,7 +218,7 @@ public class Databoard extends JPanel {
 
             tabbedPane.removeAll();
             for(Map.Entry<String, List<String>> entry: selectHost.entrySet()){
-                tabbedPane.addTab(entry.getKey(), new JScrollPane(new HitRuleDataList(entry.getValue())));
+                tabbedPane.addTab(String.format("%s (%s)", entry.getKey(), entry.getValue().size()), new JScrollPane(new HitRuleDataList(entry.getValue())));
             }
             textField.setText(hostComboBox.getSelectedItem().toString());
         }
