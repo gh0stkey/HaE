@@ -30,13 +30,11 @@ public class Databoard extends JPanel {
     private void clearActionPerformed(ActionEvent e) {
         // 清空页面
         dataTabbedPane.removeAll();
-        // 判断通配符Host/单一Host
         String host = hostTextField.getText();
-        if(host.contains("*")){
+        if (host.contains("*")) {
             Map<String, Map<String, List<String>>> ruleMap = Config.globalDataMap;
-            Map<String, List<String>> selectHost = new HashMap<>();
             ruleMap.keySet().forEach(i -> {
-                if (i.contains(host.replace("*.", ""))) {
+                if (i.contains(host.replace("*.", "")) || host.equals("*")) {
                     Config.globalDataMap.remove(i);
                 }
             });
@@ -196,7 +194,7 @@ public class Databoard extends JPanel {
                 // 通配符数据
                 Map<String, List<String>> finalSelectHost = selectHost;
                 ruleMap.keySet().forEach(i -> {
-                    if (i.contains(host.replace("*.", ""))) {
+                    if (i.contains(host.replace("*.", "")) || host.equals("*")) {
                         ruleMap.get(i).keySet().forEach(e -> {
                             if (finalSelectHost.containsKey(e)) {
                                 // 合并操作
@@ -244,6 +242,7 @@ class HitRuleDataList extends JTable {
             data[x][0] = list.get(x);
         }
         model.setDataVector(data, new Object[]{"Information"});
+        this.setAutoCreateRowSorter(true);
         this.setModel(model);
     }
 }

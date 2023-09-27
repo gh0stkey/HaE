@@ -38,7 +38,6 @@ public class ProcessMessage {
                 return result;
             }
 
-
             // 获取报文主体
             int requestBodyOffset = helpers.analyzeRequest(content).getBodyOffset();
             byte[] requestBody = Arrays.copyOfRange(content, requestBodyOffset, content.length);
@@ -63,7 +62,6 @@ public class ProcessMessage {
             // 获取报文主体
             int responseBodyOffset = helpers.analyzeResponse(content).getBodyOffset();
             byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
-
             obj = ec.matchRegex(content, responseHeaders, responseBody, "response", host);
         }
 

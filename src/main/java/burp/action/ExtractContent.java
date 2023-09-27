@@ -96,7 +96,8 @@ public class ExtractContent {
 
                             // 添加到全局变量中，便于Databoard检索
                             if (!host.isEmpty()) {
-                                String anyHost = host.replace(host.split("\\.")[0], "*");
+                                String[] splitHost = host.split("\\.");
+                                String anyHost = splitHost.length > 2 ? host.replace(splitHost[0], "*") : "";
                                 List<String> dataList = Arrays.asList(dataStr.split("\n"));
                                 if (Config.globalDataMap.containsKey(host)) {
                                     Map<String, List<String>> gRuleMap = Config.globalDataMap.get(host);
@@ -115,9 +116,12 @@ public class ExtractContent {
                                     } else {
                                         gRuleMap.put(name, dataList);
                                     }
-                                } else if (!Config.globalDataMap.containsKey(anyHost)) {
-                                    // 添加通配符Host
+                                } else if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
+                                    // 添加通配符Host，实际数据从查询哪里将所有数据提取
                                     Config.globalDataMap.put(anyHost, new HashMap<>());
+                                } else if (!Config.globalDataMap.containsKey("*")) {
+                                    // 添加通配符全匹配Host，同上
+                                    Config.globalDataMap.put("*", new HashMap<>());
                                 } else {
                                     Map<String, List<String>> ruleMap = new HashMap<>();
                                     ruleMap.put(name, dataList);
