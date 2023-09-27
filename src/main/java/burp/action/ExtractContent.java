@@ -94,6 +94,7 @@ public class ExtractContent {
                             tmpMap.put("color", color);
                             String dataStr = String.join("\n", result);
                             tmpMap.put("data", dataStr);
+                            map.put(nameAndSize, tmpMap);
 
                             // 添加到全局变量中，便于Databoard检索
                             if (!host.isEmpty()) {
@@ -127,9 +128,6 @@ public class ExtractContent {
                                     Config.globalDataMap.put("*", new HashMap<>());
                                 }
                             }
-
-                            map.put(nameAndSize, tmpMap);
-
                         }
                     }
                 });
