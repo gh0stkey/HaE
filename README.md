@@ -17,11 +17,11 @@
 
 插件装载: `Extender - Extensions - Add - Select File - Next`
 
-初次装载`HaE`会初始化配置文件，默认配置文件内置一个正则: `Email`，初始化的配置文件会放在的`/用户根目录/.config/HaE/`目录下。
+初次装载`HaE`会自动获取官方规则库`https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml`，配置文件（`Config.yml`）和规则文件（`Rules.yml`）会放在固定目录下：
 
-![-w477](images/show_config.png)
+1. Linux/Mac用户的配置文件目录：`~/.config/HaE/`
+2. Windows用户的配置文件目录：`%USERPROFILE%/.config/HaE/`
 
-除了初始化的配置文件外，还有`Setting.yml`，该文件用于存储配置文件路径与排除后缀名；`HaE`支持在线更新配置文件，你可以通过点击`Online Update`按钮进行更新（部分网络需要挂代理）。
 
 ## 优势特点
 
