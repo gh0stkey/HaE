@@ -1,33 +1,54 @@
-package burp.ui;
+package burp.ui.rule;
 
-import burp.yaml.SetConfig;
-
+import burp.rule.RuleProcessor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.Vector;
 
 /**
- * @author LinChen
+ * @author LinChen & EvilChen
  */
 
 public class RulePane extends JPanel {
+    private RuleProcessor ruleProcessor = new RuleProcessor();
+    private Boolean isEdit = false;
+    private DefaultTableModel model = createModel();
+    private static final int YES_OPTION = JOptionPane.YES_OPTION;
+    private static final String[] TITLE = {
+            "Loaded", "Name", "Regex", "Color", "Scope", "Engine", "Sensitive"
+    };
+
     public RulePane(Object[][] data, JTabbedPane pane) {
         initComponents(data, pane);
     }
-    private SetConfig setConfig = new SetConfig();
-    private Boolean isEdit = false;
 
+    private DefaultTableModel createModel() {
+        return new DefaultTableModel() {
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return (column == 0) ? Boolean.class : String.class;
+            }
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
+        };
+    }
+
+    private void updateModel() {
+        model = (DefaultTableModel) ruleTable.getModel();
+    }
     private void ruleAddActionPerformed(ActionEvent e, JTabbedPane pane) {
         RuleSetting ruleSettingPanel = new RuleSetting();
-        int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "RuleSetting - Add Rule", JOptionPane.OK_OPTION);
-        if(showState == 0){
-            Vector ruleData = new Vector();
+        int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "Add Rule", JOptionPane.OK_OPTION);
+        if (showState == YES_OPTION) {
+            Vector<Object> ruleData = new Vector<>();
             ruleData.add(false);
             ruleData.add(ruleSettingPanel.ruleNameTextField.getText());
             ruleData.add(ruleSettingPanel.regexTextField.getText());
@@ -36,8 +57,8 @@ public class RulePane extends JPanel {
             ruleData.add(ruleSettingPanel.engineComboBox.getSelectedItem().toString());
             ruleData.add(ruleSettingPanel.sensitiveComboBox.getSelectedItem());
             model.insertRow(model.getRowCount(), ruleData);
-            model = (DefaultTableModel) ruleTable.getModel();
-            setConfig.add(ruleData, pane.getTitleAt(pane.getSelectedIndex()));
+            updateModel();
+            ruleProcessor.addRule(ruleData, pane.getTitleAt(pane.getSelectedIndex()));
         }
     }
 
@@ -55,7 +76,7 @@ public class RulePane extends JPanel {
                 ruleSettingPanel.engineComboBox.getSelectedItem().toString().equals("nfa")
             );
 
-            int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "RuleSetting - Edit Rule", JOptionPane.OK_OPTION);
+            int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "Edit Rule", JOptionPane.OK_OPTION);
             if (showState == 0){
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.setValueAt(ruleSettingPanel.ruleNameTextField.getText(), select, 1);
@@ -65,19 +86,19 @@ public class RulePane extends JPanel {
                 model.setValueAt(ruleSettingPanel.engineComboBox.getSelectedItem().toString(), select, 5);
                 model.setValueAt(ruleSettingPanel.sensitiveComboBox.getSelectedItem(), select, 6);
                 model = (DefaultTableModel) ruleTable.getModel();
-                setConfig.edit((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
+                ruleProcessor.changeRule((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
             }
         }
     }
 
     private void ruleRemoveActionPerformed(ActionEvent e, JTabbedPane pane){
         if (ruleTable.getSelectedRowCount() >= 1){
-            int isOk = JOptionPane.showConfirmDialog(null, "Are your sure?", "RuleSetting - Delete Rule", JOptionPane.OK_OPTION);
+            int isOk = JOptionPane.showConfirmDialog(null, "Are your sure?", "Delete Rule", JOptionPane.OK_OPTION);
             if (isOk == 0){
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.removeRow(select);
                 model = (DefaultTableModel) ruleTable.getModel();
-                setConfig.remove(select, pane.getTitleAt(pane.getSelectedIndex()));
+                ruleProcessor.removeRule(select, pane.getTitleAt(pane.getSelectedIndex()));
             }
         }
     }
@@ -86,7 +107,7 @@ public class RulePane extends JPanel {
         if (e.getColumn() == 0 && ruleTable.getSelectedRow() != -1 && !isEdit){
             model = (DefaultTableModel) ruleTable.getModel();
             int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
-            setConfig.edit((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
+            ruleProcessor.changeRule((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
         }
     }
 
@@ -171,17 +192,10 @@ public class RulePane extends JPanel {
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(0, 5, 3, 2), 0, 0));
 
-        // JFormDesigner - End of component initialization  //GEN-END:initComponents
         ruleTable.setModel(model);
-        model.setDataVector(data, title);
-        model.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                ruleTableChange(e, pane);
-            }
-        });
-
-        ruleTable.setRowSorter(new TableRowSorter(model));
+        model.setDataVector(data, TITLE);
+        model.addTableModelListener(e -> ruleTableChange(e, pane));
+        ruleTable.setRowSorter(new TableRowSorter<>(model));
     }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -191,21 +205,5 @@ public class RulePane extends JPanel {
     public JTable ruleTable;
     public JButton removeButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
-    private final String[] title = new String[]{"Loaded", "Name", "Regex", "Color", "Scope", "Engine", "Sensitive"};
-    private DefaultTableModel model = new DefaultTableModel() {
-        @Override
-        public Class<?> getColumnClass (int column){
-            if (column == 0) {
-                return Boolean.class;
-            }else{
-                return String.class;
-            }
-        }
-
-        @Override
-        public boolean isCellEditable(int row, int column){
-            return column == 0;
-        }
-    };
 }
 

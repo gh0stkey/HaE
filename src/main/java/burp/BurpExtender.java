@@ -1,8 +1,10 @@
 package burp;
 
-import burp.action.*;
+import burp.core.processor.ColorProcessor;
+import burp.core.processor.MessageProcessor;
 import burp.ui.MainUI;
-
+import burp.ui.board.MessagePanel;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Objects;
 import javax.swing.*;
@@ -19,14 +21,14 @@ import javax.swing.event.ChangeListener;
  */
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
-    private final MainUI main = new MainUI();
+    private MainUI main;
     // stdout变成公开属性，便于其他类调用输出调试信息
     public static PrintWriter stdout;
     private IBurpExtenderCallbacks callbacks;
     private static IExtensionHelpers helpers;
-    GetColorKey gck = new GetColorKey();
-    UpgradeColor uc = new UpgradeColor();
-    ProcessMessage pm = new ProcessMessage();
+    ColorProcessor colorProcessor = new ColorProcessor();
+    MessageProcessor messageProcessor = new MessageProcessor();
+    private MessagePanel messagePanel;
 
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks)
@@ -34,21 +36,31 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.4.7";
+        String version = "2.5";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
+
         // 定义输出
         stdout = new PrintWriter(callbacks.getStdout(), true);
-        stdout.println("@First Author: EvilChen");
-        stdout.println("@Second Author: 0chencc");
-        stdout.println("@Github: https://github.com/gh0stkey/HaE");
+        stdout.println("[ HACK THE WORLD - TO DO IT ]");
+        stdout.println("[#] Author: EvilChen & 0chencc");
+        stdout.println("[#] Github: https://github.com/gh0stkey/HaE");
+
         // UI
-        SwingUtilities.invokeLater(this::initialize);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                initialize();
+            }
+        });
 
         callbacks.registerHttpListener(BurpExtender.this);
         callbacks.registerMessageEditorTabFactory(BurpExtender.this);
+
     }
 
     private void initialize(){
+        messagePanel = new MessagePanel(callbacks, helpers);
+        main = new MainUI(messagePanel);
         callbacks.customizeUiComponent(main);
         callbacks.addSuiteTab(BurpExtender.this);
     }
@@ -71,6 +83,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         // 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
         if (toolFlag == 64 || toolFlag == 32 || toolFlag == 4) {
             byte[] content;
+
             if (messageIsRequest) {
                 content = messageInfo.getRequest();
             } else {
@@ -78,20 +91,29 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
 
             IHttpService iHttpService = null;
+
             try {
                 iHttpService = messageInfo.getHttpService();
             } catch (Exception ignored) {
             }
+
             // 获取请求主机信息
             assert iHttpService != null;
             String host = iHttpService.getHost();
 
             String c = new String(content, StandardCharsets.UTF_8).intern();
 
-            List<Map<String, String>> result = pm.processMessageByContent(helpers, content, messageIsRequest, true, host);
+            List<Map<String, String>> result = null;
+            try {
+                result = messageProcessor.processMessage(helpers, content, messageIsRequest, true, host);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            String resComment = "";
+            String resColor = "";
+            String originalColor = messageInfo.getHighlight();
+            String originalComment = messageInfo.getComment();
             if (result != null && !result.isEmpty() && result.size() > 0) {
-                String originalColor = messageInfo.getHighlight();
-                String originalComment = messageInfo.getComment();
                 List<String> colorList = new ArrayList<>();
 
                 if (originalColor != null) {
@@ -99,14 +121,19 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 }
 
                 colorList.add(result.get(0).get("color"));
-                String color = uc.getEndColor(gck.getColorKeys(colorList));
-
-                messageInfo.setHighlight(color);
+                resColor = colorProcessor.retrieveFinalColor(colorProcessor.retrieveColorIndices(colorList));
+                messageInfo.setHighlight(resColor);
 
                 String addComment = String.join(", ", result.get(1).get("comment"));
-                String resComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
-
+                resComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
                 messageInfo.setComment(resComment);
+            }
+
+            String endComment = resComment.isEmpty() ? originalComment : resComment;
+            String endColor = resColor.isEmpty() ? originalColor : resColor;
+
+            if (!messageIsRequest && !endComment.isEmpty() && !endColor.isEmpty()) {
+                messagePanel.add(messageInfo, endComment, String.valueOf(content.length), endColor);
             }
         }
     }
@@ -142,7 +169,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
             String c = new String(content, StandardCharsets.UTF_8).intern();
-            List<Map<String, String>> result = pm.processMessageByContent(helpers, content, isRequest, false, "");
+            List<Map<String, String>> result = null;
+            try {
+                result = messageProcessor.processMessage(helpers, content, isRequest, false, "");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
 
             if (result != null && !result.isEmpty()) {
                 Map<String, String> dataMap = result.get(0);
@@ -207,7 +239,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 Object[][] data = new Object[extractData.length][1];
                 for (int x = 0; x < extractData.length; x++) {
                     data[x][0] = extractData[x];
-                    // stdout.println(extractData[x]);
                 }
                 JTable infoTable = new JTable(data, new Object[]{"Information"});
                 infoTable.setAutoCreateRowSorter(true);

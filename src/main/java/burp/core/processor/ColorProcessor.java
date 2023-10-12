@@ -1,6 +1,6 @@
-package burp.action;
+package burp.core.processor;
 
-import burp.Config;
+import burp.config.ConfigEntry;
 
 import java.util.*;
 
@@ -8,14 +8,30 @@ import java.util.*;
  * @author EvilChen
  */
 
-public class UpgradeColor {
-    private String endColor = "";
+public class ColorProcessor {
+    private String finalColor = "";
+
+    public List<Integer> retrieveColorIndices(List<String> colors){
+        List<Integer> indices = new ArrayList<>();
+        String[] colorArray = ConfigEntry.colorArray;
+        int size = colorArray.length;
+
+        for (String color : colors) {
+            for (int i = 0; i < size; i++) {
+                if (colorArray[i].equals(color)) {
+                    indices.add(i);
+                }
+            }
+        }
+        return indices;
+    }
+
     /**
      * 颜色升级递归算法
      */
-    private void colorUpgrade(List<Integer> colorList) {
+    private void upgradeColors(List<Integer> colorList) {
         int colorSize = colorList.size();
-        String[] colorArray = Config.colorArray;
+        String[] colorArray = ConfigEntry.colorArray;
         colorList.sort(Comparator.comparingInt(Integer::intValue));
         int i = 0;
         List<Integer> stack = new ArrayList<>();
@@ -36,17 +52,17 @@ public class UpgradeColor {
         if (stack.size() == tmpList.size()) {
             stack.sort(Comparator.comparingInt(Integer::intValue));
             if(stack.get(0) < 0) {
-                this.endColor = colorArray[0];
+                this.finalColor = colorArray[0];
             } else {
-                this.endColor = colorArray[stack.get(0)];
+                this.finalColor = colorArray[stack.get(0)];
             }
         } else {
-            this.colorUpgrade(stack);
+            this.upgradeColors(stack);
         }
     }
 
-    public String getEndColor(List<Integer> colorList) {
-        colorUpgrade(colorList);
-        return endColor;
+    public String retrieveFinalColor(List<Integer> colorList) {
+        upgradeColors(colorList);
+        return finalColor;
     }
 }
