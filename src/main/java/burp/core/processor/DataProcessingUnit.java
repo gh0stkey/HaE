@@ -1,5 +1,6 @@
 package burp.core.processor;
 
+import burp.BurpExtender;
 import burp.core.GlobalCachePool;
 import burp.core.utils.HashCalculator;
 import burp.core.utils.MatchTool;
@@ -11,12 +12,8 @@ import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 import jregex.Matcher;
 import jregex.Pattern;
 
@@ -82,7 +79,7 @@ public class DataProcessingUnit {
                                 case "any":
                                 case "request":
                                 case "response":
-                                    matchContent = new String(content, StandardCharsets.UTF_8).intern();
+                                    matchContent = new String(content, StandardCharsets.UTF_8);
                                     break;
                                 case "any header":
                                 case "request header":
@@ -92,7 +89,7 @@ public class DataProcessingUnit {
                                 case "any body":
                                 case "request body":
                                 case "response body":
-                                    matchContent = new String(body, StandardCharsets.UTF_8).intern();
+                                    matchContent = new String(body, StandardCharsets.UTF_8);
                                     break;
                                 default:
                                     break;
@@ -136,9 +133,8 @@ public class DataProcessingUnit {
                                 String dataStr = String.join("\n", result);
                                 tmpMap.put("data", dataStr);
                                 finalMap.put(nameAndSize, tmpMap);
-
                                 // 添加到全局变量中，便于Databoard检索
-                                if (!host.isEmpty()) {
+                                if (!Objects.equals(host, "")) {
                                     List<String> dataList = Arrays.asList(dataStr.split("\n"));
                                     if (ConfigEntry.globalDataMap.containsKey(host)) {
                                         Map<String, List<String>> gRuleMap = new HashMap<>(ConfigEntry.globalDataMap.get(host));
