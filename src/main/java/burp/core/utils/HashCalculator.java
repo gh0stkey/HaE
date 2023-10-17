@@ -1,5 +1,7 @@
 package burp.core.utils;
 
+import burp.BurpExtender;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
