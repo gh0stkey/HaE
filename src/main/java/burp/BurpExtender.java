@@ -5,13 +5,10 @@ import burp.core.processor.MessageProcessor;
 import burp.ui.MainUI;
 import burp.ui.board.MessagePanel;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import javax.swing.*;
 import java.awt.*;
-import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -36,7 +33,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         this.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.5";
+        String version = "2.5.1";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -92,16 +89,18 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
             IHttpService iHttpService = null;
 
+            String host = "";
+
             try {
                 iHttpService = messageInfo.getHttpService();
+                host = iHttpService.getHost();
             } catch (Exception ignored) {
             }
 
-            // 获取请求主机信息
-            assert iHttpService != null;
-            String host = iHttpService.getHost();
-
-            String c = new String(content, StandardCharsets.UTF_8).intern();
+            if (Objects.equals(host, "")) {
+                List<String> requestTmpHeaders = helpers.analyzeRequest(content).getHeaders();
+                host = requestTmpHeaders.get(1).split(":")[1].trim();
+            }
 
             List<Map<String, String>> result = null;
             try {
@@ -125,17 +124,41 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 messageInfo.setHighlight(resColor);
 
                 String addComment = String.join(", ", result.get(1).get("comment"));
-                resComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
+                String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
+                resComment = mergeComment(allComment);
+
                 messageInfo.setComment(resComment);
             }
 
             String endComment = resComment.isEmpty() ? originalComment : resComment;
             String endColor = resColor.isEmpty() ? originalColor : resColor;
 
-            if (!messageIsRequest && !endComment.isEmpty() && !endColor.isEmpty()) {
+            if (!messageIsRequest && !Objects.equals(endComment, "") && !Objects.equals(endColor, "")) {
                 messagePanel.add(messageInfo, endComment, String.valueOf(content.length), endColor);
             }
         }
+    }
+
+    private String mergeComment(String comment) {
+        Map<String, Integer> itemCounts = new HashMap<>();
+        String[] items = comment.split(", ");
+
+        for (String item : items) {
+            String itemName = item.substring(0, item.lastIndexOf("(")).trim();
+            int count = Integer.parseInt(item.substring(item.lastIndexOf("(") + 1, item.lastIndexOf(")")).trim());
+            itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+        }
+
+        StringBuilder mergedItems = new StringBuilder();
+
+        for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
+            String itemName = entry.getKey();
+            int count = entry.getValue();
+
+            mergedItems.append(itemName).append(" (").append(count).append("), ");
+        }
+
+        return mergedItems.substring(0, mergedItems.length() - 2);
     }
 
     class MarkInfoTab implements IMessageEditorTab {
@@ -168,8 +191,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
-            String c = new String(content, StandardCharsets.UTF_8).intern();
             List<Map<String, String>> result = null;
+
             try {
                 result = messageProcessor.processMessage(helpers, content, isRequest, false, "");
             } catch (NoSuchAlgorithmException e) {
@@ -219,7 +242,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          */
         @Override
         public void setMessage(byte[] content, boolean isRequest) {
-            String c = new String(content, StandardCharsets.UTF_8).intern();
             if (content.length > 0) {
                 if (isRequest) {
                     makeTable(extractRequestMap);
