@@ -42,7 +42,7 @@ public class MainUI extends JPanel {
     private void onlineUpdateActionPerformed(ActionEvent e) {
         // 添加提示框防止用户误触导致配置更新
         int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update config?", "Info",
-                JOptionPane.YES_NO_CANCEL_OPTION);
+                JOptionPane.YES_NO_OPTION);
         if (retCode == JOptionPane.YES_OPTION) {
             String rulesFilePath = rulesPathTextField.getText();
             RuleTool rt = new RuleTool(rulesFilePath);
