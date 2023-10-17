@@ -46,7 +46,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         logTable = new Table(MessagePanel.this);
-        logTable.setDefaultRenderer(Object.class, new CustomTableCellRenderer(filteredLog, logTable));
+        logTable.setDefaultRenderer(Object.class, new ColorRenderer(filteredLog, logTable));
         logTable.setAutoCreateRowSorter(true);
 
         // Length字段根据大小进行排序

@@ -3,9 +3,8 @@ package burp.ui.board;
 import burp.config.ConfigEntry;
 import burp.core.utils.StringHelper;
 import burp.ui.board.MessagePanel.Table;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+
+import java.util.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
@@ -15,8 +14,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -48,20 +46,23 @@ public class Databoard extends JPanel {
     }
 
     private void clearActionPerformed(ActionEvent e) {
-        cleanUI();
+        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to clear data?", "Info",
+                JOptionPane.YES_NO_OPTION);
+        if (retCode == JOptionPane.YES_OPTION) {
+            cleanUI();
 
-        String host = hostTextField.getText();
-        String cleanedHost = StringHelper.replaceFirstOccurrence(host, "*.", "");
+            String host = hostTextField.getText();
+            String cleanedHost = StringHelper.replaceFirstOccurrence(host, "*.", "");
 
-        if (host.contains("*")) {
-            ConfigEntry.globalDataMap.keySet().removeIf(i -> i.contains(cleanedHost) || cleanedHost.equals("**"));
-        } else {
-            ConfigEntry.globalDataMap.remove(host);
+            if (host.contains("*")) {
+                ConfigEntry.globalDataMap.keySet().removeIf(i -> i.contains(cleanedHost) || cleanedHost.equals("**"));
+            } else {
+                ConfigEntry.globalDataMap.remove(host);
+            }
+
+            messagePanel.deleteByHost(cleanedHost);
         }
-
-        messagePanel.deleteByHost(cleanedHost);
     }
-
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
@@ -115,6 +116,7 @@ public class Databoard extends JPanel {
         final JComboBox hostComboBox = new JComboBox(comboBoxModel) {
             @Override
             public Dimension getPreferredSize() {
+                setMaximumRowCount(5);
                 return new Dimension(super.getPreferredSize().width, 0);
             }
         };
@@ -130,8 +132,9 @@ public class Databoard extends JPanel {
         hostComboBox.addActionListener(e -> {
             if (!isMatchHost) {
                 if (hostComboBox.getSelectedItem() != null) {
-                    hostTextField.setText(hostComboBox.getSelectedItem().toString());
-                    populateTabbedPaneByHost(hostComboBox);
+                    String selectedHost = hostComboBox.getSelectedItem().toString();
+                    hostTextField.setText(selectedHost);
+                    populateTabbedPaneByHost(selectedHost);
                 }
             }
         });
@@ -154,7 +157,7 @@ public class Databoard extends JPanel {
                     if (keyCode == KeyEvent.VK_ENTER) {
                         String selectedItem = hostComboBox.getSelectedItem().toString();
                         hostTextField.setText(selectedItem);
-                        populateTabbedPaneByHost(hostComboBox);
+                        populateTabbedPaneByHost(selectedItem);
                         hostComboBox.setPopupVisible(false);
                         return;
                     }
@@ -172,7 +175,6 @@ public class Databoard extends JPanel {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 updateList();
-
             }
 
             @Override
@@ -193,12 +195,7 @@ public class Databoard extends JPanel {
                     for (String host : getHostByList()) {
                         String lowerCaseHost = host.toLowerCase();
                         if (lowerCaseHost.contains(input)) {
-                            if (host.length() == input.length()){
-                                comboBoxModel.insertElementAt(host,0);
-                                comboBoxModel.setSelectedItem(host);
-                            } else {
-                                comboBoxModel.addElement(host);
-                            }
+                            comboBoxModel.addElement(host);
                         }
                     }
                 }
@@ -225,9 +222,8 @@ public class Databoard extends JPanel {
         messagePanel.applyHostFilter(filterText);
     }
 
-    private void populateTabbedPaneByHost(JComboBox<String> hostComboBox) {
-        if (hostComboBox.getSelectedItem() != null) {
-            String selectedHost = hostComboBox.getSelectedItem().toString();
+    private void populateTabbedPaneByHost(String selectedHost) {
+        if (!Objects.equals(selectedHost, "")) {
             Map<String, Map<String, List<String>>> dataMap = ConfigEntry.globalDataMap;
             Map<String, List<String>> selectedDataMap;
 
