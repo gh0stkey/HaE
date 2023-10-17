@@ -1,6 +1,8 @@
 package burp.rule.utils;
 
 import java.util.Map;
+
+import burp.BurpExtender;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import java.io.FileInputStream;

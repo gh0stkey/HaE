@@ -25,7 +25,7 @@ public class RuleTool {
             // 获取官方规则文件，在线更新写入
             FileOutputStream fileOutputStream = new FileOutputStream(this.rulesFilePath);
             fileOutputStream.write(httpResponse.body().bytes());
-            JOptionPane.showMessageDialog(null, "Config file updated successfully!", "Error",
+            JOptionPane.showMessageDialog(null, "Rules updated successfully!", "Info",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ignored) {
             JOptionPane.showMessageDialog(null, "Please check your network!", "Error",
