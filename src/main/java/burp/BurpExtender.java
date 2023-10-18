@@ -126,7 +126,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 String addComment = String.join(", ", result.get(1).get("comment"));
                 String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
                 resComment = mergeComment(allComment);
-
+                messageInfo.setComment(resComment);
             }
 
             String endComment = resComment.isEmpty() ? originalComment : resComment;
