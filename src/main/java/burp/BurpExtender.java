@@ -126,7 +126,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 String addComment = String.join(", ", result.get(1).get("comment"));
                 String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
                 resComment = mergeComment(allComment);
-                messageInfo.setComment(allComment);
+                messageInfo.setComment(resComment);
             }
 
             String endComment = resComment.isEmpty() ? originalComment : resComment;
@@ -139,19 +139,23 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     }
 
     private String mergeComment(String comment) {
+        if (!comment.contains(",")) {
+            return comment;
+        }
+
         Map<String, Integer> itemCounts = new HashMap<>();
         String[] items = comment.split(", ");
 
         for (String item : items) {
-            if (!item.contains("(") || !item.contains(")") || !item.contains(",")) {
-                // 没有括号的情况，直接返回原始Comment
-                itemCounts.put(item, 0);
-            } else {
+            if (item.contains("(") && item.contains(")")) {
                 int openParenIndex = item.lastIndexOf("(");
                 int closeParenIndex = item.lastIndexOf(")");
                 String itemName = item.substring(0, openParenIndex).trim();
                 int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
                 itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+            } else {
+                itemCounts.put(item, 0);
+                BurpExtender.stdout.println(String.format("%s: %s", "A", item));
             }
         }
 
@@ -160,9 +164,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
             String itemName = entry.getKey();
             int count = entry.getValue();
-            if (count == 0) {
-                mergedItems.append(itemName);
-            } else {
+            if (count != 0) {
                 mergedItems.append(itemName).append(" (").append(count).append("), ");
             }
         }
