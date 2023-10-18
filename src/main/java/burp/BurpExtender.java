@@ -127,7 +127,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
                 resComment = mergeComment(allComment);
 
-                messageInfo.setComment(resComment);
             }
 
             String endComment = resComment.isEmpty() ? originalComment : resComment;
@@ -140,12 +139,19 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     }
 
     private String mergeComment(String comment) {
+        if (!comment.contains("(") || !comment.contains(")")) {
+            // 没有括号的情况，直接返回原始Comment
+            return comment;
+        }
+
         Map<String, Integer> itemCounts = new HashMap<>();
         String[] items = comment.split(", ");
 
         for (String item : items) {
-            String itemName = item.substring(0, item.lastIndexOf("(")).trim();
-            int count = Integer.parseInt(item.substring(item.lastIndexOf("(") + 1, item.lastIndexOf(")")).trim());
+            int openParenIndex = item.lastIndexOf("(");
+            int closeParenIndex = item.lastIndexOf(")");
+            String itemName = item.substring(0, openParenIndex).trim();
+            int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
             itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
         }
 
