@@ -126,7 +126,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 String addComment = String.join(", ", result.get(1).get("comment"));
                 String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
                 resComment = mergeComment(allComment);
-                messageInfo.setComment(resComment);
+                messageInfo.setComment(allComment);
             }
 
             String endComment = resComment.isEmpty() ? originalComment : resComment;
@@ -139,20 +139,20 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     }
 
     private String mergeComment(String comment) {
-        if (!comment.contains("(") || !comment.contains(")")) {
-            // 没有括号的情况，直接返回原始Comment
-            return comment;
-        }
-
         Map<String, Integer> itemCounts = new HashMap<>();
         String[] items = comment.split(", ");
 
         for (String item : items) {
-            int openParenIndex = item.lastIndexOf("(");
-            int closeParenIndex = item.lastIndexOf(")");
-            String itemName = item.substring(0, openParenIndex).trim();
-            int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
-            itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+            if (!item.contains("(") || !item.contains(")") || !item.contains(",")) {
+                // 没有括号的情况，直接返回原始Comment
+                itemCounts.put(item, 0);
+            } else {
+                int openParenIndex = item.lastIndexOf("(");
+                int closeParenIndex = item.lastIndexOf(")");
+                String itemName = item.substring(0, openParenIndex).trim();
+                int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
+                itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+            }
         }
 
         StringBuilder mergedItems = new StringBuilder();
@@ -160,8 +160,11 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
             String itemName = entry.getKey();
             int count = entry.getValue();
-
-            mergedItems.append(itemName).append(" (").append(count).append("), ");
+            if (count == 0) {
+                mergedItems.append(itemName);
+            } else {
+                mergedItems.append(itemName).append(" (").append(count).append("), ");
+            }
         }
 
         return mergedItems.substring(0, mergedItems.length() - 2);
