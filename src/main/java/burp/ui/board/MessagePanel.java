@@ -9,6 +9,8 @@ import burp.IMessageEditor;
 import burp.IMessageEditorController;
 import burp.config.ConfigEntry;
 import burp.core.utils.StringHelper;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -184,15 +186,18 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             byte[] requestByte = requestResponse.getRequest();
             byte[] responseByte = requestResponse.getResponse();
 
+            String requestString = new String(requestResponse.getRequest(), StandardCharsets.UTF_8);
+            String responseString = new String(requestResponse.getResponse(), StandardCharsets.UTF_8);
+
             List<String> requestTmpHeaders = helpers.analyzeRequest(requestByte).getHeaders();
-            byte[] requestHeaders = helpers.stringToBytes(String.join("\n", requestTmpHeaders));
+            String requestHeaders = new String(String.join("\n", requestTmpHeaders).getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
             int requestBodyOffset = helpers.analyzeRequest(requestByte).getBodyOffset();
-            byte[] requestBody = Arrays.copyOfRange(requestByte, requestBodyOffset, requestByte.length);
+            String requestBody = new String(Arrays.copyOfRange(requestByte, requestBodyOffset, requestByte.length), StandardCharsets.UTF_8);
 
             List<String> responseTmpHeaders = helpers.analyzeResponse(responseByte).getHeaders();
-            byte[] responseHeaders = helpers.stringToBytes(String.join("\n", responseTmpHeaders));
+            String responseHeaders = new String(String.join("\n", responseTmpHeaders).getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
             int responseBodyOffset = helpers.analyzeResponse(responseByte).getBodyOffset();
-            byte[] responseBody = Arrays.copyOfRange(responseByte, responseBodyOffset, responseByte.length);
+            String responseBody = new String(Arrays.copyOfRange(responseByte, responseBodyOffset, responseByte.length), StandardCharsets.UTF_8);
 
             final boolean[] isMatched = {false}; // 标志变量，表示是否满足过滤条件
 
@@ -205,31 +210,31 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
 
                         switch (scope) {
                             case "any":
-                                match = helpers.indexOf(requestByte, helpers.stringToBytes(filterText), true, 0, requestByte.length) != -1 || helpers.indexOf(responseByte, helpers.stringToBytes(filterText), true, 0, responseByte.length) != -1;
+                                match = requestString.contains(filterText) || responseString.contains(filterText);
                                 break;
                             case "request":
-                                match = helpers.indexOf(requestByte, helpers.stringToBytes(filterText), true, 0, requestByte.length) != -1;
+                                match = requestString.contains(filterText);
                                 break;
                             case "response":
-                                match = helpers.indexOf(responseByte, helpers.stringToBytes(filterText), true, 0, responseByte.length) != -1;
+                                match = responseString.contains(filterText);
                                 break;
                             case "any header":
-                                match = helpers.indexOf(requestHeaders, helpers.stringToBytes(filterText), true, 0, requestHeaders.length) != -1 || helpers.indexOf(responseHeaders, helpers.stringToBytes(filterText), true, 0, responseHeaders.length) != -1;
+                                match = requestHeaders.contains(filterText) || responseHeaders.contains(filterText);
                                 break;
                             case "request header":
-                                match = helpers.indexOf(requestHeaders, helpers.stringToBytes(filterText), true, 0, requestHeaders.length) != -1;
+                                match = requestHeaders.contains(filterText);
                                 break;
                             case "response header":
-                                match = helpers.indexOf(responseHeaders, helpers.stringToBytes(filterText), true, 0, responseHeaders.length) != -1;
+                                match = responseHeaders.contains(filterText);
                                 break;
                             case "any body":
-                                match = helpers.indexOf(requestBody, helpers.stringToBytes(filterText), true, 0, requestBody.length) != -1 || helpers.indexOf(responseBody, helpers.stringToBytes(filterText), true, 0, responseBody.length) != -1;
+                                match = requestBody.contains(filterText) || responseBody.contains(filterText);
                                 break;
                             case "request body":
-                                match = helpers.indexOf(requestBody, helpers.stringToBytes(filterText), true, 0, requestBody.length) != -1;
+                                match = requestBody.contains(filterText);
                                 break;
                             case "response body":
-                                match = helpers.indexOf(responseBody, helpers.stringToBytes(filterText), true, 0, responseBody.length) != -1;
+                                match = responseBody.contains(filterText);
                                 break;
                             default:
                                 break;
