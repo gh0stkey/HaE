@@ -1,5 +1,6 @@
 package burp;
 
+import burp.config.ConfigLoader;
 import burp.core.processor.ColorProcessor;
 import burp.core.processor.MessageProcessor;
 import burp.ui.MainUI;
@@ -19,10 +20,9 @@ import javax.swing.event.ChangeListener;
 
 public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEditorTabFactory, ITab {
     private MainUI main;
-    // stdout变成公开属性，便于其他类调用输出调试信息
     public static PrintWriter stdout;
-    private IBurpExtenderCallbacks callbacks;
-    private static IExtensionHelpers helpers;
+    public static IBurpExtenderCallbacks callbacks;
+    public static IExtensionHelpers helpers;
     ColorProcessor colorProcessor = new ColorProcessor();
     MessageProcessor messageProcessor = new MessageProcessor();
     private MessagePanel messagePanel;
@@ -30,10 +30,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     @Override
     public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks)
     {
-        this.callbacks = callbacks;
+        BurpExtender.callbacks = callbacks;
         BurpExtender.helpers = callbacks.getHelpers();
 
-        String version = "2.5.1";
+        new ConfigLoader();
+
+        String version = "2.5.2";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -103,6 +105,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
 
             List<Map<String, String>> result = null;
+
             try {
                 result = messageProcessor.processMessage(helpers, content, messageIsRequest, true, host);
             } catch (NoSuchAlgorithmException e) {
@@ -155,7 +158,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                 itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
             } else {
                 itemCounts.put(item, 0);
-                BurpExtender.stdout.println(String.format("%s: %s", "A", item));
             }
         }
 
