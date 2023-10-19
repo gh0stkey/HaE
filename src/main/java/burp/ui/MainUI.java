@@ -3,7 +3,6 @@ package burp.ui;
 import burp.config.ConfigEntry;
 import burp.config.ConfigLoader;
 import burp.rule.RuleProcessor;
-import burp.rule.utils.RuleTool;
 import burp.ui.board.Databoard;
 import burp.ui.board.MessagePanel;
 import burp.ui.rule.RulePane;
@@ -21,7 +20,6 @@ import java.util.Map;
  */
 
 public class MainUI extends JPanel {
-    private final ConfigLoader loadConn = new ConfigLoader();
     private MessagePanel messagePanel;
 
     public MainUI(MessagePanel messagePanel) {
@@ -41,13 +39,9 @@ public class MainUI extends JPanel {
 
     private void onlineUpdateActionPerformed(ActionEvent e) {
         // 添加提示框防止用户误触导致配置更新
-        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update config?", "Info",
-                JOptionPane.YES_NO_OPTION);
+        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update rules?", "Info", JOptionPane.YES_NO_OPTION);
         if (retCode == JOptionPane.YES_OPTION) {
-            String rulesFilePath = rulesPathTextField.getText();
-            RuleTool rt = new RuleTool(rulesFilePath);
-            rt.getRulesFromSite();
-            new ConfigLoader();
+            ConfigLoader.initRules();
             reloadRule();
         }
     }
@@ -61,7 +55,6 @@ public class MainUI extends JPanel {
                         i,
                         new RulePane(rules.get(i), ruleTabbedPane)
                 )
-
         );
         ruleTabbedPane.addTab("...", new JLabel());
         ruleSwitch.setListen(true);
@@ -72,8 +65,7 @@ public class MainUI extends JPanel {
     }
 
     private void excludeSuffixSaveActionPerformed(ActionEvent e) {
-        ConfigLoader loadCon = new ConfigLoader();
-        loadCon.setExcludeSuffix(excludeSuffixTextField.getText());
+        ConfigLoader.setExcludeSuffix(excludeSuffixTextField.getText());
     }
     private void initComponents() {
         JTabbedPane mainTabbedPane = new JTabbedPane();
@@ -154,7 +146,7 @@ public class MainUI extends JPanel {
         ruleTabbedPane.addTab("...",new JLabel());
 
         rulesPathTextField.setText(ConfigLoader.getRulesFilePath());
-        excludeSuffixTextField.setText(loadConn.getExcludeSuffix());
+        excludeSuffixTextField.setText(ConfigLoader.getExcludeSuffix());
         ruleSwitch = new TabTitleEditListener(ruleTabbedPane);
         ruleTabbedPane.addChangeListener(ruleSwitch);
         ruleTabbedPane.addMouseListener(ruleSwitch);
