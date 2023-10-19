@@ -30,5 +30,4 @@ dependencies {
     compile group: 'org.yaml', name: 'snakeyaml', version: '1.28'
     compile 'net.sourceforge.jregex:jregex:1.2_01'
     compile 'dk.brics.automaton:automaton:1.11-8'
-    compile 'com.squareup.okhttp:okhttp:2.7.5'
 }
