@@ -1,9 +1,11 @@
 package burp.rule.utils;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import burp.*;
+import burp.config.ConfigEntry;
+import burp.config.ConfigLoader;
 import java.io.FileOutputStream;
+import java.net.URL;
+import java.util.Arrays;
 import javax.swing.JOptionPane;
 
 /**
@@ -17,19 +19,31 @@ public class RuleTool {
     }
 
     public void getRulesFromSite() {
-        String url = "https://cdn.jsdelivr.net/gh/gh0stkey/HaE@gh-pages/Rules.yml";
-        OkHttpClient httpClient = new OkHttpClient();
-        Request httpRequest = new Request.Builder().url(url).get().build();
+        // 以独立线程使用BurpSuite官方请求接口获取规则
+        Thread t = new Thread(()->{
+            try {
+                URL url = new URL("https://cdn.jsdelivr.net/gh/gh0stkey/HaE@gh-pages/Rules.yml");
+                IHttpService iHttpService = BurpExtender.helpers.buildHttpService(url.getHost(), 443, true);
+                IHttpRequestResponse iHttpRequestResponse = BurpExtender.callbacks.makeHttpRequest(iHttpService, BurpExtender.helpers.buildHttpRequest(url));
+                byte[] responseByte = iHttpRequestResponse.getResponse();
+                IResponseInfo iResponseInfo = BurpExtender.helpers.analyzeResponse(responseByte);
+                int bodyOffset = iResponseInfo.getBodyOffset();
+                byte[] responseBodyByte = Arrays.copyOfRange(responseByte, bodyOffset, responseByte.length);
+                FileOutputStream fileOutputStream = new FileOutputStream(this.rulesFilePath);
+                fileOutputStream.write(responseBodyByte);
+                fileOutputStream.close();
+                JOptionPane.showMessageDialog(null, "Rules update successfully!", "Info",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e, "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        t.start();
         try {
-            Response httpResponse = httpClient.newCall(httpRequest).execute();
-            // 获取官方规则文件，在线更新写入
-            FileOutputStream fileOutputStream = new FileOutputStream(this.rulesFilePath);
-            fileOutputStream.write(httpResponse.body().bytes());
-            JOptionPane.showMessageDialog(null, "Rules updated successfully!", "Info",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ignored) {
-            JOptionPane.showMessageDialog(null, "Please check your network!", "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            t.join();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
