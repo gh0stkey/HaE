@@ -1,5 +1,6 @@
 package burp.config;
 
+import burp.BurpExtender;
 import burp.rule.utils.RuleTool;
 import burp.rule.utils.YamlTool;
 import java.io.*;
@@ -19,7 +20,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public class ConfigLoader {
     private static final Yaml yaml = YamlTool.newStandardYaml();
-    private static final String HaEConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
+    private static final String HaEConfigPath = determineConfigPath();
     private static final String RulesFilePath = String.format("%s/%s", HaEConfigPath, "Rules.yml");
     private static final String ConfigFilePath =  String.format("%s/%s", HaEConfigPath, "Config.yml");
 
@@ -31,44 +32,66 @@ public class ConfigLoader {
         }
 
         File configFilePath = new File(ConfigFilePath);
-
         if (!(configFilePath.exists() && configFilePath.isFile())) {
             initConfig();
+        }
+
+        File rulesFilePath = new File(RulesFilePath);
+        if (!(rulesFilePath.exists() && rulesFilePath.isFile())) {
             initRules();
         }
-        ConfigEntry.globalRules = ConfigLoader.getRules();
+
+        ConfigEntry.globalRules = getRules();
     }
 
-    public void initConfig() {
+    private static String determineConfigPath() {
+        // 优先级1：用户根目录
+        String userConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
+        if (isValidConfigPath(userConfigPath)) {
+            return userConfigPath;
+        }
+
+        // 优先级2：Jar包所在目录
+        String jarPath = BurpExtender.callbacks.getExtensionFilename();
+        String jarDirectory = new File(jarPath).getParent();
+        String jarConfigPath = String.format("%s/.config/HaE", jarDirectory);
+        if (isValidConfigPath(jarConfigPath)) {
+            return jarConfigPath;
+        }
+        
+        return userConfigPath;
+    }
+
+    private static boolean isValidConfigPath(String configPath) {
+        File configPathFile = new File(configPath);
+        return configPathFile.exists() && configPathFile.isDirectory();
+    }
+
+    public static void initConfig() {
         Map<String, Object> r = new LinkedHashMap<>();
-        r.put("rulesPath", RulesFilePath);
         r.put("excludeSuffix", getExcludeSuffix());
         try {
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(ConfigFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
+            ws.close();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public void initRules() {
+    public static void initRules() {
         RuleTool rt = new RuleTool(RulesFilePath);
         rt.getRulesFromSite();
     }
 
     public static String getRulesFilePath() {
-        try {
-            Map<String, Object> r = YamlTool.loadYaml(ConfigFilePath);
-            return r.get("rulesPath").toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return RulesFilePath;
-        }
+        return RulesFilePath;
     }
 
-    public String getExcludeSuffix(){
+    public static String getExcludeSuffix(){
         String excludeSuffix = "";
         File yamlSetting = new File(ConfigFilePath);
+        
         if (yamlSetting.exists() && yamlSetting.isFile()) {
             try {
                 InputStream inorder = Files.newInputStream(Paths.get(ConfigFilePath));
@@ -81,6 +104,7 @@ public class ConfigLoader {
         } else {
             excludeSuffix = ConfigEntry.excludeSuffix;
         }
+        
         return excludeSuffix;
     }
 
@@ -112,20 +136,18 @@ public class ConfigLoader {
                 resRule.put(groupFields.get("group").toString(), dataArray);
             }
         }
-
         return resRule;
     }
 
-    public void setExcludeSuffix(String excludeSuffix){
+    public static void setExcludeSuffix(String excludeSuffix){
         Map<String,Object> r = new LinkedHashMap<>();
-        r.put("rulesPath", getRulesFilePath());
         r.put("excludeSuffix", excludeSuffix);
         try{
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(RulesFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
+            ws.close();
         }catch (Exception ex){
             ex.printStackTrace();
         }
     }
-
 }
