@@ -16,15 +16,16 @@ public class ColorRenderer extends DefaultTableCellRenderer {
 
     public ColorRenderer(List<LogEntry> log, JTable table) {
         this.log = log;
-        this.colorMap.put("red", Color.RED);
-        this.colorMap.put("orange", Color.ORANGE);
-        this.colorMap.put("yellow", Color.YELLOW);
-        this.colorMap.put("green", Color.GREEN);
-        this.colorMap.put("cyan", Color.CYAN);
-        this.colorMap.put("blue", Color.BLUE);
-        this.colorMap.put("pink", Color.PINK);
-        this.colorMap.put("magenta", Color.MAGENTA);
-        this.colorMap.put("gray", Color.GRAY);
+        // 与BurpSuite的颜色保持一致
+        this.colorMap.put("red", new Color(0xFF, 0x64, 0x64));
+        this.colorMap.put("orange", new Color(0xFF, 0xC8, 0x64));
+        this.colorMap.put("yellow", new Color(0xFF, 0xFF, 0x64));
+        this.colorMap.put("green", new Color(0x64, 0xFF, 0x64));
+        this.colorMap.put("cyan", new Color(0x64, 0xFF, 0xFF));
+        this.colorMap.put("blue", new Color(0x64, 0x64, 0xFF));
+        this.colorMap.put("pink", new Color(0xFF, 0xC8, 0xC8));
+        this.colorMap.put("magenta", new Color(0xFF, 0x64, 0xFF));
+        this.colorMap.put("gray", new Color(0xB4, 0xB4, 0xB4));
         this.table = table;
     }
 
@@ -40,12 +41,14 @@ public class ColorRenderer extends DefaultTableCellRenderer {
         Color color = colorMap.get(colorByLog);
 
         if (isSelected) {
-            // 如果行被选中，设置阴影颜色
-            component.setBackground(new Color(173, 216, 230)); // Light Blue
+            // 通过更改RGB颜色来达成阴影效果
+            component.setBackground(new Color(color.getRed()-0x20, color.getGreen()-0x20, color.getBlue()-0x20));
         } else {
             // 否则使用原始颜色
             component.setBackground(color);
         }
+
+        component.setForeground(Color.BLACK);
 
         return component;
     }
