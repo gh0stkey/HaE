@@ -9,11 +9,8 @@ import burp.config.ConfigLoader;
  */
 
 public class MatchTool {
-    // 匹配后缀
-    ConfigLoader configLoader = new ConfigLoader();
-
     public boolean matchUrlSuffix(String str) {
-        Pattern pattern = new Pattern(String.format("[\\w]+[\\.](%s)", configLoader.getExcludeSuffix()), REFlags.IGNORE_CASE);
+        Pattern pattern = new Pattern(String.format("[\\w]+[\\.](%s)", ConfigLoader.getExcludeSuffix()), REFlags.IGNORE_CASE);
         jregex.Matcher matcher = pattern.matcher(str);
         return matcher.find();
     }
