@@ -324,15 +324,16 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
                     String resHashB = getMessageHash(false, reqResMessage.getResponse());
 
                     if (reqHashB.equals(reqHashA) || resHashB.equals(resHashA)) {
-                        isDuplicate = true;
-                        break;
+                        if (entry.getComment().equals(comment)) {
+                            isDuplicate = true;
+                            break;
+                        }
                     }
                 }
 
                 if (!isDuplicate) {
                     log.add(logEntry);
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
