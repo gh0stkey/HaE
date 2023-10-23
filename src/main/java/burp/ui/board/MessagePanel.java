@@ -7,10 +7,14 @@ import burp.IHttpRequestResponsePersisted;
 import burp.IHttpService;
 import burp.IMessageEditor;
 import burp.IMessageEditorController;
+import burp.IRequestInfo;
 import burp.config.ConfigEntry;
+import burp.core.utils.HashCalculator;
 import burp.core.utils.StringHelper;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -117,7 +121,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
     @Override
     public int getColumnCount()
     {
-        return 5;
+        return 6;
     }
 
     @Override
@@ -132,8 +136,10 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             case 2:
                 return "Comment";
             case 3:
-                return "Length";
+                return "Status";
             case 4:
+                return "Length";
+            case 5:
                 return "Color";
             default:
                 return "";
@@ -159,8 +165,10 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             case 2:
                 return logEntry.getComment();
             case 3:
-                return logEntry.getLength();
+                return logEntry.getStatus();
             case 4:
+                return logEntry.getLength();
+            case 5:
                 return logEntry.getColor();
             default:
                 return "";
@@ -296,12 +304,55 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
     }
 
     public void add(IHttpRequestResponse messageInfo, String comment, String length, String color) {
-        synchronized(log)
-        {
-            LogEntry logEntry = new LogEntry(callbacks.saveBuffersToTempFiles(messageInfo), helpers.analyzeRequest(messageInfo).getMethod(),
-                    helpers.analyzeRequest(messageInfo).getUrl(), comment, length, color);
-            log.add(logEntry);
+        synchronized(log) {
+            IRequestInfo iRequestInfo = helpers.analyzeRequest(messageInfo);
+            URL url = iRequestInfo.getUrl();
+            String method = iRequestInfo.getMethod();
+            String status = String.valueOf(helpers.analyzeResponse(messageInfo.getResponse()).getStatusCode());
+
+            LogEntry logEntry = new LogEntry(callbacks.saveBuffersToTempFiles(messageInfo), method, url, comment, length, color, status);
+
+            try {
+                // 比较Hash，如若存在重复的请求或响应，则不放入消息内容里
+                String reqHashA = getMessageHash(true, messageInfo.getRequest());
+                String resHashA = getMessageHash(false, messageInfo.getResponse());
+                boolean isDuplicate = false;
+
+                for (LogEntry entry : log) {
+                    IHttpRequestResponsePersisted reqResMessage = entry.getRequestResponse();
+                    String reqHashB = getMessageHash(true, reqResMessage.getRequest());
+                    String resHashB = getMessageHash(false, reqResMessage.getResponse());
+
+                    if (reqHashB.equals(reqHashA) || resHashB.equals(resHashA)) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+
+                if (!isDuplicate) {
+                    log.add(logEntry);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
+    }
+
+    private String getMessageHash(boolean isRequest, byte[] content)
+            throws NoSuchAlgorithmException {
+        String hash = "";
+
+        if (isRequest) {
+            hash = HashCalculator.calculateHash(content);
+        } else {
+            int responseBodyOffset = helpers.analyzeResponse(content).getBodyOffset();
+            byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
+            hash = HashCalculator.calculateHash(responseBody);
+        }
+
+        return hash;
     }
 
     public class Table extends JTable {
@@ -314,6 +365,8 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
 
         @Override
         public void changeSelection(int row, int col, boolean toggle, boolean extend) {
+            super.changeSelection(row, col, toggle, extend);
+
             logEntry = filteredLog.get(convertRowIndexToModel(row));
             requestViewer.setMessage("Loading...".getBytes(), true);
             responseViewer.setMessage("Loading...".getBytes(), false);
@@ -335,10 +388,9 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             currentWorker = worker;
             // 启动后台线程
             worker.execute();
-            super.changeSelection(row, col, toggle, extend);
         }
 
-        private void refreshMessage() {
+        private synchronized void refreshMessage() {
             SwingUtilities.invokeLater(() -> {
                 requestViewer.setMessage(logEntry.getRequestResponse().getRequest(), true);
                 responseViewer.setMessage(logEntry.getRequestResponse().getResponse(), false);
@@ -347,4 +399,3 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
     }
 
 }
-

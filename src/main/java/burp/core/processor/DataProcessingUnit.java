@@ -49,7 +49,7 @@ public class DataProcessingUnit {
 
     public Map<String, Map<String, Object>> matchContentByRegex(byte[] content, String headers, byte[] body, String scopeString, String host)
             throws NoSuchAlgorithmException {
-        // 先从池子里判断是否有已经匹配好的结果
+        // 先从缓存池里判断是否有已经匹配好的结果
         String messageIndex = HashCalculator.calculateHash(content);
         Map<String, Map<String, Object>> map = GlobalCachePool.getFromCache(messageIndex);
         if (map != null) {

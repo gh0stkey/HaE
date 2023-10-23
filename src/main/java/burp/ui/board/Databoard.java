@@ -195,7 +195,12 @@ public class Databoard extends JPanel {
                     for (String host : getHostByList()) {
                         String lowerCaseHost = host.toLowerCase();
                         if (lowerCaseHost.contains(input)) {
-                            comboBoxModel.addElement(host);
+                            if (lowerCaseHost.equals(input)) {
+                                comboBoxModel.insertElementAt(lowerCaseHost, 0);
+                                comboBoxModel.setSelectedItem(lowerCaseHost);
+                            } else {
+                                comboBoxModel.addElement(host);
+                            }
                         }
                     }
                 }
@@ -277,7 +282,7 @@ public class Databoard extends JPanel {
                     for (Map.Entry<String, List<String>> entrySet : entry.getValue().entrySet()) {
                         Thread t = new Thread(() -> {
                             String tabTitle = String.format("%s (%s)", entrySet.getKey(), entrySet.getValue().size());
-                            newTabbedPane.addTab(tabTitle, new JScrollPane(new DataTable(entrySet.getKey(), entrySet.getValue())));
+                            newTabbedPane.addTab(tabTitle, new DataTable(entrySet.getKey(), entrySet.getValue()));
                             dataTabbedPaneA.addTab(entry.getKey(), newTabbedPane);
                         });
                         t.start();
@@ -295,7 +300,7 @@ public class Databoard extends JPanel {
                 splitPane.setLeftComponent(dataTabbedPaneB);
                 for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
                     String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                    dataTabbedPaneB.addTab(tabTitle, new JScrollPane(new DataTable(entry.getKey(), entry.getValue())));
+                    dataTabbedPaneB.addTab(tabTitle, new DataTable(entry.getKey(), entry.getValue()));
                 }
             }
 
@@ -324,31 +329,100 @@ public class Databoard extends JPanel {
         }
     }
 
+    class DataTable extends JPanel {
+        private final JTable table;
+        private final DefaultTableModel model;
+        private final JTextField searchField;
+        private TableRowSorter<DefaultTableModel> sorter;
 
-    class DataTable extends JTable {
-        public DataTable(String tableName, List<String> list){
-            DefaultTableModel model = new DefaultTableModel();
-            Object[][] data = new Object[list.size()][1];
-            for (int x = 0; x < list.size(); x++) {
-                data[x][0] = list.get(x);
-            }
-            model.setDataVector(data, new Object[]{"Information"});
-            setAutoCreateRowSorter(true);
-            setModel(model);
-            setDefaultEditor(Object.class, null);
 
-            addMouseListener(new MouseAdapter() {
+        public DataTable(String tableName, List<String> list) {
+            model = new DefaultTableModel();
+            table = new JTable(model);
+            sorter = new TableRowSorter<>(model);
+
+            table.setRowSorter(sorter);
+            table.setDefaultEditor(Object.class, null);
+
+            // 表格内容双击事件
+            table.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 2) {
-                        int selectedRow = getSelectedRow();
+                        int selectedRow = table.getSelectedRow();
                         if (selectedRow != -1) {
-                            String rowData = getValueAt(selectedRow, 0).toString();
+                            String rowData = table.getValueAt(selectedRow, 0).toString();
                             messagePanel.applyMessageFilter(tableName, rowData);
                         }
                     }
                 }
             });
+
+            model.addColumn("Information");
+            for (String item : list) {
+                model.addRow(new Object[]{item});
+            }
+
+            String defaultText = "Search";
+
+            searchField = new JTextField(defaultText);
+            // 设置灰色默认文本Search
+            searchField.setForeground(Color.GRAY);
+            searchField.addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    if (searchField.getText().equals(defaultText)) {
+                        searchField.setText("");
+                        searchField.setForeground(Color.BLACK);
+                    }
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    if (searchField.getText().isEmpty()) {
+                        searchField.setForeground(Color.GRAY);
+                        searchField.setText(defaultText);
+                    }
+                }
+            });
+
+            // 监听输入框内容输入、更新、删除
+            searchField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    performSearch();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    performSearch();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    performSearch();
+                }
+
+                private void performSearch() {
+                    // 通过字体颜色来判断是否可以进行过滤
+                    if (searchField.getForeground() == Color.BLACK) {
+                        String searchText = searchField.getText();
+                        if (sorter == null) {
+                            sorter = new TableRowSorter<>(model);
+                            table.setRowSorter(sorter);
+                        }
+                        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(searchText, 0);
+                        sorter.setRowFilter(rowFilter);
+                    }
+                }
+            });
+
+            // 设置布局
+            JScrollPane scrollPane = new JScrollPane(table);
+
+            setLayout(new BorderLayout(0, 5));
+            add(scrollPane, BorderLayout.CENTER);
+            add(searchField, BorderLayout.SOUTH);
         }
     }
 }

@@ -35,7 +35,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.2";
+        String version = "2.5.3";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -111,10 +111,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
+
             String resComment = "";
             String resColor = "";
             String originalColor = messageInfo.getHighlight();
             String originalComment = messageInfo.getComment();
+
             if (result != null && !result.isEmpty() && result.size() > 0) {
                 List<String> colorList = new ArrayList<>();
 

@@ -9,16 +9,18 @@ public class LogEntry {
     private final IHttpRequestResponsePersisted requestResponse;
     private final URL url;
     private final String length;
+    private final String status;
     private final String color;
     private final String method;
 
-    LogEntry(IHttpRequestResponsePersisted requestResponse, String method, URL url, String comment, String length, String color) {
+    LogEntry(IHttpRequestResponsePersisted requestResponse, String method, URL url, String comment, String length, String color, String status) {
         this.requestResponse = requestResponse;
         this.method = method;
         this.url = url;
         this.comment = comment;
         this.length = length;
         this.color = color;
+        this.status = status;
     }
 
     public String getColor() {
@@ -39,6 +41,10 @@ public class LogEntry {
 
     public String getMethod() {
         return this.method;
+    }
+
+    public String getStatus() {
+        return this.status;
     }
 
     public IHttpRequestResponsePersisted getRequestResponse() {
