@@ -33,6 +33,8 @@ public class Databoard extends JPanel {
     private JSplitPane splitPane;
     private MessagePanel messagePanel;
     private Table table;
+    DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+    JComboBox hostComboBox = new JComboBox(comboBoxModel);
 
     public Databoard(MessagePanel messagePanel) {
         this.messagePanel = messagePanel;
@@ -100,6 +102,23 @@ public class Databoard extends JPanel {
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
 
+        hostTextField.setLayout(new BorderLayout());
+        hostTextField.add(hostComboBox, BorderLayout.SOUTH);
+        hostComboBox.setMaximumRowCount(5);
+        hostComboBox.setPreferredSize(new Dimension(super.getPreferredSize().width, 0));
+
+        // 由于主题切换造成的UI组件重绘，而自定义组件没有正确地与之同步，因此需要事件监听来进行同步
+        UIManager.addPropertyChangeListener(evt -> {
+            if ("lookAndFeel".equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(() -> {
+                    hostTextField.remove(hostComboBox);
+                    hostTextField.add(hostComboBox, BorderLayout.SOUTH);
+                    hostTextField.revalidate();
+                    hostTextField.repaint();
+                });
+            }
+        });
+
         setAutoMatch();
     }
 
@@ -111,16 +130,6 @@ public class Databoard extends JPanel {
      * 设置输入自动匹配
      */
     private void setAutoMatch() {
-        final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-
-        final JComboBox hostComboBox = new JComboBox(comboBoxModel) {
-            @Override
-            public Dimension getPreferredSize() {
-                setMaximumRowCount(5);
-                return new Dimension(super.getPreferredSize().width, 0);
-            }
-        };
-
         isMatchHost = false;
 
         for (String host : getHostByList()) {
@@ -208,9 +217,6 @@ public class Databoard extends JPanel {
                 isMatchHost = false;
             }
         });
-
-        hostTextField.setLayout(new BorderLayout());
-        hostTextField.add(hostComboBox, BorderLayout.SOUTH);
     }
 
     private void applyHostFilter(String filterText) {

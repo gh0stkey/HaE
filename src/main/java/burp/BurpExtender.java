@@ -5,6 +5,9 @@ import burp.core.processor.ColorProcessor;
 import burp.core.processor.MessageProcessor;
 import burp.ui.MainUI;
 import burp.ui.board.MessagePanel;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import javax.swing.*;
@@ -35,7 +38,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.3";
+        String version = "2.5.4";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -57,7 +60,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     }
 
-    private void initialize(){
+    private void initialize() {
         messagePanel = new MessagePanel(callbacks, helpers);
         main = new MainUI(messagePanel);
         callbacks.customizeUiComponent(main);
@@ -65,13 +68,49 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     }
 
     @Override
-    public String getTabCaption(){
+    public String getTabCaption() {
         return "HaE";
     }
 
     @Override
     public Component getUiComponent() {
-        return main;
+        JTabbedPane HaETabbedPane = new JTabbedPane();
+        HaETabbedPane.addTab("", getImageIcon(false), main);
+        HaETabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations ", null);
+        HaETabbedPane.setEnabledAt(1, false);
+        HaETabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent e) {
+                boolean isDarkBg = isDarkBg();
+                HaETabbedPane.setIconAt(0, getImageIcon(isDarkBg));
+            }
+
+            private boolean isDarkBg() {
+                Color bg = HaETabbedPane.getBackground();
+                int r = bg.getRed();
+                int g = bg.getGreen();
+                int b = bg.getBlue();
+                int avg = (r + g + b) / 3;
+
+                return avg < 128;
+            }
+        });
+        return HaETabbedPane;
+    }
+
+    private ImageIcon getImageIcon(boolean isDark) {
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL imageURL;
+        if (isDark) {
+            imageURL = classLoader.getResource("logo.png");
+        } else {
+            imageURL = classLoader.getResource("logo_black.png");
+        }
+        ImageIcon originalIcon = new ImageIcon(imageURL);
+        Image originalImage = originalIcon.getImage();
+        Image scaledImage = originalImage.getScaledInstance(30, 20, Image.SCALE_FAST);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        return scaledIcon;
     }
 
     /**

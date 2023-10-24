@@ -20,11 +20,9 @@ import java.util.Map;
  */
 
 public class MainUI extends JPanel {
-    private MessagePanel messagePanel;
 
     public MainUI(MessagePanel messagePanel) {
-        this.messagePanel = messagePanel;
-        databoardPanel = new Databoard(this.messagePanel);
+        databoardPanel = new Databoard(messagePanel);
         initComponents();
     }
 
@@ -143,7 +141,7 @@ public class MainUI extends JPanel {
                 ConfigEntry.globalRules.get(i),
                 ruleTabbedPane)));
 
-        ruleTabbedPane.addTab("...",new JLabel());
+        ruleTabbedPane.addTab("...", new JLabel());
 
         rulesPathTextField.setText(ConfigLoader.getRulesFilePath());
         excludeSuffixTextField.setText(ConfigLoader.getExcludeSuffix());

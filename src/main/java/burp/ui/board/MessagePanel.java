@@ -9,6 +9,7 @@ import burp.IMessageEditor;
 import burp.IMessageEditorController;
 import burp.IRequestInfo;
 import burp.config.ConfigEntry;
+import burp.core.GlobalCachePool;
 import burp.core.utils.HashCalculator;
 import burp.core.utils.StringHelper;
 
@@ -19,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -314,19 +317,23 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
 
             try {
                 // 比较Hash，如若存在重复的请求或响应，则不放入消息内容里
-                String reqHashA = getMessageHash(true, messageInfo.getRequest());
-                String resHashA = getMessageHash(false, messageInfo.getResponse());
+                byte[] reqByteA = messageInfo.getRequest();
+                byte[] resByteA = messageInfo.getResponse();
                 boolean isDuplicate = false;
 
-                for (LogEntry entry : log) {
-                    IHttpRequestResponsePersisted reqResMessage = entry.getRequestResponse();
-                    String reqHashB = getMessageHash(true, reqResMessage.getRequest());
-                    String resHashB = getMessageHash(false, reqResMessage.getResponse());
-
-                    if (reqHashB.equals(reqHashA) || resHashB.equals(resHashA)) {
-                        if (entry.getComment().equals(comment)) {
-                            isDuplicate = true;
-                            break;
+                if (log.size() > 0) {
+                    for (LogEntry entry : log) {
+                        IHttpRequestResponsePersisted reqResMessage = entry.getRequestResponse();
+                        byte[] reqByteB = reqResMessage.getRequest();
+                        byte[] resByteB = reqResMessage.getResponse();
+                        try {
+                            // 采用匹配数据结果比对
+                            if (areMapsEqual(getCacheData(reqByteB), getCacheData(reqByteA)) && areMapsEqual(getCacheData(resByteB), getCacheData(resByteA))) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -341,19 +348,52 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
 
     }
 
-    private String getMessageHash(boolean isRequest, byte[] content)
+    private Map<String, Map<String, Object>> getCacheData(byte[] content)
             throws NoSuchAlgorithmException {
-        String hash = "";
+        String hashIndex = HashCalculator.calculateHash(content);
+        return GlobalCachePool.getFromCache(hashIndex);
+    }
 
-        if (isRequest) {
-            hash = HashCalculator.calculateHash(content);
-        } else {
-            int responseBodyOffset = helpers.analyzeResponse(content).getBodyOffset();
-            byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
-            hash = HashCalculator.calculateHash(responseBody);
+    private boolean areMapsEqual(Map<String, Map<String, Object>> map1, Map<String, Map<String, Object>> map2) {
+        if (map1.size() != map2.size()) {
+            return false;
         }
 
-        return hash;
+        for (String key : map1.keySet()) {
+            if (!map2.containsKey(key)) {
+                return false;
+            }
+            if (!areInnerMapsEqual(map1.get(key), map2.get(key))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean areInnerMapsEqual(Map<String, Object> innerMap1, Map<String, Object> innerMap2) {
+        if (innerMap1.size() != innerMap2.size()) {
+            return false;
+        }
+
+        for (String key : innerMap1.keySet()) {
+            if (!innerMap2.containsKey(key)) {
+                return false;
+            }
+            Object value1 = innerMap1.get(key);
+            Object value2 = innerMap2.get(key);
+
+            // 如果值是Map，则递归对比
+            if (value1 instanceof Map && value2 instanceof Map) {
+                if (!areInnerMapsEqual((Map<String, Object>) value1, (Map<String, Object>) value2)) {
+                    return false;
+                }
+            } else if (!value1.equals(value2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public class Table extends JTable {
