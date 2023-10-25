@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
  */
 public class RuleTool {
     private String rulesFilePath;
+    private boolean isSuccess;
 
     public RuleTool(String rulesFilePath) {
         this.rulesFilePath = rulesFilePath;
@@ -32,18 +33,22 @@ public class RuleTool {
                 FileOutputStream fileOutputStream = new FileOutputStream(this.rulesFilePath);
                 fileOutputStream.write(responseBodyByte);
                 fileOutputStream.close();
-                JOptionPane.showMessageDialog(null, "Rules update successfully!", "Info",
-                        JOptionPane.INFORMATION_MESSAGE);
+                isSuccess = true;
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, e, "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                isSuccess = false;
             }
         });
         t.start();
         try {
-            t.join();
+            t.join(10000);
         } catch (Exception e) {
-            e.printStackTrace();
+            isSuccess = false;
+        }
+
+        if (isSuccess) {
+            JOptionPane.showMessageDialog(null, "Rules update successfully!", "Info", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "Rule update failed, please check the network!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
