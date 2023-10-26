@@ -60,7 +60,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
 
         // Length字段根据大小进行排序
         TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) logTable.getRowSorter();
-        sorter.setComparator(3, new Comparator<String>() {
+        sorter.setComparator(4, new Comparator<String>() {
             @Override
             public int compare(String s1, String s2) {
                 Integer age1 = Integer.parseInt(s1);
@@ -69,7 +69,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             }
         });
         // Color字段根据颜色顺序进行排序
-        sorter.setComparator(4, new Comparator<String>() {
+        sorter.setComparator(5, new Comparator<String>() {
             @Override
             public int compare(String s1, String s2) {
                 int index1 = getIndex(s1);

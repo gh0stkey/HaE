@@ -65,6 +65,7 @@ public class MainUI extends JPanel {
     private void excludeSuffixSaveActionPerformed(ActionEvent e) {
         ConfigLoader.setExcludeSuffix(excludeSuffixTextField.getText());
     }
+
     private void initComponents() {
         JTabbedPane mainTabbedPane = new JTabbedPane();
         ruleTabbedPane = new JTabbedPane();

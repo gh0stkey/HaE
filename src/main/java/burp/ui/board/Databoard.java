@@ -417,7 +417,7 @@ public class Databoard extends JPanel {
                             sorter = new TableRowSorter<>(model);
                             table.setRowSorter(sorter);
                         }
-                        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(searchText, 0);
+                        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(String.format("%s%s", "(?i)", searchText), 0);
                         sorter.setRowFilter(rowFilter);
                     }
                 }
