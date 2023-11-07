@@ -282,15 +282,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          */
         @Override
         public byte[] getSelectedData() {
-            int[] selectRows = dataTable.getSelectedRows();
-            StringBuilder selectData = new StringBuilder();
-            for (int row : selectRows) {
-                selectData.append(dataTable.getValueAt(row, 0).toString()).append("\n");
-            }
-            // 便于单行复制，去除最后一个换行符
-            String revData = selectData.reverse().toString().replaceFirst("\n", "");
-            StringBuilder retData = new StringBuilder(revData).reverse();
-            return helpers.stringToBytes(retData.toString());
+            return helpers.stringToBytes(dataPanel.getSelectedData(dataTable));
         }
 
         /**

@@ -2,6 +2,8 @@ package burp.ui.board;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
@@ -11,12 +13,14 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.TransferHandler;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -51,7 +55,6 @@ public class DatatablePanel extends JPanel {
         idColumn.setMaxWidth(50);
 
         String defaultText = "Search";
-
         searchField = new JTextField(defaultText);
         // 设置灰色默认文本Search
         searchField.setForeground(Color.GRAY);
@@ -98,7 +101,7 @@ public class DatatablePanel extends JPanel {
                         sorter = new TableRowSorter<>(model);
                         table.setRowSorter(sorter);
                     }
-                    RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(String.format("%s%s", "(?i)", searchText), 0);
+                    RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(String.format("%s%s", "(?i)", searchText), 1);
                     sorter.setRowFilter(rowFilter);
                 }
             }
@@ -188,6 +191,31 @@ public class DatatablePanel extends JPanel {
                 }
             }
         });
+
+        table.setTransferHandler(new TransferHandler() {
+            @Override
+            public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
+                if (comp instanceof JTable) {
+                    StringSelection stringSelection = new StringSelection(getSelectedData(
+                            (JTable) comp));
+                    clip.setContents(stringSelection, null);
+                } else {
+                    super.exportToClipboard(comp, clip, action);
+                }
+            }
+        });
+    }
+
+    public String getSelectedData(JTable table) {
+        int[] selectRows = table.getSelectedRows();
+        StringBuilder selectData = new StringBuilder();
+        for (int row : selectRows) {
+            selectData.append(table.getValueAt(row, 1).toString()).append("\n");
+        }
+        // 便于单行复制，去除最后一个换行符
+        String revData = selectData.reverse().toString().replaceFirst("\n", "");
+        StringBuilder retData = new StringBuilder(revData).reverse();
+        return retData.toString();
     }
 
     private static void addRowToTable(DefaultTableModel model, Object[] data) {
