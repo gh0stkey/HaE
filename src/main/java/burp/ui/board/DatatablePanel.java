@@ -20,6 +20,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 
 public class DatatablePanel extends JPanel {
@@ -40,12 +41,14 @@ public class DatatablePanel extends JPanel {
         pageSize = 10;
         this.tableName = tableName;
 
-        model = new DefaultTableModel();
+        String[] columnNames = {"#", "Information"};
+        model = new DefaultTableModel(columnNames, 0);
         table = new JTable(model);
         sorter = new TableRowSorter<>(model);
 
         table.setRowSorter(sorter);
-        model.addColumn("Information");
+        TableColumn idColumn = table.getColumnModel().getColumn(0);
+        idColumn.setMaxWidth(50);
 
         String defaultText = "Search";
 
@@ -143,11 +146,11 @@ public class DatatablePanel extends JPanel {
             start = Math.max(start, lastRow);
 
             for (int i = start; i < end; i++) {
-                model.addRow(new Object[]{fullList.get(i)});
+                addRowToTable(model, new Object[]{fullList.get(i)});
             }
         } else {
             for (String item : fullList) {
-                model.addRow(new Object[]{item});
+                addRowToTable(model, new Object[]{item});
             }
         }
     }
@@ -185,6 +188,16 @@ public class DatatablePanel extends JPanel {
                 }
             }
         });
+    }
+
+    private static void addRowToTable(DefaultTableModel model, Object[] data) {
+        // 获取当前ID
+        int rowCount = model.getRowCount();
+        int id = rowCount > 0 ? (Integer) model.getValueAt(rowCount - 1, 0) + 1 : 1;
+        Object[] rowData = new Object[data.length + 1];
+        rowData[0] = id; // 设置ID列的值
+        System.arraycopy(data, 0, rowData, 1, data.length); // 拷贝其余数据
+        model.addRow(rowData); // 添加行
     }
 
     public JTable getTable() {
