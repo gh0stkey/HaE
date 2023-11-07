@@ -1,6 +1,8 @@
 package burp.core.processor;
 
 import burp.IExtensionHelpers;
+import burp.IRequestInfo;
+import burp.IResponseInfo;
 import burp.core.utils.MatchTool;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -20,7 +22,8 @@ public class MessageProcessor {
         Map<String, Map<String, Object>> obj;
 
         if (isRequest) {
-            List<String> requestTmpHeaders = helpers.analyzeRequest(content).getHeaders();
+            IRequestInfo requestInfo = helpers.analyzeRequest(content);
+            List<String> requestTmpHeaders = requestInfo.getHeaders();
             String requestHeaders = String.join("\n", requestTmpHeaders);
 
             try {
@@ -33,22 +36,23 @@ public class MessageProcessor {
                 return result;
             }
 
-            int requestBodyOffset = helpers.analyzeRequest(content).getBodyOffset();
+            int requestBodyOffset = requestInfo.getBodyOffset();
             byte[] requestBody = Arrays.copyOfRange(content, requestBodyOffset, content.length);
             obj = dataProcessingUnit.matchContentByRegex(content, requestHeaders, requestBody, "request", host);
         } else {
+            IResponseInfo responseInfo = helpers.analyzeResponse(content);
             try {
-                String inferredMimeType = String.format("hae.%s", helpers.analyzeResponse(content).getInferredMimeType().toLowerCase());
-                String statedMimeType = String.format("hae.%s", helpers.analyzeResponse(content).getStatedMimeType().toLowerCase());
+                String inferredMimeType = String.format("hae.%s", responseInfo.getInferredMimeType().toLowerCase());
+                String statedMimeType = String.format("hae.%s", responseInfo.getStatedMimeType().toLowerCase());
                 if (matcher.matchUrlSuffix(statedMimeType) || matcher.matchUrlSuffix(inferredMimeType)) {
                     return result;
                 }
             } catch (Exception e) {
                 return result;
             }
-            List<String> responseTmpHeaders = helpers.analyzeResponse(content).getHeaders();
+            List<String> responseTmpHeaders = responseInfo.getHeaders();
             String responseHeaders = String.join("\n", responseTmpHeaders);
-            int responseBodyOffset = helpers.analyzeResponse(content).getBodyOffset();
+            int responseBodyOffset = responseInfo.getBodyOffset();
             byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
             obj = dataProcessingUnit.matchContentByRegex(content, responseHeaders, responseBody, "response", host);
         }

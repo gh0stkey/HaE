@@ -4,6 +4,7 @@ import burp.config.ConfigLoader;
 import burp.core.processor.ColorProcessor;
 import burp.core.processor.MessageProcessor;
 import burp.ui.MainUI;
+import burp.ui.board.DatatablePanel;
 import burp.ui.board.MessagePanel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -38,7 +39,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.5";
+        String version = "2.5.6";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -217,7 +218,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     class MarkInfoTab implements IMessageEditorTab {
         private final JTabbedPane jTabbedPane = new JTabbedPane();
-        private JTable jTable = new JTable();
+        private DatatablePanel dataPanel;
+        private JTable dataTable;
         private final IMessageEditorController controller;
         private Map<String, String> extractRequestMap;
         private Map<String, String> extractResponseMap;
@@ -237,10 +239,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             jTabbedPane.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent arg0) {
-                    jTable = (JTable) ((JScrollPane)jTabbedPane.getSelectedComponent()).getViewport().getView();
+                    dataTable = ((DatatablePanel)jTabbedPane.getSelectedComponent()).getTable();
                 }
             });
-            return this.jTabbedPane;
+            return jTabbedPane;
         }
 
         @Override
@@ -280,10 +282,10 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          */
         @Override
         public byte[] getSelectedData() {
-            int[] selectRows = jTable.getSelectedRows();
+            int[] selectRows = dataTable.getSelectedRows();
             StringBuilder selectData = new StringBuilder();
             for (int row : selectRows) {
-                selectData.append(jTable.getValueAt(row, 0).toString()).append("\n");
+                selectData.append(dataTable.getValueAt(row, 0).toString()).append("\n");
             }
             // 便于单行复制，去除最后一个换行符
             String revData = selectData.reverse().toString().replaceFirst("\n", "");
@@ -310,18 +312,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
          */
         public void makeTable(Map<String, String> dataMap) {
             ArrayList<String> lTitleList = new ArrayList<>();
+
             dataMap.keySet().forEach(i->{
                 String[] extractData = dataMap.get(i).split("\n");
-                Object[][] data = new Object[extractData.length][1];
-                for (int x = 0; x < extractData.length; x++) {
-                    data[x][0] = extractData[x];
-                }
-                JTable infoTable = new JTable(data, new Object[]{"Information"});
-                infoTable.setAutoCreateRowSorter(true);
-                JScrollPane jScrollPane = new JScrollPane(infoTable);
-
                 lTitleList.add(i);
-                this.jTabbedPane.addTab(i, jScrollPane);
+                dataPanel = new DatatablePanel(i, Arrays.asList(extractData));
+                jTabbedPane.addTab(i, dataPanel);
             });
 
             /*
@@ -329,9 +325,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
              * 采用全局ArrayList的方式遍历删除Tab，以此应对BurpSuite缓存机制导致的MarkInfo UI错误展示。
              */
             titleList.forEach(t->{
-                int indexOfTab = this.jTabbedPane.indexOfTab(t);
+                int indexOfTab = jTabbedPane.indexOfTab(t);
                 if (indexOfTab != -1) {
-                    this.jTabbedPane.removeTabAt(indexOfTab);
+                    jTabbedPane.removeTabAt(indexOfTab);
                 }
             });
 
