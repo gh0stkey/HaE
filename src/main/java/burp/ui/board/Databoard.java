@@ -69,7 +69,7 @@ public class Databoard extends JPanel {
             String cleanedHost = StringHelper.replaceFirstOccurrence(host, "*.", "");
 
             if (host.contains("*")) {
-                ConfigEntry.globalDataMap.keySet().removeIf(i -> i.contains(cleanedHost) || cleanedHost.equals("**"));
+                ConfigEntry.globalDataMap.keySet().removeIf(i -> i.contains(cleanedHost) || cleanedHost.contains("*"));
             } else {
                 ConfigEntry.globalDataMap.remove(host);
             }

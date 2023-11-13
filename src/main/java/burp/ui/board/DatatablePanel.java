@@ -2,19 +2,32 @@ package burp.ui.board;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -37,7 +50,10 @@ public class DatatablePanel extends JPanel {
     private List<String> fullList; // 假设这是一个包含所有数据的列表
     private JScrollPane scrollPane;
     private String tableName;
-    private final int SHOW_LENGTH = 3000;
+    private final int SHOW_LENGTH = 2;
+    private JCheckBox searchMode = new JCheckBox("Reverse search");
+    private JCheckBox showMode = new JCheckBox("Show all data");
+    private boolean scrollFlag = true;
 
     public DatatablePanel(String tableName, List<String> list) {
         fullList = list;
@@ -49,6 +65,13 @@ public class DatatablePanel extends JPanel {
         model = new DefaultTableModel(columnNames, 0);
         table = new JTable(model);
         sorter = new TableRowSorter<>(model);
+        // 设置ID排序
+        sorter.setComparator(0, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer s1, Integer s2) {
+                return s1.compareTo(s2);
+            }
+        });
 
         table.setRowSorter(sorter);
         TableColumn idColumn = table.getColumnModel().getColumn(0);
@@ -56,6 +79,7 @@ public class DatatablePanel extends JPanel {
 
         String defaultText = "Search";
         searchField = new JTextField(defaultText);
+
         // 设置灰色默认文本Search
         searchField.setForeground(Color.GRAY);
         searchField.addFocusListener(new FocusListener() {
@@ -93,18 +117,6 @@ public class DatatablePanel extends JPanel {
                 performSearch();
             }
 
-            private void performSearch() {
-                // 通过字体颜色来判断是否可以进行过滤
-                if (searchField.getForeground() == Color.BLACK) {
-                    String searchText = searchField.getText();
-                    if (sorter == null) {
-                        sorter = new TableRowSorter<>(model);
-                        table.setRowSorter(sorter);
-                    }
-                    RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(String.format("%s%s", "(?i)", searchText), 1);
-                    sorter.setRowFilter(rowFilter);
-                }
-            }
         });
 
         // 设置布局
@@ -118,7 +130,7 @@ public class DatatablePanel extends JPanel {
         });
 
         // 添加滚动监听器，以加载更多数据
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+        AdjustmentListener scrollListener = new AdjustmentListener() {
             @Override
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 if (fullList.size() > SHOW_LENGTH) {
@@ -132,17 +144,95 @@ public class DatatablePanel extends JPanel {
                     }
                 }
             }
+        };
+
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(scrollListener);
+
+        searchMode.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                performSearch();
+            }
+        });
+
+        showMode.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                model.setRowCount(0);
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    scrollFlag = false;
+                    loadPageData();
+                    showMode.setEnabled(false);
+                }
+            }
         });
 
         setLayout(new BorderLayout(0, 5));
+
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setBorder(BorderFactory.createEmptyBorder(2, 3, 5, 5));
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.X_AXIS));
+
+        // 新增复选框要在这修改rows
+        JPanel menuPanel = new JPanel(new GridLayout(2, 1));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        JPopupMenu menu = new JPopupMenu();
+        menuPanel.add(searchMode);
+        menuPanel.add(showMode);
+        menu.add(menuPanel);
+
+        JButton settingsButton = new JButton("Settings");
+        settingsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int x = settingsButton.getX();
+                int y = settingsButton.getY() - menu.getPreferredSize().height;
+                menu.show(settingsButton, x, y);
+            }
+        });
+
+        optionsPanel.add(settingsButton);
+        optionsPanel.add(Box.createHorizontalStrut(5));
+        optionsPanel.add(searchField);
+
         add(scrollPane, BorderLayout.CENTER);
-        add(searchField, BorderLayout.SOUTH);
+        add(optionsPanel, BorderLayout.SOUTH);
+
         loadPageData();
+    }
+
+    private void performSearch() {
+        // 检查文本字段的字体颜色是否为黑色，表示可以进行搜索
+        if (searchField.getForeground().equals(Color.BLACK)) {
+            // 获取搜索文本
+            String searchText = searchField.getText();
+
+            // 创建行过滤器
+            RowFilter<DefaultTableModel, Object> rowFilter;
+
+            // 检查搜索模式是否为选中状态
+            if (searchMode.isSelected()) {
+                // 反向搜索：创建一个过滤器以排除与正则表达式匹配的行
+                rowFilter = new RowFilter<DefaultTableModel, Object>() {
+                    public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                        // 对每一行的第二列进行判断（假设第二列的索引是1）
+                        String value = (String) entry.getValue(1);
+                        // 如果该列的值不包含搜索文本，则返回true，否则返回false
+                        return searchText.isEmpty() ? true : !value.toLowerCase().contains(searchText.toLowerCase());
+                    }
+                };
+            } else {
+                // 正向搜索：创建一个过滤器以包含与正则表达式匹配的行
+                rowFilter = RowFilter.regexFilter("(?i)" + Pattern.quote(searchText), 1);
+            }
+
+            // 设置过滤器到排序器
+            sorter.setRowFilter(rowFilter);
+        }
     }
 
     // 加载指定页的数据
     private void loadPageData() {
-        if (fullList.size() > SHOW_LENGTH) {
+        if (fullList.size() > SHOW_LENGTH && scrollFlag) {
             int start = currentPage * pageSize;
             int end = Math.min((currentPage + 1) * pageSize, fullList.size());
             int lastRow = model.getRowCount();
@@ -156,6 +246,16 @@ public class DatatablePanel extends JPanel {
                 addRowToTable(model, new Object[]{item});
             }
         }
+    }
+
+    private static void addRowToTable(DefaultTableModel model, Object[] data) {
+        // 获取当前ID
+        int rowCount = model.getRowCount();
+        int id = rowCount > 0 ? (Integer) model.getValueAt(rowCount - 1, 0) + 1 : 1;
+        Object[] rowData = new Object[data.length + 1];
+        rowData[0] = id; // 设置ID列的值
+        System.arraycopy(data, 0, rowData, 1, data.length); // 拷贝其余数据
+        model.addRow(rowData); // 添加行
     }
 
     public void updatePageSize() {
@@ -172,7 +272,7 @@ public class DatatablePanel extends JPanel {
     private int getDynamicSize() {
         int visibleHeight = scrollPane.getViewport().getViewRect().height;
         int rowHeight = table.getRowHeight();
-        return Math.max(1, visibleHeight / rowHeight + 2);
+        return Math.max(1, visibleHeight / rowHeight + 5);
     }
 
     public void setTableListener(MessagePanel messagePanel) {
@@ -185,7 +285,7 @@ public class DatatablePanel extends JPanel {
                 if (e.getClickCount() == 2) {
                     int selectedRow = table.getSelectedRow();
                     if (selectedRow != -1) {
-                        String rowData = table.getValueAt(selectedRow, 0).toString();
+                        String rowData = table.getValueAt(selectedRow, 1).toString();
                         messagePanel.applyMessageFilter(tableName, rowData);
                     }
                 }
@@ -216,16 +316,6 @@ public class DatatablePanel extends JPanel {
         String revData = selectData.reverse().toString().replaceFirst("\n", "");
         StringBuilder retData = new StringBuilder(revData).reverse();
         return retData.toString();
-    }
-
-    private static void addRowToTable(DefaultTableModel model, Object[] data) {
-        // 获取当前ID
-        int rowCount = model.getRowCount();
-        int id = rowCount > 0 ? (Integer) model.getValueAt(rowCount - 1, 0) + 1 : 1;
-        Object[] rowData = new Object[data.length + 1];
-        rowData[0] = id; // 设置ID列的值
-        System.arraycopy(data, 0, rowData, 1, data.length); // 拷贝其余数据
-        model.addRow(rowData); // 添加行
     }
 
     public JTable getTable() {
