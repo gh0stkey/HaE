@@ -50,7 +50,7 @@ public class DatatablePanel extends JPanel {
     private List<String> fullList; // 假设这是一个包含所有数据的列表
     private JScrollPane scrollPane;
     private String tableName;
-    private final int SHOW_LENGTH = 2;
+    private final int SHOW_LENGTH = 5000;
     private JCheckBox searchMode = new JCheckBox("Reverse search");
     private JCheckBox showMode = new JCheckBox("Show all data");
     private boolean scrollFlag = true;
