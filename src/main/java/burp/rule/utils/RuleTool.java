@@ -1,8 +1,6 @@
 package burp.rule.utils;
 
 import burp.*;
-import burp.config.ConfigEntry;
-import burp.config.ConfigLoader;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.Arrays;

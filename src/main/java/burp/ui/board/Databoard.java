@@ -301,9 +301,6 @@ public class Databoard extends JPanel {
                 for (Map.Entry<String, Map<String, List<String>>> entry : dataMap.entrySet()) {
                     JTabbedPane newTabbedPane = new JTabbedPane();
                     newTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-                    if (currentWorker != null && !currentWorker.isDone()) {
-                        currentWorker.cancel(true);
-                    }
 
                     for (Map.Entry<String, List<String>> entrySet : entry.getValue().entrySet()) {
                         currentWorker = new SwingWorker<Object, Void>() {
@@ -322,8 +319,10 @@ public class Databoard extends JPanel {
                                 if (!isCancelled()) {
                                     try {
                                         Object[] result = (Object[]) get();
-                                        newTabbedPane.addTab(result[0].toString(), (DatatablePanel) result[1]);
-                                        dataTabbedPane.addTab(entry.getKey(), newTabbedPane);
+                                        SwingUtilities.invokeLater(() -> {
+                                            newTabbedPane.addTab(result[0].toString(), (DatatablePanel) result[1]);
+                                            dataTabbedPane.addTab(entry.getKey(), newTabbedPane);
+                                        });
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }

@@ -329,8 +329,8 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
                         byte[] reqByteB = reqResMessage.getRequest();
                         byte[] resByteB = reqResMessage.getResponse();
                         try {
-                            // 采用匹配数据结果比对
-                            if (areMapsEqual(getCacheData(reqByteB), getCacheData(reqByteA)) && areMapsEqual(getCacheData(resByteB), getCacheData(resByteA))) {
+                            // 通过URL、请求和响应报文、匹配数据内容，多维度进行对比
+                            if ((entry.getUrl().toString().equals(url.toString()) || (Arrays.equals(reqByteB, reqByteA) || Arrays.equals(resByteB, resByteA))) && (areMapsEqual(getCacheData(reqByteB), getCacheData(reqByteA)) && areMapsEqual(getCacheData(resByteB), getCacheData(resByteA)))) {
                                 isDuplicate = true;
                                 break;
                             }

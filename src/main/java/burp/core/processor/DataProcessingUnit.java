@@ -132,7 +132,7 @@ public class DataProcessingUnit {
                             tmpMap.put("data", dataStr);
                             finalMap.put(nameAndSize, tmpMap);
                             // 添加到全局变量中，便于Databoard检索
-                            if (!Objects.equals(host, "")) {
+                            if (!Objects.equals(host, "") && host != null) {
                                 List<String> dataList = Arrays.asList(dataStr.split("\n"));
                                 if (ConfigEntry.globalDataMap.containsKey(host)) {
                                     Map<String, List<String>> gRuleMap = new HashMap<>(ConfigEntry.globalDataMap.get(host));
