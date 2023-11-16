@@ -120,34 +120,15 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
     public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) {
         // 判断是否是响应，且该代码作用域为：REPEATER、INTRUDER、PROXY（分别对应toolFlag 64、32、4）
         if (toolFlag == 64 || toolFlag == 32 || toolFlag == 4) {
-            byte[] content;
-
-            if (messageIsRequest) {
-                content = messageInfo.getRequest();
-            } else {
-                content = messageInfo.getResponse();
-            }
-
-            IHttpService iHttpService = null;
-
-            String host = "";
-
-            try {
-                iHttpService = messageInfo.getHttpService();
-                host = iHttpService.getHost();
-            } catch (Exception ignored) {
-            }
-
-            if (Objects.equals(host, "")) {
-                host = helpers.analyzeRequest(content).getUrl().getHost();
-            }
-
-            List<Map<String, String>> result = null;
-
-            String originalColor = messageInfo.getHighlight();
-            String originalComment = messageInfo.getComment();
-
             if (!messageIsRequest) {
+                IHttpService iHttpService = messageInfo.getHttpService();
+                String host = iHttpService.getHost();
+
+                List<Map<String, String>> result = null;
+
+                String originalColor = messageInfo.getHighlight();
+                String originalComment = messageInfo.getComment();
+
                 try {
                     result = messageProcessor.processMessage(helpers, messageInfo, host, true);
 
@@ -167,7 +148,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
                         String resComment = mergeComment(allComment);
                         messageInfo.setComment(resComment);
 
-                        messagePanel.add(messageInfo, resComment, String.valueOf(content.length), resColor);
+                        messagePanel.add(messageInfo, resComment, resColor);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

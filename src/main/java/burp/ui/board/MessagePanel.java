@@ -308,13 +308,13 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
         return currentlyDisplayedItem.getHttpService();
     }
 
-    public void add(IHttpRequestResponse messageInfo, String comment, String length, String color) {
+    public void add(IHttpRequestResponse messageInfo, String comment, String color) {
         synchronized(log) {
             IRequestInfo iRequestInfo = helpers.analyzeRequest(messageInfo);
             URL url = iRequestInfo.getUrl();
             String method = iRequestInfo.getMethod();
             String status = String.valueOf(helpers.analyzeResponse(messageInfo.getResponse()).getStatusCode());
-
+            String length = String.valueOf(messageInfo.getResponse().length);
             LogEntry logEntry = new LogEntry(callbacks.saveBuffersToTempFiles(messageInfo), method, url, comment, length, color, status);
 
             try {
