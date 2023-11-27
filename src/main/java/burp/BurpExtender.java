@@ -3,12 +3,10 @@ package burp;
 import burp.config.ConfigLoader;
 import burp.core.processor.ColorProcessor;
 import burp.core.processor.MessageProcessor;
+import burp.core.utils.StringHelper;
 import burp.ui.MainUI;
 import burp.ui.board.DatatablePanel;
 import burp.ui.board.MessagePanel;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.net.URL;
 import java.util.*;
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +36,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.8";
+        String version = "2.5.9";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -74,43 +72,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
     @Override
     public Component getUiComponent() {
-        JTabbedPane HaETabbedPane = new JTabbedPane();
-        HaETabbedPane.addTab("", getImageIcon(false), main);
-        HaETabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations ", null);
-        HaETabbedPane.setEnabledAt(1, false);
-        HaETabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent e) {
-                boolean isDarkBg = isDarkBg();
-                HaETabbedPane.setIconAt(0, getImageIcon(isDarkBg));
-            }
-
-            private boolean isDarkBg() {
-                Color bg = HaETabbedPane.getBackground();
-                int r = bg.getRed();
-                int g = bg.getGreen();
-                int b = bg.getBlue();
-                int avg = (r + g + b) / 3;
-
-                return avg < 128;
-            }
-        });
-        return HaETabbedPane;
-    }
-
-    private ImageIcon getImageIcon(boolean isDark) {
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL imageURL;
-        if (isDark) {
-            imageURL = classLoader.getResource("logo.png");
-        } else {
-            imageURL = classLoader.getResource("logo_black.png");
-        }
-        ImageIcon originalIcon = new ImageIcon(imageURL);
-        Image originalImage = originalIcon.getImage();
-        Image scaledImage = originalImage.getScaledInstance(30, 20, Image.SCALE_FAST);
-        ImageIcon scaledIcon = new ImageIcon(scaledImage);
-        return scaledIcon;
+        return main;
     }
 
     /**
@@ -145,7 +107,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
                         String addComment = String.join(", ", result.get(1).get("comment"));
                         String allComment = !Objects.equals(originalComment, "") ? String.format("%s, %s", originalComment, addComment) : addComment;
-                        String resComment = mergeComment(allComment);
+                        String resComment = StringHelper.mergeComment(allComment);
                         messageInfo.setComment(resComment);
 
                         messagePanel.add(messageInfo, resComment, resColor);
@@ -156,39 +118,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
             }
 
         }
-    }
-
-    private String mergeComment(String comment) {
-        if (!comment.contains(",")) {
-            return comment;
-        }
-
-        Map<String, Integer> itemCounts = new HashMap<>();
-        String[] items = comment.split(", ");
-
-        for (String item : items) {
-            if (item.contains("(") && item.contains(")")) {
-                int openParenIndex = item.lastIndexOf("(");
-                int closeParenIndex = item.lastIndexOf(")");
-                String itemName = item.substring(0, openParenIndex).trim();
-                int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
-                itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
-            } else {
-                itemCounts.put(item, 0);
-            }
-        }
-
-        StringBuilder mergedItems = new StringBuilder();
-
-        for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
-            String itemName = entry.getKey();
-            int count = entry.getValue();
-            if (count != 0) {
-                mergedItems.append(itemName).append(" (").append(count).append("), ");
-            }
-        }
-
-        return mergedItems.substring(0, mergedItems.length() - 2);
     }
 
     class MarkInfoTab implements IMessageEditorTab {
@@ -223,27 +152,27 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
             List<Map<String, String>> result = null;
-
-            try {
-                if (isRequest) {
-                    result = messageProcessor.processRequestMessage(helpers, content, "", false);
-                } else {
-                    result = messageProcessor.processResponseMessage(helpers, content, "", false);
+            if (content.length != 0 && !helpers.bytesToString(content).equals("Loading...")) {
+                try {
+                    if (isRequest) {
+                        result = messageProcessor.processRequestMessage(helpers, content, "", false);
+                    } else {
+                        result = messageProcessor.processResponseMessage(helpers, content, "", false);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-            if (result != null && !result.isEmpty()) {
-                Map<String, String> dataMap = result.get(0);
-                if (isRequest) {
-                    extractRequestMap = dataMap;
-                } else {
-                    extractResponseMap = dataMap;
+                if (result != null && !result.isEmpty()) {
+                    Map<String, String> dataMap = result.get(0);
+                    if (isRequest) {
+                        extractRequestMap = dataMap;
+                    } else {
+                        extractResponseMap = dataMap;
+                    }
+                    return true;
                 }
-                return true;
             }
-
             return false;
         }
 

@@ -6,6 +6,9 @@ import burp.rule.RuleProcessor;
 import burp.ui.board.Databoard;
 import burp.ui.board.MessagePanel;
 import burp.ui.rule.RulePane;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.net.URL;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -134,7 +137,31 @@ public class MainUI extends JPanel {
             mainTabbedPane.addTab("Config", rulePanel);
             mainTabbedPane.addTab("Databoard", this.databoardPanel);
         }
-        add(mainTabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+
+        // 新增Logo
+        JTabbedPane HaETabbedPane = new JTabbedPane();
+        HaETabbedPane.addTab("", getImageIcon(false), mainTabbedPane);
+        HaETabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations ", null);
+        HaETabbedPane.setEnabledAt(1, false);
+        HaETabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent e) {
+                boolean isDarkBg = isDarkBg();
+                HaETabbedPane.setIconAt(0, getImageIcon(isDarkBg));
+            }
+
+            private boolean isDarkBg() {
+                Color bg = HaETabbedPane.getBackground();
+                int r = bg.getRed();
+                int g = bg.getGreen();
+                int b = bg.getBlue();
+                int avg = (r + g + b) / 3;
+
+                return avg < 128;
+            }
+        });
+
+        add(HaETabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(0, 0, 0, 0), 0, 0));
 
@@ -151,6 +178,21 @@ public class MainUI extends JPanel {
         ruleTabbedPane.addMouseListener(ruleSwitch);
         deleteMenuItem.addActionListener(this::closeTabActionPerformed);
         tabMenu.add(deleteMenuItem);
+    }
+
+    private ImageIcon getImageIcon(boolean isDark) {
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL imageURL;
+        if (isDark) {
+            imageURL = classLoader.getResource("logo.png");
+        } else {
+            imageURL = classLoader.getResource("logo_black.png");
+        }
+        ImageIcon originalIcon = new ImageIcon(imageURL);
+        Image originalImage = originalIcon.getImage();
+        Image scaledImage = originalImage.getScaledInstance(30, 20, Image.SCALE_FAST);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        return scaledIcon;
     }
 
     private JTabbedPane ruleTabbedPane;

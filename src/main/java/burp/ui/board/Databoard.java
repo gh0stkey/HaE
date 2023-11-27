@@ -5,8 +5,8 @@ import burp.core.utils.StringHelper;
 import burp.ui.board.MessagePanel.Table;
 
 import java.util.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.event.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -15,8 +15,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 /**
  * @author LinChen && EvilChen
@@ -47,7 +45,6 @@ public class Databoard extends JPanel {
             applyHostFilter(selectedTitle);
         }
     };
-
 
     public Databoard(MessagePanel messagePanel) {
         this.messagePanel = messagePanel;
@@ -94,41 +91,24 @@ public class Databoard extends JPanel {
 
         //---- hostLabel ----
         hostLabel.setText("Host:");
-        add(hostLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+        add(hostLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
-        add(hostTextField, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+        add(hostTextField, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
         clearButton.setText("Clear");
         clearButton.addActionListener(this::clearActionPerformed);
-        add(clearButton,  new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+        add(clearButton,  new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(8, 0, 5, 5), 0, 0));
+
+        hostComboBox.setMaximumRowCount(5);
+        add(hostComboBox, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
 
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setVisible(false);
-
-        add(splitPane, new GridBagConstraints(1, 1, 3, 2, 0.0, 0.0,
+        add(splitPane, new GridBagConstraints(1, 1, 3, 3, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
-
-        hostTextField.setLayout(new BorderLayout());
-        hostTextField.add(hostComboBox, BorderLayout.SOUTH);
-        hostComboBox.setMaximumRowCount(5);
-        hostComboBox.setPreferredSize(new Dimension(super.getPreferredSize().width, 0));
-
-        // 由于主题切换造成的UI组件重绘，而自定义组件没有正确地与之同步，因此需要事件监听来进行同步
-        UIManager.addPropertyChangeListener(evt -> {
-            if ("lookAndFeel".equals(evt.getPropertyName())) {
-                SwingUtilities.invokeLater(() -> {
-                    hostTextField.remove(hostComboBox);
-                    hostTextField.add(hostComboBox, BorderLayout.SOUTH);
-                    hostTextField.revalidate();
-                    hostTextField.repaint();
-                });
-            }
-        });
 
         setAutoMatch();
     }
@@ -156,22 +136,19 @@ public class Databoard extends JPanel {
         hostTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                update(e);
+                filterComboBoxList();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                update(e);
+                filterComboBoxList();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                update(e);
-            }
-
-            public void update(DocumentEvent e) {
                 filterComboBoxList();
             }
+
         });
     }
 
@@ -188,7 +165,6 @@ public class Databoard extends JPanel {
             populateTabbedPaneByHost(selectedHost);
         }
     }
-
     private void handleKeyEvents(KeyEvent e) {
         isMatchHost = true;
         int keyCode = e.getKeyCode();
@@ -197,14 +173,14 @@ public class Databoard extends JPanel {
             e.setKeyCode(KeyEvent.VK_ENTER);
         }
 
-        if (Arrays.asList(KeyEvent.VK_ENTER, KeyEvent.VK_UP, KeyEvent.VK_DOWN).contains(keyCode)) {
-            e.setSource(hostComboBox);
+        if (Arrays.asList(KeyEvent.VK_DOWN, KeyEvent.VK_UP).contains(keyCode)) {
             hostComboBox.dispatchEvent(e);
-            if (keyCode == KeyEvent.VK_ENTER) {
-                updateTextFieldFromComboBox();
-                hostComboBox.setPopupVisible(false);
-                e.consume();
-            }
+        }
+
+        if (keyCode == KeyEvent.VK_ENTER) {
+            isMatchHost = false;
+            handleComboBoxAction(null);
+            hostComboBox.setPopupVisible(false);
         }
 
         if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -212,15 +188,6 @@ public class Databoard extends JPanel {
         }
 
         isMatchHost = false;
-    }
-
-    private void updateTextFieldFromComboBox() {
-        Object selectedItem = hostComboBox.getSelectedItem();
-        if (selectedItem != null) {
-            String selectedHost = selectedItem.toString();
-            hostTextField.setText(selectedHost);
-            populateTabbedPaneByHost(selectedHost);
-        }
     }
 
     private void filterComboBoxList() {
@@ -249,23 +216,27 @@ public class Databoard extends JPanel {
     private void applyHostFilter(String filterText) {
         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) table.getRowSorter();
 
-        if (filterText.contains("*.")) {
-            filterText = StringHelper.replaceFirstOccurrence(filterText, "*.", "");
-        } else if (filterText.contains("*")) {
-            filterText = "";
+        String cleanedText = StringHelper.replaceFirstOccurrence(filterText, "*.", "");
+
+        if (cleanedText.contains("*")) {
+            cleanedText = "";
         }
 
-        RowFilter<TableModel, Integer> filter = RowFilter.regexFilter(filterText, 1);
+        RowFilter<TableModel, Integer> filter = RowFilter.regexFilter(cleanedText, 1);
         sorter.setRowFilter(filter);
-        filterText = filterText.isEmpty() ? "*" : filterText;
 
         messagePanel.applyHostFilter(filterText);
     }
 
     private void populateTabbedPaneByHost(String selectedHost) {
         if (!Objects.equals(selectedHost, "")) {
-            Map<String, Map<String, List<String>>> dataMap = ConfigEntry.globalDataMap;
+            ConcurrentHashMap<String, Map<String, List<String>>> dataMap = ConfigEntry.globalDataMap;
             Map<String, List<String>> selectedDataMap;
+
+            dataTabbedPane.removeAll();
+            dataTabbedPane.setPreferredSize(new Dimension(500,0));
+            dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+            splitPane.setLeftComponent(dataTabbedPane);
 
             if (selectedHost.contains("*")) {
                 // 通配符数据
@@ -291,14 +262,8 @@ public class Databoard extends JPanel {
                 selectedDataMap = dataMap.get(selectedHost);
             }
 
-            dataTabbedPane.removeAll();
-
-            dataTabbedPane.setPreferredSize(new Dimension(500,0));
-            dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-            splitPane.setLeftComponent(dataTabbedPane);
-
             if (selectedHost.equals("**")) {
-                for (Map.Entry<String, Map<String, List<String>>> entry : dataMap.entrySet()) {
+                for (ConcurrentHashMap.Entry<String, Map<String, List<String>>> entry : dataMap.entrySet()) {
                     JTabbedPane newTabbedPane = new JTabbedPane();
                     newTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 

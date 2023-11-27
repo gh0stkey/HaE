@@ -23,9 +23,29 @@ public class MessageProcessor {
 
         List<Map<String, String>> reqObj = processRequestMessage(helpers, requestByte, host, actionFlag);
         List<Map<String, String>> resObj = processResponseMessage(helpers, responseByte, host, actionFlag);
+        List<Map<String, String>> mergedList = new ArrayList<>();
 
-        List<Map<String, String>> mergedList = new ArrayList<>(reqObj);
-        mergedList.addAll(resObj);
+        if (reqObj != null && !reqObj.isEmpty()) {
+            if (resObj != null && !resObj.isEmpty()) {
+                List<String> colorList = new ArrayList<>();
+
+                colorList.add(reqObj.get(0).get("color"));
+                colorList.add(resObj.get(0).get("color"));
+                Map<String, String> colorMap = new HashMap<>();
+                colorMap.put("color", colorProcessor.retrieveFinalColor(colorProcessor.retrieveColorIndices(colorList)));
+
+                Map<String, String> commentMap = new HashMap<>();
+                String commentList = String.format("%s, %s", reqObj.get(1).get("comment"), resObj.get(1).get("comment"));
+                commentMap.put("comment", commentList);
+
+                mergedList.add(0, colorMap);
+                mergedList.add(1, commentMap);
+            } else {
+                mergedList = new ArrayList<>(reqObj);
+            }
+        } else if (resObj != null && !resObj.isEmpty()){
+            mergedList = new ArrayList<>(resObj);
+        }
 
         return mergedList;
     }

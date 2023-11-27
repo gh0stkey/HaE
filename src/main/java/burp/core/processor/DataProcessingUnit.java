@@ -1,5 +1,6 @@
 package burp.core.processor;
 
+import burp.BurpExtender;
 import burp.core.GlobalCachePool;
 import burp.core.utils.HashCalculator;
 import burp.core.utils.MatchTool;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import java.util.concurrent.ConcurrentHashMap;
 import jregex.Matcher;
 import jregex.Pattern;
 
@@ -93,31 +95,37 @@ public class DataProcessingUnit {
                                 break;
                         }
 
-                        if ("nfa".equals(engine)) {
-                            Pattern pattern;
-                            // 判断规则是否大小写敏感
-                            if (sensitive) {
-                                pattern = new Pattern(regex);
-                            } else {
-                                pattern = new Pattern(regex, Pattern.IGNORE_CASE);
-                            }
+                        try {
+                            if ("nfa".equals(engine)) {
+                                Pattern pattern;
+                                // 判断规则是否大小写敏感
+                                if (sensitive) {
+                                    pattern = new Pattern(regex);
+                                } else {
+                                    pattern = new Pattern(regex, Pattern.IGNORE_CASE);
+                                }
 
-                            Matcher matcher = pattern.matcher(matchContent);
-                            while (matcher.find()) {
-                                // 添加匹配数据至list
-                                // 强制用户使用()包裹正则
-                                result.add(matcher.group(1));
+                                Matcher matcher = pattern.matcher(matchContent);
+                                while (matcher.find()) {
+                                    // 添加匹配数据至list
+                                    // 强制用户使用()包裹正则
+                                    result.add(matcher.group(1));
+                                }
+                            } else {
+                                RegExp regexp = new RegExp(regex);
+                                Automaton auto = regexp.toAutomaton();
+                                RunAutomaton runAuto = new RunAutomaton(auto, true);
+                                AutomatonMatcher autoMatcher = runAuto.newMatcher(matchContent);
+                                while (autoMatcher.find()) {
+                                    // 添加匹配数据至list
+                                    // 强制用户使用()包裹正则
+                                    result.add(autoMatcher.group());
+                                }
                             }
-                        } else {
-                            RegExp regexp = new RegExp(regex);
-                            Automaton auto = regexp.toAutomaton();
-                            RunAutomaton runAuto = new RunAutomaton(auto, true);
-                            AutomatonMatcher autoMatcher = runAuto.newMatcher(matchContent);
-                            while (autoMatcher.find()) {
-                                // 添加匹配数据至list
-                                // 强制用户使用()包裹正则
-                                result.add(autoMatcher.group());
-                            }
+                        } catch (Exception e) {
+                            BurpExtender.stdout.println(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, regex));
+                            e.printStackTrace();
+                            continue;
                         }
 
                         // 去除重复内容
@@ -135,7 +143,7 @@ public class DataProcessingUnit {
                             if (!Objects.equals(host, "") && host != null) {
                                 List<String> dataList = Arrays.asList(dataStr.split("\n"));
                                 if (ConfigEntry.globalDataMap.containsKey(host)) {
-                                    Map<String, List<String>> gRuleMap = new HashMap<>(ConfigEntry.globalDataMap.get(host));
+                                    ConcurrentHashMap<String, List<String>> gRuleMap = new ConcurrentHashMap<>(ConfigEntry.globalDataMap.get(host));
                                     if (gRuleMap.containsKey(name)) {
                                         // gDataList为不可变列表，因此需要重新创建一个列表以便于使用addAll方法
                                         List<String> gDataList = gRuleMap.get(name);

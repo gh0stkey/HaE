@@ -182,9 +182,13 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
     public void applyHostFilter(String filterText) {
         filteredLog.clear();
         fireTableDataChanged();
+        String cleanedText = StringHelper.replaceFirstOccurrence(filterText, "*.", "");
+
         for (LogEntry entry : log) {
             String host = entry.getUrl().getHost();
-            if (StringHelper.matchFromEnd(host, filterText) || filterText.contains("*")) {
+            if (filterText.contains("*.") && StringHelper.matchFromEnd(host, cleanedText)) {
+                filteredLog.add(entry);
+            } else if (host.equals(filterText) || filterText.contains("*")) {
                 filteredLog.add(entry);
             }
         }
