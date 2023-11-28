@@ -56,16 +56,6 @@ HaE目前的规则一共有6个字段，分别是规则名称、规则正则、�
 | Config（配置信息管理）    | <img src="images/config.png" style="width: 80%" />    |
 | Databoard（数据集合面板） | <img src="images/databoard.png" style="width: 80%" /> |
 
-## 实际使用
-
-使用 RGPerson 生成测试数据，放入网站根目录文件中: 
-
-![-w467](images/rgperson.jpg)
-
-访问该地址，在`Proxy - HTTP History`中可以看见高亮请求，响应标签页中含有`MarkInfo`标签，其中将匹配到的信息提取了出来。
-
-![-w1047](images/markinfo.png)
-
 ## 文末随笔
 
 正义感是一个不可丢失的东西。
