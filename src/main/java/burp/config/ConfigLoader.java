@@ -143,7 +143,7 @@ public class ConfigLoader {
         Map<String,Object> r = new LinkedHashMap<>();
         r.put("excludeSuffix", excludeSuffix);
         try{
-            Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(RulesFilePath)), StandardCharsets.UTF_8);
+            Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(ConfigFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
             ws.close();
         }catch (Exception ex){
