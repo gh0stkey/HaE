@@ -333,20 +333,6 @@ public class Databoard extends JPanel {
 
             hostTextField.setText(selectedHost);
 
-            ChangeListener changeListener = new ChangeListener() {
-                public void stateChanged(ChangeEvent e) {
-                    JTabbedPane tabSource = (JTabbedPane) e.getSource();
-                    int index = tabSource.getSelectedIndex();
-                    if (index != -1) {
-                        Component selectedComponent = tabSource.getComponentAt(index);
-                        if (selectedComponent instanceof DatatablePanel) {
-                            ((DatatablePanel) selectedComponent).updatePageSize();
-                        }
-                    }
-                }
-            };
-
-            dataTabbedPane.addChangeListener(changeListener);
         }
     }
 }
