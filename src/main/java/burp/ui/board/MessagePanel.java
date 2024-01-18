@@ -44,7 +44,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
     private final List<LogEntry> filteredLog = new ArrayList<LogEntry>();
     private IHttpRequestResponse currentlyDisplayedItem;
     private final IExtensionHelpers helpers;
-    private Table logTable;
+    private final Table logTable;
 
     public MessagePanel(IBurpExtenderCallbacks callbacks, IExtensionHelpers helpers) {
         this.callbacks = callbacks;
@@ -66,6 +66,7 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
                 return age1.compareTo(age2);
             }
         });
+
         // Color字段根据颜色顺序进行排序
         sorter.setComparator(5, new Comparator<String>() {
             @Override

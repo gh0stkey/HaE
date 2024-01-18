@@ -36,7 +36,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.10";
+        String version = "2.5.11";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出
@@ -128,6 +128,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
         private Map<String, String> extractRequestMap;
         private Map<String, String> extractResponseMap;
         private ArrayList<String> titleList = new ArrayList<>();
+        private byte[] message;
 
         public MarkInfoTab(IMessageEditorController controller, boolean editable) {
             this.controller = controller;
@@ -151,6 +152,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public boolean isEnabled(byte[] content, boolean isRequest) {
+            this.message = content;
             List<Map<String, String>> result = null;
             if (content.length != 0 && !helpers.bytesToString(content).equals("Loading...")) {
                 try {
@@ -178,7 +180,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         @Override
         public byte[] getMessage() {
-            return null;
+            return message;
         }
 
         @Override

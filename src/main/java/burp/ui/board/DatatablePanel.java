@@ -163,33 +163,25 @@ public class DatatablePanel extends JPanel {
     }
 
     private void performSearch() {
-        // 检查文本字段的字体颜色是否为黑色，表示可以进行搜索
         if (searchField.getForeground().equals(Color.BLACK)) {
-            // 获取搜索文本
-            String searchText = searchField.getText();
-
-            // 创建行过滤器
-            RowFilter<DefaultTableModel, Object> rowFilter;
-
-            // 检查搜索模式是否为选中状态
-            if (searchMode.isSelected()) {
-                // 反向搜索：创建一个过滤器以排除与正则表达式匹配的行
-                rowFilter = new RowFilter<DefaultTableModel, Object>() {
-                    public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
-                        // 对每一行的第二列进行判断（假设第二列的索引是1）
-                        String entryValue = (String) entry.getValue(1);
-                        // 如果该列的值不包含搜索文本，则返回true，否则返回false
-                        Pattern pattern = new Pattern(searchText, REFlags.IGNORE_CASE);
-
-                        return searchText.isEmpty() || !pattern.matcher(entryValue).find();
+            RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
+                public boolean include(Entry<?, ?> entry) {
+                    String searchFieldTextText = searchField.getText();
+                    Pattern pattern = null;
+                    try {
+                        pattern = new Pattern(searchFieldTextText, REFlags.IGNORE_CASE);
+                    } catch (Exception ignored) {
                     }
-                };
-            } else {
-                // 正向搜索：创建一个过滤器以包含与正则表达式匹配的行
-                rowFilter = RowFilter.regexFilter(String.format("(?i)%s", searchText), 1);
-            }
 
-            // 设置过滤器到排序器
+                    String entryValue = ((String) entry.getValue(1)).toLowerCase();
+                    searchFieldTextText = searchFieldTextText.toLowerCase();
+                    if (pattern != null) {
+                        return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find() != searchMode.isSelected();
+                    } else {
+                        return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
+                    }
+                }
+            };
             sorter.setRowFilter(rowFilter);
         }
     }
@@ -231,10 +223,13 @@ public class DatatablePanel extends JPanel {
         for (int row : selectRows) {
             selectData.append(table.getValueAt(row, 1).toString()).append("\n");
         }
+
         // 便于单行复制，去除最后一个换行符
-        String revData = selectData.reverse().toString().replaceFirst("\n", "");
-        StringBuilder retData = new StringBuilder(revData).reverse();
-        return retData.toString();
+        if (selectData.length() > 0){
+            selectData.deleteCharAt(selectData.length() - 1);
+        }
+
+        return selectData.toString();
     }
 
     public JTable getTable() {

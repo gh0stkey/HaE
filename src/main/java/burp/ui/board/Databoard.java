@@ -76,7 +76,6 @@ public class Databoard extends JPanel {
     }
 
     private void initComponents() {
-        // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
         hostLabel = new JLabel();
         hostTextField = new JTextField();
         dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -165,6 +164,7 @@ public class Databoard extends JPanel {
             populateTabbedPaneByHost(selectedHost);
         }
     }
+    
     private void handleKeyEvents(KeyEvent e) {
         isMatchHost = true;
         int keyCode = e.getKeyCode();
@@ -313,17 +313,25 @@ public class Databoard extends JPanel {
             // 展示请求消息表单
             JSplitPane messageSplitPane = this.messagePanel.getPanel();
             this.splitPane.setRightComponent(messageSplitPane);
-            // 获取字段
             table = this.messagePanel.getTable();
 
-            // 设置对应字段宽度
-            TableColumnModel columnModel = table.getColumnModel();
-            TableColumn column = columnModel.getColumn(1);
-            column.setPreferredWidth(300);
-            column = columnModel.getColumn(2);
-            column.setPreferredWidth(300);
+            this.splitPane.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    splitPane.setDividerLocation(0.4);
+                    TableColumnModel columnModel = table.getColumnModel();
+                    int totalWidth = (int) (getWidth() * 0.6);
+                    columnModel.getColumn(0).setPreferredWidth((int) (totalWidth * 0.1));
+                    columnModel.getColumn(1).setPreferredWidth((int) (totalWidth * 0.3));
+                    columnModel.getColumn(2).setPreferredWidth((int) (totalWidth * 0.3));
+                    columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.1));
+                    columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
+                    columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
+                }
+            });
 
             splitPane.setVisible(true);
+
             applyHostFilter(selectedHost);
 
             // 主动调用一次stateChanged，使得dataTabbedPane可以精准展示内容
