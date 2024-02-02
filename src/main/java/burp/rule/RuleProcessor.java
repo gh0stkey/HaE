@@ -33,7 +33,9 @@ public class RuleProcessor {
                             (String) objects[3],
                             (String) objects[4],
                             (String) objects[5],
-                            (boolean) objects[6]))
+                            (String) objects[6],
+                            (String) objects[7],
+                            (boolean) objects[8]))
                     .collect(Collectors.toList());
             ruleGroupList.add(new RuleGroup(k, ruleList));
         });
@@ -80,17 +82,20 @@ public class RuleProcessor {
         ConfigEntry.globalRules.remove(Rules);
         this.rulesFormatAndSave();
     }
+
     public String newRule() {
         int i = 0;
         String name = "New ";
         Object[][] data = new Object[][] {
                 {
-                    false, "New Name", "(New Regex)", "gray", "any", "nfa", false
+                    false, "New Name", "(First Regex)", "(Second Regex)", "{0}", "gray", "any", "nfa", false
                 }
         };
+
         while (ConfigEntry.globalRules.containsKey(name + i)) {
             i++;
         }
+
         ConfigEntry.globalRules.put(name + i, data);
         this.rulesFormatAndSave();
         return name + i;

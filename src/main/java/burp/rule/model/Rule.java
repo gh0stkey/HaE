@@ -10,11 +10,13 @@ import java.util.Map;
 public class Rule {
     private Map<String, Object> fields;
 
-    public Rule(boolean loaded, String name, String regex, String color, String scope, String engine, boolean sensitive) {
+    public Rule(boolean loaded, String name, String f_regex, String s_regex, String format, String color, String scope, String engine, boolean sensitive) {
         fields = new LinkedHashMap<>();
         fields.put("name", name);
         fields.put("loaded", loaded);
-        fields.put("regex", regex);
+        fields.put("f_regex", f_regex);
+        fields.put("s_regex", s_regex);
+        fields.put("format", format);
         fields.put("color", color);
         fields.put("scope", scope);
         fields.put("engine", engine);

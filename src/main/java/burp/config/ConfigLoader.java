@@ -112,7 +112,7 @@ public class ConfigLoader {
     public static Map<String, Object[][]> getRules() {
         Map<String, Object> rulesMap = YamlTool.loadYaml(getRulesFilePath());
         Map<String, Object[][]> resRule = new HashMap<>();
-        String[] fieldKeys = {"loaded", "name", "regex", "color", "scope", "engine", "sensitive"};
+        String[] fieldKeys = {"loaded", "name", "f_regex", "s_regex", "format", "color", "scope", "engine", "sensitive"};
 
         Object rulesObj = rulesMap.get("rules");
         if (rulesObj instanceof List) {

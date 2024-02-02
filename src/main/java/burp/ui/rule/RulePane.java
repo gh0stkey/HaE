@@ -20,7 +20,7 @@ public class RulePane extends JPanel {
     private DefaultTableModel model = createModel();
     private static final int YES_OPTION = JOptionPane.YES_OPTION;
     private static final String[] TITLE = {
-            "Loaded", "Name", "Regex", "Color", "Scope", "Engine", "Sensitive"
+            "Loaded", "Name", "F-Regex", "S-Regex", "Format", "Color", "Scope", "Engine", "Sensitive"
     };
 
     public RulePane(Object[][] data, JTabbedPane pane) {
@@ -44,14 +44,19 @@ public class RulePane extends JPanel {
     private void updateModel() {
         model = (DefaultTableModel) ruleTable.getModel();
     }
+
     private void ruleAddActionPerformed(ActionEvent e, JTabbedPane pane) {
         RuleSetting ruleSettingPanel = new RuleSetting();
+        ruleSettingPanel.formatTextField.setText("{0}");
+
         int showState = JOptionPane.showConfirmDialog(null, ruleSettingPanel, "Add Rule", JOptionPane.OK_OPTION);
         if (showState == YES_OPTION) {
             Vector<Object> ruleData = new Vector<>();
             ruleData.add(false);
             ruleData.add(ruleSettingPanel.ruleNameTextField.getText());
-            ruleData.add(ruleSettingPanel.regexTextField.getText());
+            ruleData.add(ruleSettingPanel.firstRegexTextField.getText());
+            ruleData.add(ruleSettingPanel.secondRegexTextField.getText());
+            ruleData.add(ruleSettingPanel.formatTextField.getText());
             ruleData.add(ruleSettingPanel.colorComboBox.getSelectedItem().toString());
             ruleData.add(ruleSettingPanel.scopeComboBox.getSelectedItem().toString());
             ruleData.add(ruleSettingPanel.engineComboBox.getSelectedItem().toString());
@@ -66,13 +71,15 @@ public class RulePane extends JPanel {
         if (ruleTable.getSelectedRowCount() >= 1){
             RuleSetting ruleSettingPanel = new RuleSetting();
             ruleSettingPanel.ruleNameTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 1).toString());
-            ruleSettingPanel.regexTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 2).toString());
-            ruleSettingPanel.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 3).toString());
-            ruleSettingPanel.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 4).toString());
-            ruleSettingPanel.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
-            ruleSettingPanel.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),6));
+            ruleSettingPanel.firstRegexTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 2).toString());
+            ruleSettingPanel.secondRegexTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 3).toString());
+            ruleSettingPanel.formatTextField.setText(ruleTable.getValueAt(ruleTable.getSelectedRow(), 4).toString());
+            ruleSettingPanel.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
+            ruleSettingPanel.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 6).toString());
+            ruleSettingPanel.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 7).toString());
+            ruleSettingPanel.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),8));
 
-            ruleSettingPanel.sensitiveComboBox.setEnabled(
+            ruleSettingPanel.formatTextField.setEnabled(
                 ruleSettingPanel.engineComboBox.getSelectedItem().toString().equals("nfa")
             );
 
@@ -80,11 +87,13 @@ public class RulePane extends JPanel {
             if (showState == 0){
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.setValueAt(ruleSettingPanel.ruleNameTextField.getText(), select, 1);
-                model.setValueAt(ruleSettingPanel.regexTextField.getText(), select, 2);
-                model.setValueAt(ruleSettingPanel.colorComboBox.getSelectedItem().toString(), select, 3);
-                model.setValueAt(ruleSettingPanel.scopeComboBox.getSelectedItem().toString(), select, 4);
-                model.setValueAt(ruleSettingPanel.engineComboBox.getSelectedItem().toString(), select, 5);
-                model.setValueAt(ruleSettingPanel.sensitiveComboBox.getSelectedItem(), select, 6);
+                model.setValueAt(ruleSettingPanel.firstRegexTextField.getText(), select, 2);
+                model.setValueAt(ruleSettingPanel.secondRegexTextField.getText(), select, 3);
+                model.setValueAt(ruleSettingPanel.formatTextField.getText(), select, 4);
+                model.setValueAt(ruleSettingPanel.colorComboBox.getSelectedItem().toString(), select, 5);
+                model.setValueAt(ruleSettingPanel.scopeComboBox.getSelectedItem().toString(), select, 6);
+                model.setValueAt(ruleSettingPanel.engineComboBox.getSelectedItem().toString(), select, 7);
+                model.setValueAt(ruleSettingPanel.sensitiveComboBox.getSelectedItem(), select, 8);
                 model = (DefaultTableModel) ruleTable.getModel();
                 ruleProcessor.changeRule((Vector) model.getDataVector().get(select), select, pane.getTitleAt(pane.getSelectedIndex()));
             }
@@ -93,7 +102,7 @@ public class RulePane extends JPanel {
 
     private void ruleRemoveActionPerformed(ActionEvent e, JTabbedPane pane){
         if (ruleTable.getSelectedRowCount() >= 1){
-            int isOk = JOptionPane.showConfirmDialog(null, "Are your sure?", "Delete Rule", JOptionPane.OK_OPTION);
+            int isOk = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this rule?", "Info", JOptionPane.OK_OPTION);
             if (isOk == 0){
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.removeRow(select);

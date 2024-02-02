@@ -16,11 +16,13 @@ import burp.core.utils.StringHelper;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -216,61 +218,86 @@ public class MessagePanel extends AbstractTableModel implements IMessageEditorCo
             int responseBodyOffset = helpers.analyzeResponse(responseByte).getBodyOffset();
             String responseBody = new String(Arrays.copyOfRange(responseByte, responseBodyOffset, responseByte.length), StandardCharsets.UTF_8);
 
-            final boolean[] isMatched = {false}; // 标志变量，表示是否满足过滤条件
+            // 标志变量，表示是否满足过滤条件
+            AtomicBoolean isMatched = new AtomicBoolean(false);
 
             ConfigEntry.globalRules.keySet().forEach(i -> {
                 for (Object[] objects : ConfigEntry.globalRules.get(i)) {
                     String name = objects[1].toString();
-                    String scope = objects[4].toString();
-                    if (name.contains(tableName)) {
-                        boolean match = false; // 标志变量，表示当前规则是否匹配
+                    String format = objects[4].toString();
+                    String scope = objects[6].toString();
 
-                        switch (scope) {
-                            case "any":
-                                match = requestString.contains(filterText) || responseString.contains(filterText);
-                                break;
-                            case "request":
-                                match = requestString.contains(filterText);
-                                break;
-                            case "response":
-                                match = responseString.contains(filterText);
-                                break;
-                            case "any header":
-                                match = requestHeaders.contains(filterText) || responseHeaders.contains(filterText);
-                                break;
-                            case "request header":
-                                match = requestHeaders.contains(filterText);
-                                break;
-                            case "response header":
-                                match = responseHeaders.contains(filterText);
-                                break;
-                            case "any body":
-                                match = requestBody.contains(filterText) || responseBody.contains(filterText);
-                                break;
-                            case "request body":
-                                match = requestBody.contains(filterText);
-                                break;
-                            case "response body":
-                                match = responseBody.contains(filterText);
-                                break;
-                            default:
-                                break;
-                        }
+                    // 从注释中查看是否包含当前规则名，包含的再进行查询，有效减少无意义的检索时间
+                    if (entry.getComment().contains(name)) {
+                        if (name.equals(tableName)) {
+                            // 标志变量，表示当前规则是否匹配
+                            boolean isMatch = false;
 
-                        if (match) {
-                            isMatched[0] = true;
+                            switch (scope) {
+                                case "any":
+                                    isMatch = matchingString(format, filterText, requestString) || matchingString(format, filterText, responseString);
+                                    break;
+                                case "request":
+                                    isMatch = matchingString(format, filterText, requestString);
+                                    break;
+                                case "response":
+                                    isMatch = matchingString(format, filterText, responseString);
+                                    break;
+                                case "any header":
+                                    isMatch = matchingString(format, filterText, requestHeaders) || matchingString(format, filterText, responseHeaders);
+                                    break;
+                                case "request header":
+                                    isMatch = matchingString(format, filterText, requestHeaders);
+                                    break;
+                                case "response header":
+                                    isMatch = matchingString(format, filterText, responseHeaders);
+                                    break;
+                                case "any body":
+                                    isMatch = matchingString(format, filterText, requestBody) || matchingString(format, filterText, responseBody);
+                                    break;
+                                case "request body":
+                                    isMatch = matchingString(format, filterText, requestBody);
+                                    break;
+                                case "response body":
+                                    isMatch = matchingString(format, filterText, responseBody);
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            isMatched.set(isMatch);
                             break;
                         }
                     }
                 }
             });
 
-            if (isMatched[0]) {
+            if (isMatched.get()) {
                 filteredLog.add(entry);
             }
         }
         fireTableDataChanged();
         logTable.lastSelectedIndex = -1;
+    }
+
+    private boolean matchingString(String format, String filterText, String target) {
+        boolean isMatch = true;
+
+        try {
+            MessageFormat mf = new MessageFormat(format);
+            Object[] parsedObjects = mf.parse(filterText);
+
+            for (Object parsedObject : parsedObjects) {
+                if (!target.contains(parsedObject.toString())) {
+                    isMatch = false;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            isMatch = false;
+        }
+
+        return isMatch;
     }
 
     public void deleteByHost(String filterText) {

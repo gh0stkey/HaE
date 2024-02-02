@@ -12,6 +12,7 @@ import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
 import java.util.*;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,13 +67,16 @@ public class DataProcessingUnit {
                     List<String> result = new ArrayList<>();
                     Map<String, Object> tmpMap = new HashMap<>();
 
-                    String name = objects[1].toString();
                     boolean loaded = (Boolean) objects[0];
-                    String regex = objects[2].toString();
-                    String color = objects[3].toString();
-                    String scope = objects[4].toString();
-                    String engine = objects[5].toString();
-                    boolean sensitive = (Boolean) objects[6];
+                    String name = objects[1].toString();
+                    String f_regex = objects[2].toString();
+                    String s_regex = objects[3].toString();
+                    String format = objects[4].toString();
+                    String color = objects[5].toString();
+                    String scope = objects[6].toString();
+                    String engine = objects[7].toString();
+                    boolean sensitive = (Boolean) objects[8];
+
                     // 判断规则是否开启与作用域
                     if (loaded && (scope.contains(scopeString) || scope.contains("any"))) {
                         switch (scope) {
@@ -96,34 +100,9 @@ public class DataProcessingUnit {
                         }
 
                         try {
-                            if ("nfa".equals(engine)) {
-                                Pattern pattern;
-                                // 判断规则是否大小写敏感
-                                if (sensitive) {
-                                    pattern = new Pattern(regex);
-                                } else {
-                                    pattern = new Pattern(regex, Pattern.IGNORE_CASE);
-                                }
-
-                                Matcher matcher = pattern.matcher(matchContent);
-                                while (matcher.find()) {
-                                    // 添加匹配数据至list
-                                    // 强制用户使用()包裹正则
-                                    result.add(matcher.group(1));
-                                }
-                            } else {
-                                RegExp regexp = new RegExp(regex);
-                                Automaton auto = regexp.toAutomaton();
-                                RunAutomaton runAuto = new RunAutomaton(auto, true);
-                                AutomatonMatcher autoMatcher = runAuto.newMatcher(matchContent);
-                                while (autoMatcher.find()) {
-                                    // 添加匹配数据至list
-                                    // 强制用户使用()包裹正则
-                                    result.add(autoMatcher.group());
-                                }
-                            }
+                            result.addAll(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
                         } catch (Exception e) {
-                            BurpExtender.stdout.println(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, regex));
+                            BurpExtender.stdout.println(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, f_regex));
                             e.printStackTrace();
                             continue;
                         }
@@ -190,6 +169,122 @@ public class DataProcessingUnit {
             GlobalCachePool.addToCache(messageIndex, finalMap);
             return finalMap;
         }
+    }
 
+    private List<String> matchByRegex(String f_regex, String s_regex, String content, String format, String engine, boolean sensitive) {
+        List<String> retList = new ArrayList<>();
+        if ("nfa".equals(engine)) {
+            Matcher matcher = createPatternMatcher(f_regex, content, sensitive);
+            retList.addAll(extractMatches(s_regex, format, sensitive, matcher));
+        } else {
+            String newContent = content;
+            String newFirstRegex = f_regex;
+            if (!sensitive) {
+                newContent = content.toLowerCase();
+                newFirstRegex = f_regex.toLowerCase();
+            }
+            AutomatonMatcher autoMatcher = createAutomatonMatcher(newFirstRegex, newContent);
+            retList.addAll(extractMatches(s_regex, format, autoMatcher, content));
+        }
+        return retList;
+    }
+
+    private List<String> extractMatches(String s_regex, String format, boolean sensitive, Matcher matcher) {
+        List<String> matches = new ArrayList<>();
+        if (s_regex.isEmpty()) {
+            matches.addAll(getFormatString(matcher, format));
+        } else {
+            while (matcher.find()) {
+                matcher = createPatternMatcher(s_regex, matcher.group(1), sensitive);
+                matches.addAll(getFormatString(matcher, format));
+            }
+        }
+        return matches;
+    }
+
+    private List<String> extractMatches(String s_regex, String format, AutomatonMatcher autoMatcher, String content) {
+        List<String> matches = new ArrayList<>();
+        if (s_regex.isEmpty()) {
+            matches.addAll(getFormatString(autoMatcher, format, content));
+        } else {
+            while (autoMatcher.find()) {
+                autoMatcher = createAutomatonMatcher(s_regex, getSubString(content, autoMatcher.group()));
+                matches.addAll(getFormatString(autoMatcher, format, content));
+            }
+        }
+        return matches;
+    }
+
+    public List<String> getFormatString(Matcher matcher, String format) {
+        List<Integer> indexList = parseIndexesFromString(format);
+        List<String> stringList = new ArrayList<>();
+
+        while (matcher.find()) {
+            Object[] params = indexList.stream().map(i -> {
+                if (matcher.group(i+1) != null) {
+                    return matcher.group(i+1);
+                }
+                return "";
+            }).toArray();
+            stringList.add(MessageFormat.format(reorderIndex(format), params));
+        }
+
+        return stringList;
+    }
+
+    public List<String> getFormatString(AutomatonMatcher matcher, String format, String content) {
+        List<Integer> indexList = parseIndexesFromString(format);
+        List<String> stringList = new ArrayList<>();
+
+        while (matcher.find()) {
+            Object[] params = indexList.stream().map(i -> getSubString(content, matcher.group(i))).toArray();
+            stringList.add(MessageFormat.format(reorderIndex(format), params));
+        }
+
+        return stringList;
+    }
+
+    private Matcher createPatternMatcher(String regex, String content, boolean sensitive) {
+        Pattern pattern = (sensitive) ? new Pattern(regex) : new Pattern(regex, Pattern.IGNORE_CASE);
+        return pattern.matcher(content);
+    }
+
+    private AutomatonMatcher createAutomatonMatcher(String regex, String content) {
+        RegExp regexp = new RegExp(regex);
+        Automaton auto = regexp.toAutomaton();
+        RunAutomaton runAuto = new RunAutomaton(auto, true);
+        return runAuto.newMatcher(content);
+    }
+
+    private LinkedList<Integer> parseIndexesFromString(String input) {
+        LinkedList<Integer> indexes = new LinkedList<>();
+        Pattern pattern = new Pattern("\\{(\\d+)}");
+        Matcher matcher = pattern.matcher(input);
+
+        while (matcher.find()) {
+            indexes.add(Integer.valueOf(matcher.group(1)));
+        }
+
+        return indexes;
+    }
+
+    private String getSubString(String content, String s) {
+        int startIndex = content.toLowerCase().indexOf(s);
+        int endIndex = startIndex + s.length();
+        return content.substring(startIndex, endIndex);
+    }
+
+    private String reorderIndex(String format) {
+        Pattern pattern = new Pattern("\\{(\\d+)}");
+        Matcher matcher = pattern.matcher(format);
+        int count = 0;
+        while (matcher.find()) {
+            String newStr = String.format("{%s}", count);
+            String matchStr = matcher.group(0);
+            format = format.replace(matchStr, newStr);
+            count++;
+        }
+        return format;
     }
 }
+

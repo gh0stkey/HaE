@@ -36,7 +36,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, IMessageEdito
 
         new ConfigLoader();
 
-        String version = "2.5.11";
+        String version = "2.6";
         callbacks.setExtensionName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 定义输出

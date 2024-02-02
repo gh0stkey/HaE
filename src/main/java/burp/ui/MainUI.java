@@ -294,7 +294,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener, Docum
     }
 
     public void newTab(){
-        Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "gray", "any", "nfa", false}};
+        Object[][] data = new Object[][]{{false, "New Name", "(New Regex)", "", "{0}", "gray", "any", "nfa", false}};
         insertTab(ruleEditTabbedPane, ruleProcessor.newRule(),data);
     }
 

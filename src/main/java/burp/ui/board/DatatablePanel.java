@@ -66,7 +66,9 @@ public class DatatablePanel extends JPanel {
         idColumn.setMaxWidth(50);
 
         for (String item : list) {
-            addRowToTable(model, new Object[]{item});
+            if (!item.isEmpty()) {
+                addRowToTable(model, new Object[]{item});
+            }
         }
 
         String defaultText = "Search";

@@ -9,8 +9,9 @@ import burp.config.ConfigEntry;
  */
 
 public class RuleSetting extends JPanel {
-
-    public JTextField regexTextField;
+    public JTextField firstRegexTextField;
+    public JTextField secondRegexTextField;
+    public JTextField formatTextField;
     public JTextField ruleNameTextField;
     public JComboBox<String> scopeComboBox;
     public JComboBox<String> engineComboBox;
@@ -29,21 +30,31 @@ public class RuleSetting extends JPanel {
         addLabel("Name:", 0, c);
         ruleNameTextField = addTextField(0, c);
 
-        addLabel("Regex:", 1, c);
-        regexTextField = addTextField(1, c);
+        addLabel("F-Regex:", 1, c);
+        firstRegexTextField = addTextField(1, c);
 
-        addLabel("Scope:", 2, c);
-        scopeComboBox = addComboBox(ConfigEntry.scopeArray, 2, c);
+        addLabel("S-Regex:", 2, c);
+        secondRegexTextField = addTextField(2, c);
 
-        addLabel("Engine:", 3, c);
-        engineComboBox = addComboBox(ConfigEntry.engineArray, 3, c);
-        engineComboBox.addActionListener(e -> sensitiveComboBox.setEnabled("nfa".equals(engineComboBox.getSelectedItem().toString())));
+        addLabel("Format:", 3, c);
+        formatTextField = addTextField(3, c);
 
-        addLabel("Color:", 4, c);
-        colorComboBox = addComboBox(ConfigEntry.colorArray, 4, c);
+        addLabel("Scope:", 4, c);
+        scopeComboBox = addComboBox(ConfigEntry.scopeArray, 4, c);
 
-        addLabel("Sensitive:", 5, c);
-        sensitiveComboBox = addComboBox(new Boolean[]{true, false}, 5, c);
+        addLabel("Engine:", 5, c);
+        engineComboBox = addComboBox(ConfigEntry.engineArray, 5, c);
+        engineComboBox.addActionListener(e -> {
+            boolean isNfa = "nfa".equals(engineComboBox.getSelectedItem().toString());
+            formatTextField.setEnabled(isNfa);
+            formatTextField.setText(isNfa ? formatTextField.getText() : "{0}");
+        });
+
+        addLabel("Color:", 6, c);
+        colorComboBox = addComboBox(ConfigEntry.colorArray, 6, c);
+
+        addLabel("Sensitive:", 7, c);
+        sensitiveComboBox = addComboBox(new Boolean[]{true, false}, 7, c);
     }
 
     private void addLabel(String text, int y, GridBagConstraints c) {
