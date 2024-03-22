@@ -1,5 +1,6 @@
 package burp.core.processor;
 
+import burp.BurpExtender;
 import burp.IExtensionHelpers;
 import burp.IHttpRequestResponse;
 import burp.IRequestInfo;
@@ -79,20 +80,29 @@ public class MessageProcessor {
         Map<String, Map<String, Object>> obj;
 
         IResponseInfo responseInfo = helpers.analyzeResponse(content);
-        try {
-            String inferredMimeType = String.format("hae.%s", responseInfo.getInferredMimeType().toLowerCase());
-            String statedMimeType = String.format("hae.%s", responseInfo.getStatedMimeType().toLowerCase());
-            if (matcher.matchUrlSuffix(statedMimeType) || matcher.matchUrlSuffix(inferredMimeType)) {
-                return null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
         List<String> responseTmpHeaders = responseInfo.getHeaders();
         String responseHeaders = String.join("\n", responseTmpHeaders);
+
         int responseBodyOffset = responseInfo.getBodyOffset();
         byte[] responseBody = Arrays.copyOfRange(content, responseBodyOffset, content.length);
+
+        if (responseBody.length > 1) {
+            try {
+                // TODO: 需要加入文件头校验来排除静态二进制文件
+                String inferredMimeType = String.format("hae.%s", responseInfo.getInferredMimeType());
+                String statedMimeType = String.format("hae.%s", responseInfo.getStatedMimeType());
+                if (matcher.matchUrlSuffix(statedMimeType) || matcher.matchUrlSuffix(inferredMimeType))
+                {
+                    return null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            return null;
+        }
+
         obj = dataProcessingUnit.matchContentByRegex(content, responseHeaders, responseBody, "response", host);
 
         return getDataList(obj, actionFlag);

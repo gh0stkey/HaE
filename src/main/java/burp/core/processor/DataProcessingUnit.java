@@ -177,6 +177,7 @@ public class DataProcessingUnit {
             Matcher matcher = createPatternMatcher(f_regex, content, sensitive);
             retList.addAll(extractMatches(s_regex, format, sensitive, matcher));
         } else {
+            // DFA不支持格式化输出，因此不关注format
             String newContent = content;
             String newFirstRegex = f_regex;
             if (!sensitive) {
@@ -184,7 +185,7 @@ public class DataProcessingUnit {
                 newFirstRegex = f_regex.toLowerCase();
             }
             AutomatonMatcher autoMatcher = createAutomatonMatcher(newFirstRegex, newContent);
-            retList.addAll(extractMatches(s_regex, format, autoMatcher, content));
+            retList.addAll(extractMatches(s_regex, autoMatcher, content));
         }
         return retList;
     }
@@ -195,21 +196,27 @@ public class DataProcessingUnit {
             matches.addAll(getFormatString(matcher, format));
         } else {
             while (matcher.find()) {
-                matcher = createPatternMatcher(s_regex, matcher.group(1), sensitive);
-                matches.addAll(getFormatString(matcher, format));
+                String matchContent = matcher.group(1);
+                if (!matchContent.isEmpty()) {
+                    matcher = createPatternMatcher(s_regex, matchContent, sensitive);
+                    matches.addAll(getFormatString(matcher, format));
+                }
             }
         }
         return matches;
     }
 
-    private List<String> extractMatches(String s_regex, String format, AutomatonMatcher autoMatcher, String content) {
+    private List<String> extractMatches(String s_regex, AutomatonMatcher autoMatcher, String content) {
         List<String> matches = new ArrayList<>();
         if (s_regex.isEmpty()) {
-            matches.addAll(getFormatString(autoMatcher, format, content));
+            matches.addAll(getFormatString(autoMatcher, content));
         } else {
             while (autoMatcher.find()) {
-                autoMatcher = createAutomatonMatcher(s_regex, getSubString(content, autoMatcher.group()));
-                matches.addAll(getFormatString(autoMatcher, format, content));
+                String s = autoMatcher.group();
+                if (!s.isEmpty()) {
+                    autoMatcher = createAutomatonMatcher(s_regex, getSubString(content, s));
+                    matches.addAll(getFormatString(autoMatcher, content));
+                }
             }
         }
         return matches;
@@ -220,25 +227,29 @@ public class DataProcessingUnit {
         List<String> stringList = new ArrayList<>();
 
         while (matcher.find()) {
-            Object[] params = indexList.stream().map(i -> {
-                if (matcher.group(i+1) != null) {
-                    return matcher.group(i+1);
-                }
-                return "";
-            }).toArray();
-            stringList.add(MessageFormat.format(reorderIndex(format), params));
+            if (!matcher.group(1).isEmpty()) {
+                Object[] params = indexList.stream().map(i -> {
+                    if (!matcher.group(i+1).isEmpty()) {
+                        return matcher.group(i+1);
+                    }
+                    return "";
+                }).toArray();
+
+                stringList.add(MessageFormat.format(reorderIndex(format), params));
+            }
         }
 
         return stringList;
     }
 
-    public List<String> getFormatString(AutomatonMatcher matcher, String format, String content) {
-        List<Integer> indexList = parseIndexesFromString(format);
+    public List<String> getFormatString(AutomatonMatcher matcher, String content) {
         List<String> stringList = new ArrayList<>();
 
         while (matcher.find()) {
-            Object[] params = indexList.stream().map(i -> getSubString(content, matcher.group(i))).toArray();
-            stringList.add(MessageFormat.format(reorderIndex(format), params));
+            String s = matcher.group(0);
+            if (!s.isEmpty()) {
+                stringList.add(getSubString(content, s));
+            }
         }
 
         return stringList;
@@ -262,14 +273,19 @@ public class DataProcessingUnit {
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
-            indexes.add(Integer.valueOf(matcher.group(1)));
+            String index = matcher.group(1);
+            if (!index.isEmpty()) {
+                indexes.add(Integer.valueOf(index));
+            }
         }
 
         return indexes;
     }
 
     private String getSubString(String content, String s) {
-        int startIndex = content.toLowerCase().indexOf(s);
+        byte[] contentByte = BurpExtender.helpers.stringToBytes(content);
+        byte[] sByte = BurpExtender.helpers.stringToBytes(s);
+        int startIndex = BurpExtender.helpers.indexOf(contentByte, sByte, false, 1, contentByte.length);
         int endIndex = startIndex + s.length();
         return content.substring(startIndex, endIndex);
     }
