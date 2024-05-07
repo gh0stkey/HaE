@@ -11,7 +11,7 @@ import java.awt.event.*;
 
 public class Rules extends JTabbedPane {
     private final MontoyaApi api;
-    private final ConfigLoader configLoader;
+    private ConfigLoader configLoader;
     private final RuleProcessor ruleProcessor;
     private final JTextField ruleGroupNameTextField;
 
@@ -101,6 +101,8 @@ public class Rules extends JTabbedPane {
 
     public void reloadRuleGroup() {
         removeAll();
+
+        this.configLoader = new ConfigLoader(api);
         Config.globalRules.keySet().forEach(i-> addTab(i, new Rule(api, configLoader, hae.Config.globalRules.get(i), this)));
         addTab("...", null);
     }

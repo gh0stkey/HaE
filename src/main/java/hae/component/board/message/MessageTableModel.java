@@ -443,8 +443,7 @@ public class MessageTableModel extends AbstractTableModel {
                                 ByteArray[] result = (ByteArray[]) get();
                                 requestEditor.setRequest(HttpRequest.httpRequest(MessageEntry.getRequestResponse().httpService(), result[0]));
                                 responseEditor.setResponse(HttpResponse.httpResponse(result[1]));
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            } catch (Exception ignored) {
                             }
                         }
                     }
