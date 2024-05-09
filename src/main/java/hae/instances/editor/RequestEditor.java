@@ -1,11 +1,11 @@
 package hae.instances.editor;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.core.ByteArray;
+import burp.api.montoya.core.Range;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
-import burp.api.montoya.core.ByteArray;
-import burp.api.montoya.core.Range;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.ui.Selection;
@@ -60,7 +60,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
             HttpRequest request = requestResponse.request();
             if (request != null && !request.bodyToString().equals("Loading...")) {
                 List<Map<String, String>> result = messageProcessor.processRequest("", request, false);
-                jTabbedPane = generateTabbedPaneFromResultMap(api, result);
+                generateTabbedPaneFromResultMap(api, jTabbedPane, result);
                 return jTabbedPane.getTabCount() > 0;
             }
             return false;
@@ -81,7 +81,8 @@ public class RequestEditor implements HttpRequestEditorProvider {
             return new Selection() {
                 @Override
                 public ByteArray contents() {
-                    return ByteArray.byteArray(Datatable.getSelectedData(((Datatable) jTabbedPane.getSelectedComponent()).getDataTable()));
+                    Datatable dataTable = (Datatable) jTabbedPane.getSelectedComponent();
+                    return ByteArray.byteArray(dataTable.getSelectedDataAtTable(dataTable.getDataTable()));
                 }
 
                 @Override
@@ -97,8 +98,8 @@ public class RequestEditor implements HttpRequestEditorProvider {
         }
     }
 
-    public static JTabbedPane generateTabbedPaneFromResultMap(MontoyaApi api, List<Map<String, String>> result) {
-        JTabbedPane tabbedPane = new JTabbedPane();
+    public static void generateTabbedPaneFromResultMap(MontoyaApi api, JTabbedPane tabbedPane, List<Map<String, String>> result) {
+        tabbedPane.removeAll();
         if (result != null && !result.isEmpty() && result.size() > 0) {
             Map<String, String> dataMap = result.get(0);
             if (dataMap != null && !dataMap.isEmpty() && dataMap.size() > 0) {
@@ -109,7 +110,5 @@ public class RequestEditor implements HttpRequestEditorProvider {
                 });
             }
         }
-
-        return tabbedPane;
     }
 }

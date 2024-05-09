@@ -69,6 +69,10 @@ public class RegularMatcher {
                             case "response body":
                                 matchContent = body;
                                 break;
+                            case "request line":
+                            case "response line":
+                                matchContent = message.split("\\r?\\n", 2)[0];
+                                break;
                             default:
                                 break;
                         }

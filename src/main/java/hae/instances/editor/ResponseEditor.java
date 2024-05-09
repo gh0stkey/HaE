@@ -1,13 +1,13 @@
 package hae.instances.editor;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.core.ByteArray;
+import burp.api.montoya.core.Range;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpResponseEditor;
 import burp.api.montoya.ui.editor.extension.HttpResponseEditorProvider;
-import burp.api.montoya.core.ByteArray;
-import burp.api.montoya.core.Range;
 import burp.api.montoya.ui.Selection;
 import hae.component.board.Datatable;
 import hae.instances.http.utils.MessageProcessor;
@@ -59,7 +59,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
             HttpResponse request = requestResponse.response();
             if (request != null && !request.bodyToString().equals("Loading...")) {
                 List<Map<String, String>> result = messageProcessor.processResponse("", request, false);
-                jTabbedPane = RequestEditor.generateTabbedPaneFromResultMap(api, result);
+                RequestEditor.generateTabbedPaneFromResultMap(api, jTabbedPane, result);
                 return jTabbedPane.getTabCount() > 0;
             }
             return false;
@@ -80,7 +80,8 @@ public class ResponseEditor implements HttpResponseEditorProvider {
             return new Selection() {
                 @Override
                 public ByteArray contents() {
-                    return ByteArray.byteArray(Datatable.getSelectedData(((Datatable) jTabbedPane.getSelectedComponent()).getDataTable()));
+                    Datatable dataTable = (Datatable) jTabbedPane.getSelectedComponent();
+                    return ByteArray.byteArray(dataTable.getSelectedDataAtTable(dataTable.getDataTable()));
                 }
 
                 @Override

@@ -55,7 +55,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
             String websocketMessage = webSocketMessage.payload().toString();
             if (!websocketMessage.isEmpty()) {
                 List<Map<String, String>> result = messageProcessor.processMessage("", websocketMessage, false);
-                jTabbedPane = RequestEditor.generateTabbedPaneFromResultMap(api, result);
+                RequestEditor.generateTabbedPaneFromResultMap(api, jTabbedPane, result);
                 return jTabbedPane.getTabCount() > 0;
             }
             return false;
@@ -76,7 +76,8 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
             return new Selection() {
                 @Override
                 public ByteArray contents() {
-                    return ByteArray.byteArray(Datatable.getSelectedData(((Datatable) jTabbedPane.getSelectedComponent()).getDataTable()));
+                    Datatable dataTable = (Datatable) jTabbedPane.getSelectedComponent();
+                    return ByteArray.byteArray(dataTable.getSelectedDataAtTable(dataTable.getDataTable()));
                 }
 
                 @Override

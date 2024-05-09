@@ -2,6 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.message.MessageTableModel;
+import hae.instances.editor.RequestEditor;
 import jregex.Pattern;
 import jregex.REFlags;
 
@@ -29,7 +30,6 @@ public class Datatable extends JPanel {
     public Datatable(MontoyaApi api, String tabName, List<String> dataList) {
         this.api = api;
         this.tabName = tabName;
-
 
         String[] columnNames = {"#", "Information"};
 
@@ -114,19 +114,6 @@ public class Datatable extends JPanel {
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(searchField);
 
-        dataTable.setTransferHandler(new TransferHandler() {
-            @Override
-            public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
-                if (comp instanceof JTable) {
-                    StringSelection stringSelection = new StringSelection(getSelectedData(
-                            (JTable) comp));
-                    clip.setContents(stringSelection, null);
-                } else {
-                    super.exportToClipboard(comp, clip, action);
-                }
-            }
-        });
-
         add(scrollPane, BorderLayout.CENTER);
         add(optionsPanel, BorderLayout.SOUTH);
     }
@@ -186,26 +173,20 @@ public class Datatable extends JPanel {
         }
     }
 
-    public static String getSelectedData(JTable table) {
-        int[] selectRows = table.getSelectedRows();
-        StringBuilder selectData = new StringBuilder();
-        for (int row : selectRows) {
-            selectData.append(table.getValueAt(row, 1).toString()).append("\n");
-        }
-
-        // 便于单行复制，去除最后一个换行符
-        if (!selectData.isEmpty()){
-            selectData.deleteCharAt(selectData.length() - 1);
-        }
-
-        return selectData.toString();
-    }
-
-    public JTable getDataTable() {
-        return this.dataTable;
-    }
-
     public void setTableListener(MessageTableModel messagePanel) {
+        // 表格复制功能
+        dataTable.setTransferHandler(new TransferHandler() {
+            @Override
+            public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
+                if (comp instanceof JTable) {
+                    StringSelection stringSelection = new StringSelection(getSelectedDataAtTable((JTable) comp));
+                    clip.setContents(stringSelection, null);
+                } else {
+                    super.exportToClipboard(comp, clip, action);
+                }
+            }
+        });
+
         dataTable.setDefaultEditor(Object.class, null);
 
         // 表格内容双击事件
@@ -221,6 +202,27 @@ public class Datatable extends JPanel {
                 }
             }
         });
+    }
+
+    public String getSelectedDataAtTable(JTable table) {
+        int[] selectRows = table.getSelectedRows();
+        StringBuilder selectData = new StringBuilder();
+
+        for (int row : selectRows) {
+            selectData.append(table.getValueAt(row, 1).toString()).append("\n");
+        }
+
+        // 便于单行复制，去除最后一个换行符
+        if (!selectData.isEmpty()){
+            selectData.deleteCharAt(selectData.length() - 1);
+            return selectData.toString();
+        } else {
+            return "";
+        }
+    }
+
+    public JTable getDataTable() {
+        return this.dataTable;
     }
 }
 

@@ -13,9 +13,11 @@ public class Config {
             "any header",
             "any body",
             "response",
+            "response line",
             "response header",
             "response body",
             "request",
+            "request line",
             "request header",
             "request body"
     };
