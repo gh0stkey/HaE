@@ -13,7 +13,9 @@
 **注意事项**: 
 
 1. 由于HaE 3.0版本开始采用`Montoya API`进行开发，因此使用新版HaE需要升级你的BurpSuite版本（>=2023.12.1）。
-2. 自定义HaE规则必须用左右括号`()`将所需提取的表达式内容包含，例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，在HaE的规则中就需要变成`(rememberMe=delete)`。
+2. 由于HaE 2.6版本后对规则字段进行了更新，因此无法适配<=2.6版本的规则，请用户自行前往[规则转换页面](https://gh0st.cn/HaE/ConversionRule.html)进行转换。
+3. HaE官方规则库存放在[Github](https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml)上，因此默认加载HaE官方规则库需使用代理（BApp审核不允许使用CDN）。
+4. 自定义HaE规则必须用左右括号`()`将所需提取的表达式内容包含，例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，在HaE的规则中就需要变成`(rememberMe=delete)`。
 
 ## 使用方法
 
