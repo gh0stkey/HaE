@@ -3,12 +3,12 @@ package hae.instances.editor;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.core.ByteArray;
 import burp.api.montoya.core.Range;
-import burp.api.montoya.ui.editor.extension.EditorCreationContext;
-import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
-import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.ui.Selection;
+import burp.api.montoya.ui.editor.extension.EditorCreationContext;
+import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
+import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
 import hae.component.board.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 
@@ -36,10 +36,9 @@ public class RequestEditor implements HttpRequestEditorProvider {
         private final MessageProcessor messageProcessor;
         private HttpRequestResponse requestResponse;
 
-        private JTabbedPane jTabbedPane = new JTabbedPane();
+        private final JTabbedPane jTabbedPane = new JTabbedPane();
 
-        public Editor(MontoyaApi api, EditorCreationContext creationContext)
-        {
+        public Editor(MontoyaApi api, EditorCreationContext creationContext) {
             this.api = api;
             this.creationContext = creationContext;
             this.messageProcessor = new MessageProcessor(api);
@@ -103,7 +102,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
         if (result != null && !result.isEmpty() && result.size() > 0) {
             Map<String, String> dataMap = result.get(0);
             if (dataMap != null && !dataMap.isEmpty() && dataMap.size() > 0) {
-                dataMap.keySet().forEach(i->{
+                dataMap.keySet().forEach(i -> {
                     String[] extractData = dataMap.get(i).split("\n");
                     Datatable dataPanel = new Datatable(api, i, Arrays.asList(extractData));
                     tabbedPane.addTab(i, dataPanel);

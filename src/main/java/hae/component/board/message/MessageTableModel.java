@@ -14,18 +14,14 @@ import hae.cache.CachePool;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
 
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.*;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -37,7 +33,7 @@ public class MessageTableModel extends AbstractTableModel {
     private final JTabbedPane messageTab;
     private final JSplitPane splitPane;
     private final List<MessageEntry> log = new ArrayList<MessageEntry>();
-    private LinkedList<MessageEntry> filteredLog;
+    private final LinkedList<MessageEntry> filteredLog;
 
     public MessageTableModel(MontoyaApi api) {
         this.filteredLog = new LinkedList<>();
@@ -74,6 +70,7 @@ public class MessageTableModel extends AbstractTableModel {
                 int index2 = getIndex(s2);
                 return Integer.compare(index1, index2);
             }
+
             private int getIndex(String color) {
                 for (int i = 0; i < Config.color.length; i++) {
                     if (Config.color[i].equals(color)) {
@@ -96,7 +93,7 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     public void add(HttpRequestResponse messageInfo, String comment, String color) {
-        synchronized(log) {
+        synchronized (log) {
             HttpRequest httpRequest = messageInfo.request();
             String url = httpRequest.url();
             String method = httpRequest.method();
@@ -120,7 +117,7 @@ public class MessageTableModel extends AbstractTableModel {
                         byte[] resByteB = reqResMessage.response().toByteArray().getBytes();
                         try {
                             // 通过URL、请求和响应报文、匹配数据内容，多维度进行对比
-                            if ((entry.getUrl().toString().equals(url.toString()) || (Arrays.equals(reqByteB, reqByteA) || Arrays.equals(resByteB, resByteA))) && (areMapsEqual(getCacheData(reqByteB), getCacheData(reqByteA)) && areMapsEqual(getCacheData(resByteB), getCacheData(resByteA)))) {
+                            if ((entry.getUrl().equals(url) || (Arrays.equals(reqByteB, reqByteA) || Arrays.equals(resByteB, resByteA))) && (areMapsEqual(getCacheData(reqByteB), getCacheData(reqByteA)) && areMapsEqual(getCacheData(resByteB), getCacheData(resByteA)))) {
                                 isDuplicate = true;
                                 break;
                             }
@@ -243,6 +240,14 @@ public class MessageTableModel extends AbstractTableModel {
                                 case "response body":
                                     isMatch = matchingString(format, filterText, responseBody);
                                     break;
+                                case "request line":
+                                    String requestLine = requestString.split("\\r?\\n", 2)[0];
+                                    isMatch = matchingString(format, filterText, requestLine);
+                                    break;
+                                case "response line":
+                                    String responseLine = responseString.split("\\r?\\n", 2)[0];
+                                    isMatch = matchingString(format, filterText, responseLine);
+                                    break;
                                 default:
                                     break;
                             }
@@ -334,13 +339,11 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
 
-    public JSplitPane getSplitPane()
-    {
+    public JSplitPane getSplitPane() {
         return splitPane;
     }
 
-    public MessageTable getMessageTable()
-    {
+    public MessageTable getMessageTable() {
         return messageTable;
     }
 
@@ -360,8 +363,7 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Object getValueAt(int rowIndex, int columnIndex)
-    {
+    public Object getValueAt(int rowIndex, int columnIndex) {
         if (filteredLog.isEmpty()) {
             return "";
         }
@@ -379,8 +381,7 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     @Override
-    public String getColumnName(int columnIndex)
-    {
+    public String getColumnName(int columnIndex) {
         return switch (columnIndex) {
             case 0 -> "Method";
             case 1 -> "URL";

@@ -11,16 +11,19 @@ import hae.component.board.message.MessageTableModel;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.string.StringProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class HttpMessageHandler implements HttpHandler {
     private final MontoyaApi api;
-    private MessageTableModel messageTableModel;
+    private final MessageTableModel messageTableModel;
     private final MessageProcessor messageProcessor;
-    private String host;
 
     // Montoya API对HTTP消息的处理分为了请求和响应，因此此处设置高亮和标记需要使用全局变量的方式，以此兼顾请求和响应
     // 同时采用 ThreadLocal 来保证多线程并发的情况下全局变量的安全性
+    private final ThreadLocal<String> host = ThreadLocal.withInitial(() -> "");
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> commentList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<Boolean> matches = ThreadLocal.withInitial(() -> false);
@@ -41,13 +44,13 @@ public class HttpMessageHandler implements HttpHandler {
 
         httpRequest.set(httpRequestToBeSent);
 
-        host = StringProcessor.getHostByUrl(httpRequestToBeSent.url());
+        host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
 
         List<String> suffixList = Arrays.asList(Config.suffix.split("\\|"));
         matches.set(suffixList.contains(httpRequestToBeSent.fileExtension()));
 
         if (!matches.get()) {
-            List<Map<String, String>> result = messageProcessor.processRequest(host, httpRequestToBeSent, true);
+            List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);
             setColorAndCommentList(result);
         }
 
@@ -59,7 +62,7 @@ public class HttpMessageHandler implements HttpHandler {
         Annotations annotations = httpResponseReceived.annotations();
 
         if (!matches.get()) {
-            List<Map<String, String>> result = messageProcessor.processResponse(host, httpResponseReceived, true);
+            List<Map<String, String>> result = messageProcessor.processResponse(host.get(), httpResponseReceived, true);
             setColorAndCommentList(result);
             // 设置高亮颜色和注释
             if (!colorList.get().isEmpty() && !commentList.get().isEmpty()) {

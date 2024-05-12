@@ -1,15 +1,5 @@
 package hae.utils.config;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
-
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
@@ -17,6 +7,12 @@ import hae.Config;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class ConfigLoader {
     private final MontoyaApi api;
@@ -32,7 +28,7 @@ public class ConfigLoader {
         this.yaml = new Yaml(representer, dop);
 
         String configPath = determineConfigPath();
-        this.configFilePath =  String.format("%s/%s", configPath, "Config.yml");
+        this.configFilePath = String.format("%s/%s", configPath, "Config.yml");
         this.rulesFilePath = String.format("%s/%s", configPath, "Rules.yml");
 
         // 构造函数，初始化配置
@@ -104,7 +100,7 @@ public class ConfigLoader {
             if (r.containsKey("excludeSuffix")) {
                 return r.get("excludeSuffix").toString();
             }
-        }catch (Exception ignored) {
+        } catch (Exception ignored) {
         }
 
         return Config.suffix;
@@ -147,16 +143,16 @@ public class ConfigLoader {
             }
 
             return rules;
-        } catch (Exception ignored){
+        } catch (Exception ignored) {
         }
 
         return rules;
     }
 
     public void setExcludeSuffix(String excludeSuffix) {
-        Map<String,Object> r = new LinkedHashMap<>();
+        Map<String, Object> r = new LinkedHashMap<>();
         r.put("excludeSuffix", excludeSuffix);
-        try{
+        try {
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
             ws.close();

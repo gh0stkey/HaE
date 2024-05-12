@@ -103,7 +103,7 @@ public class Rules extends JTabbedPane {
         removeAll();
 
         this.configLoader = new ConfigLoader(api);
-        Config.globalRules.keySet().forEach(i-> addTab(i, new Rule(api, configLoader, hae.Config.globalRules.get(i), this)));
+        Config.globalRules.keySet().forEach(i -> addTab(i, new Rule(api, configLoader, hae.Config.globalRules.get(i), this)));
         addTab("...", null);
     }
 
@@ -120,7 +120,7 @@ public class Rules extends JTabbedPane {
         }
     }
 
-    private Action renameTitleActionPerformed = new AbstractAction() {
+    private final Action renameTitleActionPerformed = new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
             String title = ruleGroupNameTextField.getText();
@@ -136,7 +136,7 @@ public class Rules extends JTabbedPane {
         }
     };
 
-    private Action cancelActionPerformed = new AbstractAction() {
+    private final Action cancelActionPerformed = new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (selectedIndex >= 0) {

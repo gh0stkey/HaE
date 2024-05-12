@@ -2,21 +2,24 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.message.MessageTableModel;
-import hae.instances.editor.RequestEditor;
 import jregex.Pattern;
 import jregex.REFlags;
 
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Comparator;
 import java.util.List;
-import javax.swing.*;
-import java.awt.datatransfer.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
 
 public class Datatable extends JPanel {
     private final MontoyaApi api;
@@ -213,7 +216,7 @@ public class Datatable extends JPanel {
         }
 
         // 便于单行复制，去除最后一个换行符
-        if (!selectData.isEmpty()){
+        if (!selectData.isEmpty()) {
             selectData.deleteCharAt(selectData.length() - 1);
             return selectData.toString();
         } else {

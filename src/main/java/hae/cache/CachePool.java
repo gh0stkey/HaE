@@ -1,6 +1,7 @@
 package hae.cache;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CachePool {
     private static final Map<String, Map<String, Map<String, Object>>> cache = new HashMap<>();

@@ -202,8 +202,8 @@ public class RegularMatcher {
         while (matcher.find()) {
             if (!matcher.group(1).isEmpty()) {
                 Object[] params = indexList.stream().map(i -> {
-                    if (!matcher.group(i+1).isEmpty()) {
-                        return matcher.group(i+1);
+                    if (!matcher.group(i + 1).isEmpty()) {
+                        return matcher.group(i + 1);
                     }
                     return "";
                 }).toArray();

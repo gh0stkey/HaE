@@ -3,20 +3,21 @@ package hae.component.board;
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
 import hae.component.board.message.MessageTableModel;
-import hae.utils.string.StringProcessor;
-import hae.utils.config.ConfigLoader;
 import hae.component.board.message.MessageTableModel.MessageTable;
+import hae.utils.config.ConfigLoader;
+import hae.utils.string.StringProcessor;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.swing.event.*;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
-import javax.swing.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Databoard extends JPanel {
     private final MontoyaApi api;
@@ -28,8 +29,8 @@ public class Databoard extends JPanel {
     private MessageTable messageTable;
 
     private static Boolean isMatchHost = false;
-    private DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-    private JComboBox hostComboBox = new JComboBox(comboBoxModel);
+    private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+    private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
@@ -41,10 +42,10 @@ public class Databoard extends JPanel {
 
     private void initComponents() {
         setLayout(new GridBagLayout());
-        ((GridBagLayout)getLayout()).columnWidths = new int[] {25, 0, 0, 0,20, 0};
-        ((GridBagLayout)getLayout()).rowHeights = new int[] {0, 65, 20, 0};
-        ((GridBagLayout)getLayout()).columnWeights = new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
-        ((GridBagLayout)getLayout()).rowWeights = new double[] {0.0, 1.0, 0.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).columnWidths = new int[]{25, 0, 0, 0, 20, 0};
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0};
+        ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 1.0E-4};
 
         JLabel hostLabel = new JLabel("Host:");
 
@@ -81,7 +82,7 @@ public class Databoard extends JPanel {
                 new Insets(8, 0, 5, 5), 0, 0));
         add(hostTextField, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
-        add(actionButton,  new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+        add(actionButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
         add(splitPane, new GridBagConstraints(1, 1, 3, 3, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
@@ -196,7 +197,7 @@ public class Databoard extends JPanel {
             Map<String, List<String>> selectedDataMap;
 
             dataTabbedPane.removeAll();
-            dataTabbedPane.setPreferredSize(new Dimension(500,0));
+            dataTabbedPane.setPreferredSize(new Dimension(500, 0));
             dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
             splitPane.setLeftComponent(dataTabbedPane);
 

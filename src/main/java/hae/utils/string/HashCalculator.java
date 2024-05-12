@@ -3,7 +3,7 @@ package hae.utils.string;
 import java.security.MessageDigest;
 
 public class HashCalculator {
-    public static String calculateHash(byte[] bytes){
+    public static String calculateHash(byte[] bytes) {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("MD5");

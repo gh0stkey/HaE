@@ -1,18 +1,17 @@
 package hae.component.board.message;
 
-import java.awt.Color;
-import java.awt.Component;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
 
 public class MessageRenderer extends DefaultTableCellRenderer {
 
-    private List<MessageEntry> log;
-    private Map<String, Color> colorMap = new HashMap<>();
-    private JTable table; // 保存对表格的引用
+    private final List<MessageEntry> log;
+    private final Map<String, Color> colorMap = new HashMap<>();
+    private final JTable table; // 保存对表格的引用
 
     public MessageRenderer(List<MessageEntry> log, JTable table) {
         this.log = log;
@@ -42,7 +41,7 @@ public class MessageRenderer extends DefaultTableCellRenderer {
 
         if (isSelected) {
             // 通过更改RGB颜色来达成阴影效果
-            component.setBackground(new Color(color.getRed()-0x20, color.getGreen()-0x20, color.getBlue()-0x20));
+            component.setBackground(new Color(color.getRed() - 0x20, color.getGreen() - 0x20, color.getBlue() - 0x20));
         } else {
             // 否则使用原始颜色
             component.setBackground(color);

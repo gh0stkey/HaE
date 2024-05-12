@@ -2,11 +2,11 @@ package hae.utils.rule;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
+import hae.utils.config.ConfigLoader;
 import hae.utils.rule.model.Group;
 import hae.utils.rule.model.Info;
-import hae.utils.config.ConfigLoader;
-import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
@@ -72,13 +72,14 @@ public class RuleProcessor {
     public void addRule(Vector data, String type) {
         ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.globalRules.get(type)));
         x.add(data.toArray());
-        Config.globalRules.put(type,x.toArray(new Object[x.size()][]));
+        Config.globalRules.put(type, x.toArray(new Object[x.size()][]));
         this.rulesFormatAndSave();
     }
-    public void removeRule(int select,String type) {
+
+    public void removeRule(int select, String type) {
         ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.globalRules.get(type)));
         x.remove(select);
-        Config.globalRules.put(type,x.toArray(new Object[x.size()][]));
+        Config.globalRules.put(type, x.toArray(new Object[x.size()][]));
         this.rulesFormatAndSave();
     }
 

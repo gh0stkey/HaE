@@ -1,17 +1,16 @@
 package hae.component.rule;
 
 import burp.api.montoya.MontoyaApi;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import javax.swing.table.TableRowSorter;
-import java.util.Vector;
-
 import hae.Config;
 import hae.utils.config.ConfigLoader;
 import hae.utils.rule.RuleProcessor;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Vector;
 
 import static javax.swing.JOptionPane.YES_OPTION;
 
@@ -32,10 +31,10 @@ public class Rule extends JPanel {
 
     private void initComponents(Object[][] data) {
         setLayout(new GridBagLayout());
-        ((GridBagLayout)getLayout()).columnWidths = new int[] {0, 0, 0};
-        ((GridBagLayout)getLayout()).rowHeights = new int[] {0, 0, 0, 0, 0};
-        ((GridBagLayout)getLayout()).columnWeights = new double[] {0.0, 1.0, 1.0E-4};
-        ((GridBagLayout)getLayout()).rowWeights = new double[] {0.0, 0.0, 0.0, 1.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).columnWidths = new int[]{0, 0, 0};
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 0, 0, 0, 0};
+        ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 1.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, 1.0E-4};
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
@@ -74,7 +73,7 @@ public class Rule extends JPanel {
 
         model.setDataVector(data, Config.ruleFields);
         model.addTableModelListener(e -> {
-            if (e.getColumn() == 0 && ruleTable.getSelectedRow() != -1){
+            if (e.getColumn() == 0 && ruleTable.getSelectedRow() != -1) {
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 ruleProcessor.changeRule(model.getDataVector().get(select), select, tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()));
             }
@@ -117,8 +116,8 @@ public class Rule extends JPanel {
         }
     }
 
-    private void ruleEditActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane){
-        if (ruleTable.getSelectedRowCount() >= 1){
+    private void ruleEditActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane) {
+        if (ruleTable.getSelectedRowCount() >= 1) {
             DefaultTableModel model = (DefaultTableModel) ruleTable.getModel();
             Display ruleDisplay = new Display();
 
@@ -129,12 +128,12 @@ public class Rule extends JPanel {
             ruleDisplay.colorComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 5).toString());
             ruleDisplay.scopeComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 6).toString());
             ruleDisplay.engineComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 7).toString());
-            ruleDisplay.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(),8));
+            ruleDisplay.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(ruleTable.getSelectedRow(), 8));
 
             ruleDisplay.formatTextField.setEnabled(ruleDisplay.engineComboBox.getSelectedItem().toString().equals("nfa"));
 
             int showState = JOptionPane.showConfirmDialog(null, ruleDisplay, "Edit Rule", JOptionPane.OK_OPTION);
-            if (showState == 0){
+            if (showState == 0) {
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.setValueAt(ruleDisplay.ruleNameTextField.getText(), select, 1);
                 model.setValueAt(ruleDisplay.firstRegexTextField.getText(), select, 2);
@@ -150,9 +149,9 @@ public class Rule extends JPanel {
         }
     }
 
-    private void ruleRemoveActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane){
-        if (ruleTable.getSelectedRowCount() >= 1){
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this rule?", "Info", JOptionPane.OK_OPTION) == 0){
+    private void ruleRemoveActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane) {
+        if (ruleTable.getSelectedRowCount() >= 1) {
+            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this rule?", "Info", JOptionPane.OK_OPTION) == 0) {
                 DefaultTableModel model = (DefaultTableModel) ruleTable.getModel();
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
 

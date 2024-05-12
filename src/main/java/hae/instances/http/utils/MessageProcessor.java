@@ -24,6 +24,7 @@ public class MessageProcessor {
 
     public List<Map<String, String>> processMessage(String host, String message, boolean flag) {
         Map<String, Map<String, Object>> obj = null;
+
         try {
             obj = regularMatcher.match(host, "any", message, message, message);
         } catch (Exception ignored) {
@@ -34,6 +35,7 @@ public class MessageProcessor {
 
     public List<Map<String, String>> processResponse(String host, HttpResponse httpResponse, boolean flag) {
         Map<String, Map<String, Object>> obj = null;
+
         try {
             String response = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
             String body = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
@@ -57,6 +59,7 @@ public class MessageProcessor {
             String header = httpRequest.headers().stream()
                     .map(HttpHeader::toString)
                     .collect(Collectors.joining("\n"));
+
             obj = regularMatcher.match(host, "request", request, header, body);
         } catch (Exception ignored) {
         }
@@ -99,6 +102,7 @@ public class MessageProcessor {
             String data = tempMap.get("data").toString();
             extractedData.put(key, data);
         });
+
         return extractedData;
     }
 
@@ -114,10 +118,11 @@ public class MessageProcessor {
         List<List<String>> result = new ArrayList<>();
         result.add(colorList);
         result.add(commentList);
+
         return result;
     }
 
-    public List<Integer> retrieveColorIndices(List<String> colors){
+    public List<Integer> retrieveColorIndices(List<String> colors) {
         List<Integer> indices = new ArrayList<>();
         String[] colorArray = Config.color;
         int size = colorArray.length;
@@ -129,6 +134,7 @@ public class MessageProcessor {
                 }
             }
         }
+
         return indices;
     }
 
@@ -154,7 +160,7 @@ public class MessageProcessor {
         HashSet tmpList = new HashSet(stack);
         if (stack.size() == tmpList.size()) {
             stack.sort(Comparator.comparingInt(Integer::intValue));
-            if(stack.get(0) < 0) {
+            if (stack.get(0) < 0) {
                 finalColor = colorArray[0];
             } else {
                 finalColor = colorArray[stack.get(0)];
