@@ -250,12 +250,18 @@ public class Databoard extends JPanel {
 
         String cleanedText = StringProcessor.replaceFirstOccurrence(filterText, "*.", "");
 
-        if (cleanedText.contains("*")) {
-            cleanedText = "";
-        }
+        RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
+            public boolean include(Entry<?, ?> entry) {
+                if (cleanedText.equals("*")) {
+                    return true;
+                } else {
+                    String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
+                    return StringProcessor.matchFromEnd(host, cleanedText);
+                }
+            }
+        };
 
-        RowFilter<TableModel, Integer> filter = RowFilter.regexFilter(cleanedText, 1);
-        sorter.setRowFilter(filter);
+        sorter.setRowFilter(rowFilter);
 
         messageTableModel.applyHostFilter(filterText);
     }

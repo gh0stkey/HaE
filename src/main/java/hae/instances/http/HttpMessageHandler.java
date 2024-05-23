@@ -6,9 +6,10 @@ import burp.api.montoya.core.HighlightColor;
 import burp.api.montoya.http.handler.*;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
-import hae.Config;
 import hae.component.board.message.MessageTableModel;
+import hae.instances.editor.RequestEditor;
 import hae.instances.http.utils.MessageProcessor;
+import hae.utils.config.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 public class HttpMessageHandler implements HttpHandler {
     private final MontoyaApi api;
+    private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final MessageProcessor messageProcessor;
 
@@ -29,8 +31,9 @@ public class HttpMessageHandler implements HttpHandler {
     private final ThreadLocal<Boolean> matches = ThreadLocal.withInitial(() -> false);
     private final ThreadLocal<HttpRequest> httpRequest = new ThreadLocal<>();
 
-    public HttpMessageHandler(MontoyaApi api, MessageTableModel messageTableModel) {
+    public HttpMessageHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
+        this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.messageProcessor = new MessageProcessor(api);
     }
@@ -46,8 +49,11 @@ public class HttpMessageHandler implements HttpHandler {
 
         host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
 
-        List<String> suffixList = Arrays.asList(Config.suffix.split("\\|"));
-        matches.set(suffixList.contains(httpRequestToBeSent.fileExtension()));
+        String[] hostList = configLoader.getBlockHost().split("\\|");
+        boolean isBlockHost = RequestEditor.isBlockHost(hostList, host.get());
+
+        List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
+        matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost);
 
         if (!matches.get()) {
             List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);

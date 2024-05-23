@@ -2,8 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.message.MessageTableModel;
-import jregex.Pattern;
-import jregex.REFlags;
+import hae.utils.ui.UIEnhancer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -14,12 +13,11 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Datatable extends JPanel {
     private final MontoyaApi api;
@@ -66,7 +64,7 @@ public class Datatable extends JPanel {
 
         // 设置灰色默认文本
         String searchText = "Search";
-        addPlaceholder(searchField, searchText);
+        UIEnhancer.setTextFieldPlaceholder(searchField, searchText);
 
         // 监听输入框内容输入、更新、删除
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -121,28 +119,6 @@ public class Datatable extends JPanel {
         add(optionsPanel, BorderLayout.SOUTH);
     }
 
-    public static void addPlaceholder(JTextField textField, String placeholderText) {
-        textField.setForeground(Color.GRAY);
-        textField.setText(placeholderText);
-        textField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (textField.getText().equals(placeholderText)) {
-                    textField.setText("");
-                    textField.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (textField.getText().isEmpty()) {
-                    textField.setForeground(Color.GRAY);
-                    textField.setText(placeholderText);
-                }
-            }
-        });
-    }
-
     private void addRowToTable(Object[] data) {
         int rowCount = dataTableModel.getRowCount();
         int id = rowCount > 0 ? (Integer) dataTableModel.getValueAt(rowCount - 1, 0) + 1 : 1;
@@ -159,7 +135,7 @@ public class Datatable extends JPanel {
                     String searchFieldTextText = searchField.getText();
                     Pattern pattern = null;
                     try {
-                        pattern = new Pattern(searchFieldTextText, REFlags.IGNORE_CASE);
+                        pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
                     } catch (Exception ignored) {
                     }
 

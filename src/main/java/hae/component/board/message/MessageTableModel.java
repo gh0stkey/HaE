@@ -290,7 +290,7 @@ public class MessageTableModel extends AbstractTableModel {
 
     private Map<String, Map<String, Object>> getCacheData(byte[] content) {
         String hashIndex = HashCalculator.calculateHash(content);
-        return CachePool.getFromCache(hashIndex);
+        return CachePool.get(hashIndex);
     }
 
     private boolean areMapsEqual(Map<String, Map<String, Object>> map1, Map<String, Map<String, Object>> map2) {
@@ -396,8 +396,8 @@ public class MessageTableModel extends AbstractTableModel {
     public class MessageTable extends JTable {
         private MessageEntry MessageEntry;
         private SwingWorker<Object, Void> currentWorker;
-        // 设置响应报文返回的最大长度为3MB
-        private final int MAX_LENGTH = 3145728;
+        // 设置响应报文返回的最大长度
+        private final int MAX_LENGTH = 5242880;
         private int lastSelectedIndex = -1;
         private final HttpRequestEditor requestEditor;
         private final HttpResponseEditor responseEditor;

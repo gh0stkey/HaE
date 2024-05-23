@@ -9,12 +9,12 @@ import hae.Config;
 import hae.cache.CachePool;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
-import jregex.Matcher;
-import jregex.Pattern;
 
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RegularMatcher {
     private final MontoyaApi api;
@@ -27,7 +27,7 @@ public class RegularMatcher {
     public Map<String, Map<String, Object>> match(String host, String type, String message, String header, String body) {
         // 先从缓存池里判断是否有已经匹配好的结果
         String messageIndex = HashCalculator.calculateHash(message.getBytes());
-        Map<String, Map<String, Object>> map = CachePool.getFromCache(messageIndex);
+        Map<String, Map<String, Object>> map = CachePool.get(messageIndex);
         if (map != null) {
             return map;
         } else {
@@ -81,6 +81,7 @@ public class RegularMatcher {
                             result.addAll(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
                         } catch (Exception e) {
                             api.logging().logToError(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, f_regex));
+                            api.logging().logToError(e.getMessage());
                             continue;
                         }
 
@@ -98,27 +99,18 @@ public class RegularMatcher {
                             // 添加到全局变量中，便于Databoard检索
                             if (!Objects.equals(host, "") && host != null) {
                                 List<String> dataList = Arrays.asList(dataStr.split("\n"));
-                                if (Config.globalDataMap.containsKey(host)) {
-                                    ConcurrentHashMap<String, List<String>> gRuleMap = new ConcurrentHashMap<>(Config.globalDataMap.get(host));
-                                    if (gRuleMap.containsKey(name)) {
-                                        // gDataList为不可变列表，因此需要重新创建一个列表以便于使用addAll方法
-                                        List<String> gDataList = gRuleMap.get(name);
-                                        List<String> newDataList = new ArrayList<>(gDataList);
-                                        newDataList.addAll(dataList);
-                                        newDataList = new ArrayList<>(new HashSet<>(newDataList));
-                                        gRuleMap.remove(name);
-                                        gRuleMap.put(name, newDataList);
-                                    } else {
-                                        gRuleMap.put(name, dataList);
-                                    }
-                                    Config.globalDataMap.remove(host);
-                                    Config.globalDataMap.put(host, gRuleMap);
-                                } else {
-                                    Map<String, List<String>> ruleMap = new HashMap<>();
-                                    ruleMap.put(name, dataList);
-                                    // 添加单一Host
-                                    Config.globalDataMap.put(host, ruleMap);
-                                }
+
+                                Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
+                                    Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
+
+                                    gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
+                                        Set<String> combinedSet = new LinkedHashSet<>(existingList);
+                                        combinedSet.addAll(newList);
+                                        return new ArrayList<>(combinedSet);
+                                    });
+
+                                    return gRuleMap;
+                                });
 
                                 String[] splitHost = host.split("\\.");
                                 String onlyHost = host.split(":")[0];
@@ -139,7 +131,7 @@ public class RegularMatcher {
                     }
                 }
             });
-            CachePool.addToCache(messageIndex, finalMap);
+            CachePool.put(messageIndex, finalMap);
             return finalMap;
         }
     }
@@ -229,7 +221,7 @@ public class RegularMatcher {
     }
 
     private Matcher createPatternMatcher(String regex, String content, boolean sensitive) {
-        Pattern pattern = (sensitive) ? new Pattern(regex) : new Pattern(regex, Pattern.IGNORE_CASE);
+        Pattern pattern = sensitive ? Pattern.compile(regex) : Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         return pattern.matcher(content);
     }
 
@@ -242,7 +234,7 @@ public class RegularMatcher {
 
     private LinkedList<Integer> parseIndexesFromString(String input) {
         LinkedList<Integer> indexes = new LinkedList<>();
-        Pattern pattern = new Pattern("\\{(\\d+)}");
+        Pattern pattern = Pattern.compile("\\{(\\d+)}");
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
@@ -264,7 +256,7 @@ public class RegularMatcher {
     }
 
     private String reorderIndex(String format) {
-        Pattern pattern = new Pattern("\\{(\\d+)}");
+        Pattern pattern = Pattern.compile("\\{(\\d+)}");
         Matcher matcher = pattern.matcher(format);
         int count = 0;
         while (matcher.find()) {

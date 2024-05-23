@@ -66,17 +66,17 @@ public class Main extends JPanel {
         // 依次添加Rules、Config、Databoard
         Rules rules = new Rules(api, configLoader);
         mainTabbedPane.addTab("Rules", rules);
-        mainTabbedPane.addTab("Config", new Config(api, configLoader, rules));
         mainTabbedPane.addTab("Databoard", new Databoard(api, configLoader, messageTableModel));
+        mainTabbedPane.addTab("Config", new Config(api, configLoader, rules));
     }
 
     private ImageIcon getImageIcon(boolean isDark) {
         ClassLoader classLoader = getClass().getClassLoader();
         URL imageURL;
         if (isDark) {
-            imageURL = classLoader.getResource("logo.png");
+            imageURL = classLoader.getResource("logo/logo.png");
         } else {
-            imageURL = classLoader.getResource("logo_black.png");
+            imageURL = classLoader.getResource("logo/logo_black.png");
         }
         ImageIcon originalIcon = new ImageIcon(imageURL);
         Image originalImage = originalIcon.getImage();

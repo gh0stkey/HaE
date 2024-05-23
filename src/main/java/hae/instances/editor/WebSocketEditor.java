@@ -33,6 +33,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
         private ByteArray message;
+        private List<Map<String, String>> dataList;
 
         private final JTabbedPane jTabbedPane = new JTabbedPane();
 
@@ -50,15 +51,15 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
         @Override
         public void setMessage(WebSocketMessage webSocketMessage) {
             this.message = webSocketMessage.payload();
+            RequestEditor.generateTabbedPaneFromResultMap(api, jTabbedPane, this.dataList);
         }
 
         @Override
         public boolean isEnabledFor(WebSocketMessage webSocketMessage) {
             String websocketMessage = webSocketMessage.payload().toString();
             if (!websocketMessage.isEmpty()) {
-                List<Map<String, String>> result = messageProcessor.processMessage("", websocketMessage, false);
-                RequestEditor.generateTabbedPaneFromResultMap(api, jTabbedPane, result);
-                return jTabbedPane.getTabCount() > 0;
+                this.dataList = messageProcessor.processMessage("", websocketMessage, false);
+                return RequestEditor.isListHasData(this.dataList);
             }
             return false;
         }
