@@ -28,7 +28,7 @@ public class ProjectProcessor {
         yaml.dump(httpMap, new OutputStreamWriter(httpYamlStream, StandardCharsets.UTF_8));
 
         try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(haeFilePath))) {
-            zipOut.putNextEntry(new ZipEntry("info.txt"));
+            zipOut.putNextEntry(new ZipEntry("info"));
             zipOut.write(host.getBytes(StandardCharsets.UTF_8));
             zipOut.closeEntry();
 
@@ -55,7 +55,7 @@ public class ProjectProcessor {
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 switch (entry.getName()) {
-                    case "info.txt":
+                    case "info":
                         haeFileContent.setHost(new String(zipIn.readAllBytes(), StandardCharsets.UTF_8));
                         break;
                     case "data.yml":
