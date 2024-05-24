@@ -1,4 +1,4 @@
-package hae.utils.config;
+package hae.utils;
 
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.RequestOptions;
@@ -178,7 +178,7 @@ public class ConfigLoader {
 
         try (InputStream in = Files.newInputStream(path)) {
             return yaml.load(in);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return new LinkedHashMap<>(); // 读取失败时也返回空的Map
         }
     }
@@ -189,7 +189,7 @@ public class ConfigLoader {
 
         try (Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
             yaml.dump(currentConfig, ws);
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -199,7 +199,7 @@ public class ConfigLoader {
 
         try (Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
             yaml.dump(currentConfig, ws);
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -225,7 +225,7 @@ public class ConfigLoader {
 
                 return true;
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
 
         return false;

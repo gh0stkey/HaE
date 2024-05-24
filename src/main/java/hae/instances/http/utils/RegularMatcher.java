@@ -90,49 +90,53 @@ public class RegularMatcher {
                         result.clear();
                         result.addAll(tmpList);
 
-                        String nameAndSize = String.format("%s (%s)", name, result.size());
                         if (!result.isEmpty()) {
                             tmpMap.put("color", color);
                             String dataStr = String.join("\n", result);
                             tmpMap.put("data", dataStr);
+
+                            String nameAndSize = String.format("%s (%s)", name, result.size());
                             finalMap.put(nameAndSize, tmpMap);
-                            // 添加到全局变量中，便于Databoard检索
-                            if (!Objects.equals(host, "") && host != null) {
-                                List<String> dataList = Arrays.asList(dataStr.split("\n"));
 
-                                Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
-                                    Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
-
-                                    gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
-                                        Set<String> combinedSet = new LinkedHashSet<>(existingList);
-                                        combinedSet.addAll(newList);
-                                        return new ArrayList<>(combinedSet);
-                                    });
-
-                                    return gRuleMap;
-                                });
-
-                                String[] splitHost = host.split("\\.");
-                                String onlyHost = host.split(":")[0];
-
-                                String anyHost = (splitHost.length > 2 && !onlyHost.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
-
-                                if (!Config.globalDataMap.containsKey(anyHost) && anyHost.length() > 0) {
-                                    // 添加通配符Host，实际数据从查询哪里将所有数据提取
-                                    Config.globalDataMap.put(anyHost, new HashMap<>());
-                                }
-
-                                if (!Config.globalDataMap.containsKey("*")) {
-                                    // 添加通配符全匹配，同上
-                                    Config.globalDataMap.put("*", new HashMap<>());
-                                }
-                            }
+                            putDataToGlobalMap(host, name, result);
                         }
                     }
                 }
             });
             CachePool.put(messageIndex, finalMap);
             return finalMap;
+        }
+    }
+
+    public static void putDataToGlobalMap(String host, String name, List<String> dataList) {
+        // 添加到全局变量中，便于Databoard检索
+        if (!Objects.equals(host, "") && host != null) {
+            Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
+                Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
+
+                gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
+                    Set<String> combinedSet = new LinkedHashSet<>(existingList);
+                    combinedSet.addAll(newList);
+                    return new ArrayList<>(combinedSet);
+                });
+
+                return gRuleMap;
+            });
+
+            String[] splitHost = host.split("\\.");
+            String onlyHost = host.split(":")[0];
+
+            String anyHost = (splitHost.length > 2 && !onlyHost.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
+
+            if (!Config.globalDataMap.containsKey(anyHost) && anyHost.length() > 0) {
+                // 添加通配符Host，实际数据从查询哪里将所有数据提取
+                Config.globalDataMap.put(anyHost, new HashMap<>());
+            }
+
+            if (!Config.globalDataMap.containsKey("*")) {
+                // 添加通配符全匹配，同上
+                Config.globalDataMap.put("*", new HashMap<>());
+            }
         }
     }
 

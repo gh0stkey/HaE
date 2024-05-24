@@ -142,7 +142,7 @@ public class MessageTableModel extends AbstractTableModel {
             MessageEntry entry = log.get(i);
             String host = StringProcessor.getHostByUrl(entry.getUrl());
             if (!host.isEmpty()) {
-                if (StringProcessor.matchFromEnd(host, filterText) || filterText.contains("*")) {
+                if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
                     rowsToRemove.add(i);
                 }
             }
@@ -167,7 +167,7 @@ public class MessageTableModel extends AbstractTableModel {
         for (MessageEntry entry : log) {
             String host = StringProcessor.getHostByUrl(entry.getUrl());
             if (!host.isEmpty()) {
-                if (filterText.contains("*.") && StringProcessor.matchFromEnd(host, cleanedText)) {
+                if (filterText.contains("*.") && StringProcessor.matchFromEnd(StringProcessor.extractHostname(host), cleanedText)) {
                     filteredLog.add(entry);
                 } else if (host.equals(filterText) || filterText.contains("*")) {
                     filteredLog.add(entry);
@@ -350,7 +350,6 @@ public class MessageTableModel extends AbstractTableModel {
     public List<MessageEntry> getLogs() {
         return log;
     }
-
 
     @Override
     public int getRowCount() {

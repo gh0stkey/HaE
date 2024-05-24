@@ -32,6 +32,29 @@ public class StringProcessor {
         return patternIndex == -1;
     }
 
+    public static String extractHostname(String hostWithPort) {
+        if (hostWithPort == null || hostWithPort.isEmpty()) {
+            return "";
+        }
+        int colonIndex = hostWithPort.indexOf(":");
+        if (colonIndex != -1) {
+            return hostWithPort.substring(0, colonIndex);
+        } else {
+            return hostWithPort;
+        }
+    }
+
+    public static boolean matchesHostPattern(String host, String selectedHost) {
+        String hostname = StringProcessor.extractHostname(host);
+        String hostPattern = selectedHost.replace("*.", "");
+        boolean matchesDirectly = selectedHost.equals("*") || host.equals(selectedHost);
+        boolean matchesPattern = !host.contains("*") &&
+                (hostPattern.equals(selectedHost) ?
+                        StringProcessor.matchFromEnd(host, hostPattern) :
+                        StringProcessor.matchFromEnd(hostname, hostPattern));
+        return matchesDirectly || matchesPattern;
+    }
+
     public static String mergeComment(String comment) {
         if (!comment.contains(",")) {
             return comment;

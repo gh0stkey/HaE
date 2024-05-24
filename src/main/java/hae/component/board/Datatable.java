@@ -2,7 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.message.MessageTableModel;
-import hae.utils.ui.UIEnhancer;
+import hae.utils.UIEnhancer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

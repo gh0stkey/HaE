@@ -9,7 +9,7 @@ import burp.api.montoya.http.message.requests.HttpRequest;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.editor.RequestEditor;
 import hae.instances.http.utils.MessageProcessor;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
 import java.util.ArrayList;

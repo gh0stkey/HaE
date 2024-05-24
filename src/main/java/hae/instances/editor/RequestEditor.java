@@ -11,7 +11,7 @@ import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
 import hae.component.board.Datatable;
 import hae.instances.http.utils.MessageProcessor;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;

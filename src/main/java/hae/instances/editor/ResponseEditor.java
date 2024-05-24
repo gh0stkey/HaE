@@ -12,7 +12,7 @@ import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpResponseEditor;
 import burp.api.montoya.ui.editor.extension.HttpResponseEditorProvider;
 import hae.component.board.Datatable;
 import hae.instances.http.utils.MessageProcessor;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;

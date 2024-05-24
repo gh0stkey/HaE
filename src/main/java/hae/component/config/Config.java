@@ -2,8 +2,8 @@ package hae.component.config;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.rule.Rules;
-import hae.utils.config.ConfigLoader;
-import hae.utils.ui.UIEnhancer;
+import hae.utils.ConfigLoader;
+import hae.utils.UIEnhancer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,6 +25,8 @@ public class Config extends JPanel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final Rules rules;
+    private JTextField addTextField;
+    private final String defaultText = "Enter a new item";
 
     public Config(MontoyaApi api, ConfigLoader configLoader, Rules rules) {
         this.api = api;
@@ -40,7 +44,7 @@ public class Config extends JPanel {
         constraints.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel ruleInfoPanel = new JPanel(new GridBagLayout());
-        ruleInfoPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        ruleInfoPanel.setBorder(new EmptyBorder(10, 15, 5, 15));
 
         JLabel ruleLabel = new JLabel("Path:");
         JTextField pathTextField = new JTextField();
@@ -112,7 +116,7 @@ public class Config extends JPanel {
                 }
 
                 if (selected.equals("Block host")) {
-                    if (!values.equals(configLoader.getExcludeSuffix()) && !values.isEmpty()) {
+                    if (!values.equals(configLoader.getBlockHost()) && !values.isEmpty()) {
                         configLoader.setBlockHost(values);
                     }
                 }
@@ -131,8 +135,7 @@ public class Config extends JPanel {
         constraints.gridy = 4;
         buttonPanel.add(clearButton, constraints);
 
-        JTextField addTextField = new JTextField();
-        String defaultText = "Enter a new item";
+        addTextField = new JTextField();
         UIEnhancer.setTextFieldPlaceholder(addTextField, defaultText);
 
         inputPanelB.add(addTextField, BorderLayout.CENTER);
@@ -142,13 +145,16 @@ public class Config extends JPanel {
         settingPanel.add(buttonPanel, BorderLayout.EAST);
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
-        addButton.addActionListener(e -> {
-            String addTextFieldText = addTextField.getText();
-            if (!addTextFieldText.equals(defaultText)) {
-                addDataToTable(addTextFieldText, model);
+
+        addButton.addActionListener(e -> addActionPerformedAction(e, model));
+
+        addTextField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    addActionPerformedAction(null, model);
+                }
             }
-            addTextField.setText("");
-            addTextField.requestFocusInWindow();
         });
 
         pasteButton.addActionListener(e -> {
@@ -176,13 +182,14 @@ public class Config extends JPanel {
         JLabel settingLabel = new JLabel("Setting:");
         JPanel settingLabelPanel = new JPanel(new BorderLayout());
         settingLabelPanel.add(settingLabel, BorderLayout.WEST);
-        settingMainPanel.setBorder(new EmptyBorder(0, 5, 10, 5));
+        settingMainPanel.setBorder(new EmptyBorder(0, 15, 10, 15));
         settingMainPanel.add(settingLabelPanel, BorderLayout.NORTH);
         settingMainPanel.add(settingPanel, BorderLayout.CENTER);
 
         add(ruleInfoPanel, BorderLayout.NORTH);
         add(settingMainPanel, BorderLayout.CENTER);
     }
+
 
     private String getFirstColumnDataAsString(DefaultTableModel model) {
         StringBuilder firstColumnData = new StringBuilder();
@@ -230,6 +237,15 @@ public class Config extends JPanel {
         for (List<Object> uniqueRow : rowData) {
             model.addRow(uniqueRow.toArray());
         }
+    }
+
+    private void addActionPerformedAction(ActionEvent e, DefaultTableModel model) {
+        String addTextFieldText = addTextField.getText();
+        if (!addTextFieldText.equals(defaultText)) {
+            addDataToTable(addTextFieldText, model);
+        }
+        addTextField.setText("");
+        addTextField.requestFocusInWindow();
     }
 
     private void onlineUpdateActionPerformed(ActionEvent e) {

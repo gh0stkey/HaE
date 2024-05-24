@@ -2,7 +2,7 @@ package hae.component.rule;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 import hae.utils.rule.RuleProcessor;
 
 import javax.swing.*;
@@ -151,7 +151,7 @@ public class Rule extends JPanel {
 
     private void ruleRemoveActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane) {
         if (ruleTable.getSelectedRowCount() >= 1) {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this rule?", "Info", JOptionPane.OK_OPTION) == 0) {
+            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to remove this rule?", "Info", JOptionPane.YES_NO_OPTION) == 0) {
                 DefaultTableModel model = (DefaultTableModel) ruleTable.getModel();
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
 

@@ -5,7 +5,7 @@ import hae.component.board.Databoard;
 import hae.component.board.message.MessageTableModel;
 import hae.component.config.Config;
 import hae.component.rule.Rules;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 
 import javax.swing.*;
 import java.awt.*;

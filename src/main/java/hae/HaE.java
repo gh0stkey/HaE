@@ -10,13 +10,13 @@ import hae.instances.editor.ResponseEditor;
 import hae.instances.editor.WebSocketEditor;
 import hae.instances.http.HttpMessageHandler;
 import hae.instances.websocket.WebSocketMessageHandler;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 
 public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.1";
+        String version = "3.2";
         api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 加载扩展后输出的项目信息

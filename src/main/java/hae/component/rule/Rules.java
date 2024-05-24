@@ -2,7 +2,7 @@ package hae.component.rule;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
-import hae.utils.config.ConfigLoader;
+import hae.utils.ConfigLoader;
 import hae.utils.rule.RuleProcessor;
 
 import javax.swing.*;

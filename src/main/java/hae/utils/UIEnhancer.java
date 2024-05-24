@@ -1,4 +1,4 @@
-package hae.utils.ui;
+package hae.utils;
 
 import javax.swing.*;
 import java.awt.*;

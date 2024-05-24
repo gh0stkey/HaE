@@ -1,27 +1,39 @@
 package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.http.HttpService;
+import burp.api.montoya.http.message.HttpRequestResponse;
+import burp.api.montoya.http.message.requests.HttpRequest;
+import burp.api.montoya.http.message.responses.HttpResponse;
 import hae.Config;
+import hae.component.board.message.MessageEntry;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
-import hae.utils.config.ConfigLoader;
+import hae.instances.http.utils.RegularMatcher;
+import hae.utils.ConfigLoader;
+import hae.utils.project.ProjectProcessor;
+import hae.utils.project.model.HaeFileContent;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final ProjectProcessor projectProcessor;
     private final MessageTableModel messageTableModel;
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
@@ -35,6 +47,7 @@ public class Databoard extends JPanel {
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
         this.configLoader = configLoader;
+        this.projectProcessor = new ProjectProcessor(api);
         this.messageTableModel = messageTableModel;
 
         initComponents();
@@ -50,11 +63,15 @@ public class Databoard extends JPanel {
         JLabel hostLabel = new JLabel("Host:");
 
         JButton clearButton = new JButton("Clear");
+        JButton exportButton = new JButton("Export");
+        JButton importButton = new JButton("Import");
         JButton actionButton = new JButton("Action");
-        JPanel menuPanel = new JPanel(new GridLayout(1, 1));
+        JPanel menuPanel = new JPanel(new GridLayout(3, 1, 0, 5));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         JPopupMenu menu = new JPopupMenu();
         menuPanel.add(clearButton);
+        menuPanel.add(exportButton);
+        menuPanel.add(importButton);
         menu.add(menuPanel);
 
         hostTextField = new JTextField();
@@ -68,6 +85,8 @@ public class Databoard extends JPanel {
         });
 
         clearButton.addActionListener(this::clearActionPerformed);
+        exportButton.addActionListener(this::exportActionPerformed);
+        importButton.addActionListener(this::importActionPerformed);
 
         splitPane.addComponentListener(new ComponentAdapter() {
             @Override
@@ -204,9 +223,8 @@ public class Databoard extends JPanel {
             if (selectedHost.contains("*")) {
                 // 通配符数据
                 selectedDataMap = new HashMap<>();
-                String hostPattern = StringProcessor.replaceFirstOccurrence(selectedHost, "*.", "");
                 for (String key : dataMap.keySet()) {
-                    if (key.contains(hostPattern) || selectedHost.equals("*")) {
+                    if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
                         Map<String, List<String>> ruleMap = dataMap.get(key);
                         for (String ruleKey : ruleMap.keySet()) {
                             List<String> dataList = ruleMap.get(ruleKey);
@@ -256,7 +274,8 @@ public class Databoard extends JPanel {
                     return true;
                 } else {
                     String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
-                    return StringProcessor.matchFromEnd(host, cleanedText);
+
+                    return StringProcessor.matchesHostPattern(host, filterText);
                 }
             }
         };
@@ -267,7 +286,155 @@ public class Databoard extends JPanel {
     }
 
     private List<String> getHostByList() {
-        return new ArrayList<>(Config.globalDataMap.keySet());
+        if (!(Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.contains("*")))) {
+            return new ArrayList<>(Config.globalDataMap.keySet());
+        }
+        return new ArrayList<>();
+    }
+
+    private void exportActionPerformed(ActionEvent e) {
+        String selectedHost = hostTextField.getText().trim();
+
+        if (selectedHost.isEmpty()) {
+            return;
+        }
+
+        String exportDir = selectDirectory(true);
+
+        if (exportDir.isEmpty()) {
+            return;
+        }
+
+        ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
+        List<String> taskStatusList = exportData(selectedHost, exportDir, dataMap);
+
+        if (!taskStatusList.isEmpty()) {
+            String exportStatusMessage = String.format("Exported File List Status:\n%s", String.join("\n", taskStatusList));
+            JOptionPane.showConfirmDialog(null, exportStatusMessage, "Info", JOptionPane.YES_OPTION);
+        }
+    }
+
+    private List<String> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
+        return dataMap.entrySet().stream()
+                .filter(entry -> selectedHost.equals("*") || StringProcessor.matchesHostPattern(entry.getKey(), selectedHost))
+                .filter(entry -> !entry.getKey().contains("*"))
+                .map(entry -> exportEntry(entry, exportDir))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private String exportEntry(Map.Entry<String, Map<String, List<String>>> entry, String exportDir) {
+        String key = entry.getKey();
+        Map<String, List<String>> ruleMap = entry.getValue();
+
+        if (ruleMap == null || ruleMap.isEmpty()) {
+            return null;
+        }
+
+        List<MessageEntry> messageEntryList = messageTableModel.getLogs();
+        Map<String, Map<String, String>> httpMap = messageEntryList.stream()
+                .filter(messageEntry -> !StringProcessor.getHostByUrl(messageEntry.getUrl()).isEmpty())
+                .filter(messageEntry -> StringProcessor.getHostByUrl(messageEntry.getUrl()).equals(key))
+                .collect(Collectors.toMap(
+                        MessageEntry::getUrl,
+                        this::createHttpItemMap,
+                        (existing, replacement) -> existing
+                ));
+
+        String hostName = key.replace(":", "_");
+        String filename = String.format("%s/%s.hae", exportDir, hostName);
+        boolean createdStatus = projectProcessor.createHaeFile(filename, key, ruleMap, httpMap);
+
+        return String.format("Filename: %s, Status: %s", filename, createdStatus);
+    }
+
+    private Map<String, String> createHttpItemMap(MessageEntry entry) {
+        Map<String, String> httpItemMap = new HashMap<>();
+        httpItemMap.put("comment", entry.getComment());
+        httpItemMap.put("color", entry.getColor());
+        httpItemMap.put("request", entry.getRequestResponse().request().toString());
+        httpItemMap.put("response", entry.getRequestResponse().response().toString());
+        return httpItemMap;
+    }
+
+    private void importActionPerformed(ActionEvent e) {
+        String exportDir = selectDirectory(false);
+        if (exportDir.isEmpty()) {
+            return;
+        }
+
+        List<String> filesWithExtension = findFilesWithExtension(new File(exportDir), ".hae");
+        List<String> taskStatusList = filesWithExtension.stream()
+                .map(this::importData)
+                .collect(Collectors.toList());
+
+        if (!taskStatusList.isEmpty()) {
+            String importStatusMessage = "Imported File List Status:\n" + String.join("\n", taskStatusList);
+            JOptionPane.showConfirmDialog(null, importStatusMessage, "Info", JOptionPane.YES_OPTION);
+        }
+    }
+
+    private String importData(String filename) {
+        HaeFileContent haeFileContent = projectProcessor.readHaeFile(filename);
+        boolean readStatus = haeFileContent != null;
+
+        if (readStatus) {
+            String host = haeFileContent.getHost();
+            haeFileContent.getDataMap().forEach((key, value) -> RegularMatcher.putDataToGlobalMap(host, key, value));
+
+            haeFileContent.getHttpMap().forEach((key, httpItemMap) -> {
+                String comment = httpItemMap.get("comment");
+                String color = httpItemMap.get("color");
+                HttpRequestResponse httpRequestResponse = createHttpRequestResponse(key, httpItemMap);
+                messageTableModel.add(httpRequestResponse, comment, color);
+            });
+        }
+
+        return String.format("Filename: %s, Status: %s", filename, readStatus);
+    }
+
+    private HttpRequestResponse createHttpRequestResponse(String key, Map<String, String> httpItemMap) {
+        HttpService httpService = HttpService.httpService(key);
+        HttpRequest httpRequest = HttpRequest.httpRequest(httpService, httpItemMap.get("request"));
+        HttpResponse httpResponse = HttpResponse.httpResponse(httpItemMap.get("response"));
+        return HttpRequestResponse.httpRequestResponse(httpRequest, httpResponse);
+    }
+
+    private List<String> findFilesWithExtension(File directory, String extension) {
+        List<String> filePaths = new ArrayList<>();
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        filePaths.addAll(findFilesWithExtension(file, extension));
+                    } else if (file.isFile() && file.getName().toLowerCase().endsWith(extension)) {
+                        filePaths.add(file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        filePaths.add(directory.getAbsolutePath());
+        return filePaths;
+    }
+
+    private String selectDirectory(boolean forDirectories) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new java.io.File(configLoader.getRulesFilePath()));
+        chooser.setDialogTitle(String.format("Select a Directory%s", forDirectories ? "" : " or File"));
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(".hae Files", "hae");
+        chooser.addChoosableFileFilter(filter);
+        chooser.setFileFilter(filter);
+
+        chooser.setFileSelectionMode(forDirectories ? JFileChooser.DIRECTORIES_ONLY : JFileChooser.FILES_AND_DIRECTORIES);
+        chooser.setAcceptAllFileFilterUsed(!forDirectories);
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedDirectory = chooser.getSelectedFile();
+            return selectedDirectory.getAbsolutePath();
+        }
+
+        return "";
     }
 
     private void clearActionPerformed(ActionEvent e) {
@@ -286,7 +453,7 @@ public class Databoard extends JPanel {
                 Config.globalDataMap.remove(host);
             }
 
-            messageTableModel.deleteByHost(cleanedHost);
+            messageTableModel.deleteByHost(host);
         }
     }
 }
