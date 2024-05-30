@@ -191,3 +191,4 @@ public class ProjectProcessor {
         return requiredRootEntries.isEmpty() && hasHttpDirectoryWithFiles;
     }
 }
+

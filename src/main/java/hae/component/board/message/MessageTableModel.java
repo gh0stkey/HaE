@@ -474,48 +474,39 @@ public class MessageTableModel extends AbstractTableModel {
         @Override
         public void changeSelection(int row, int col, boolean toggle, boolean extend) {
             super.changeSelection(row, col, toggle, extend);
-            int selectedIndex = convertRowIndexToModel(row);
-            if (lastSelectedIndex != selectedIndex) {
-                lastSelectedIndex = selectedIndex;
-                messageEntry = filteredLog.get(selectedIndex);
+            if (currentWorker != null && !currentWorker.isDone()) {
+                currentWorker.cancel(true);
+            }
 
-                requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
-                responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
+            currentWorker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    int selectedIndex = convertRowIndexToModel(row);
+                    if (lastSelectedIndex != selectedIndex) {
+                        lastSelectedIndex = selectedIndex;
+                        messageEntry = filteredLog.get(selectedIndex);
 
-                if (currentWorker != null && !currentWorker.isDone()) {
-                    currentWorker.cancel(true);
-                }
-
-                currentWorker = new SwingWorker<>() {
-                    @Override
-                    protected ByteArray[] doInBackground() {
+                        requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
+                        responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
                         HttpRequestResponse httpRequestResponse = messageEntry.getRequestResponse();
 
-                        ByteArray requestByte = messageEntry.getRequestResponse().request().toByteArray();
-                        ByteArray responseByte = messageEntry.getRequestResponse().response().toByteArray();
+                        ByteArray requestByte = httpRequestResponse.request().toByteArray();
+                        ByteArray responseByte = httpRequestResponse.response().toByteArray();
 
                         if (responseByte.length() > MAX_LENGTH) {
                             String ellipsis = "\r\n......";
                             responseByte = responseByte.subArray(0, MAX_LENGTH).withAppended(ellipsis);
                         }
 
-                        return new ByteArray[]{requestByte, responseByte};
+                        requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), requestByte));
+                        responseEditor.setResponse(HttpResponse.httpResponse(responseByte));
+
                     }
 
-                    @Override
-                    protected void done() {
-                        if (!isCancelled()) {
-                            try {
-                                ByteArray[] result = (ByteArray[]) get();
-                                requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), result[0]));
-                                responseEditor.setResponse(HttpResponse.httpResponse(result[1]));
-                            } catch (Exception ignored) {
-                            }
-                        }
-                    }
-                };
-                currentWorker.execute();
-            }
+                    return null;
+                }
+            };
+            currentWorker.execute();
         }
     }
 }
