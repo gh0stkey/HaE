@@ -474,6 +474,10 @@ public class MessageTableModel extends AbstractTableModel {
         @Override
         public void changeSelection(int row, int col, boolean toggle, boolean extend) {
             super.changeSelection(row, col, toggle, extend);
+
+            requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
+            responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
+            
             if (currentWorker != null && !currentWorker.isDone()) {
                 currentWorker.cancel(true);
             }
@@ -486,8 +490,6 @@ public class MessageTableModel extends AbstractTableModel {
                         lastSelectedIndex = selectedIndex;
                         messageEntry = filteredLog.get(selectedIndex);
 
-                        requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
-                        responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
                         HttpRequestResponse httpRequestResponse = messageEntry.getRequestResponse();
 
                         ByteArray requestByte = httpRequestResponse.request().toByteArray();
