@@ -93,7 +93,7 @@ public class ProjectProcessor {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<?>> futures = new ArrayList<>();
 
-        HaeFileContent haeFileContent = new HaeFileContent(api); // 假设api是正确的
+        HaeFileContent haeFileContent = new HaeFileContent(api);
         LoaderOptions loaderOptions = new LoaderOptions();
         loaderOptions.setMaxAliasesForCollections(Integer.MAX_VALUE);
         loaderOptions.setCodePointLimit(Integer.MAX_VALUE);
@@ -191,4 +191,3 @@ public class ProjectProcessor {
         return requiredRootEntries.isEmpty() && hasHttpDirectoryWithFiles;
     }
 }
-
