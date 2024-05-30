@@ -11,13 +11,14 @@ import java.util.Map;
 public class HaeFileContent {
     private final MontoyaApi api;
     private String host;
+    private String httpPath;
     private final Map<String, List<String>> dataMap;
-    private final Map<String, Map<String, String>> httpMap;
+    private final Map<String, Map<String, String>> urlMap;
 
     public HaeFileContent(MontoyaApi api) {
         this.api = api;
         this.dataMap = new HashMap<>();
-        this.httpMap = new HashMap<>();
+        this.urlMap = new HashMap<>();
     }
 
     public String getHost() {
@@ -28,12 +29,20 @@ public class HaeFileContent {
         return dataMap;
     }
 
-    public Map<String, Map<String, String>> getHttpMap() {
-        return httpMap;
+    public Map<String, Map<String, String>> getUrlMap() {
+        return urlMap;
+    }
+
+    public String getHttpPath() {
+        return httpPath;
     }
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public void setHttpPath(String path) {
+        this.httpPath = path;
     }
 
     public void setDataMap(Map<String, List<Object>> dataMap) {
@@ -50,8 +59,8 @@ public class HaeFileContent {
         }
     }
 
-    public void setHttpMap(Map<String, Map<String, Object>> httpMap) {
-        for (Map.Entry<String, Map<String, Object>> entry : httpMap.entrySet()) {
+    public void setUrlMap(Map<String, Map<String, Object>> urlMap) {
+        for (Map.Entry<String, Map<String, Object>> entry : urlMap.entrySet()) {
             Map<String, String> newValues = new HashMap<>();
             Map<String, Object> values = entry.getValue();
             for (String key : values.keySet()) {
@@ -61,7 +70,7 @@ public class HaeFileContent {
                     newValues.put(key, values.get(key).toString());
                 }
             }
-            this.httpMap.put(entry.getKey(), newValues);
+            this.urlMap.put(entry.getKey(), newValues);
         }
     }
 }

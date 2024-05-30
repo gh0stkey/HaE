@@ -16,13 +16,13 @@ public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.2";
+        String version = "3.2.1";
         api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
         logging.logToOutput("[ HACK THE WORLD - TO DO IT ]");
-        logging.logToOutput("[#] Author: EvilChen && 0chencc");
+        logging.logToOutput("[#] Author: EvilChen && 0chencc && vaycore");
         logging.logToOutput("[#] Github: https://github.com/gh0stkey/HaE");
 
         // 配置文件加载

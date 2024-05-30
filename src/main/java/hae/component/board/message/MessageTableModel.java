@@ -11,6 +11,7 @@ import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.HttpResponseEditor;
 import hae.Config;
 import hae.cache.CachePool;
+import hae.utils.project.FileProcessor;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
 
@@ -22,6 +23,10 @@ import javax.swing.table.TableRowSorter;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -32,7 +37,7 @@ public class MessageTableModel extends AbstractTableModel {
     private final MessageTable messageTable;
     private final JTabbedPane messageTab;
     private final JSplitPane splitPane;
-    private final List<MessageEntry> log = new ArrayList<MessageEntry>();
+    private final LinkedList<MessageEntry> log = new LinkedList<>();
     private final LinkedList<MessageEntry> filteredLog;
 
     public MessageTableModel(MontoyaApi api) {
@@ -92,25 +97,25 @@ public class MessageTableModel extends AbstractTableModel {
         splitPane.setRightComponent(messageTab);
     }
 
-    public void add(HttpRequestResponse messageInfo, String comment, String color) {
+    public void add(HttpRequestResponse messageInfo, String url, String method, String status, String length, String comment, String color, String hash, String path) {
         synchronized (log) {
-            HttpRequest httpRequest = messageInfo.request();
-            String url = httpRequest.url();
-            String method = httpRequest.method();
+            boolean isDuplicate = false;
+            MessageEntry logEntry = new MessageEntry(messageInfo, method, url, comment, length, color, status, hash, path);
 
-            HttpResponse httpResponse = messageInfo.response();
-            String status = String.valueOf(httpResponse.statusCode());
-            String length = String.valueOf(httpResponse.body().length());
+            byte[] reqByteA = new byte[0];
+            byte[] resByteA = new byte[0];
 
-            MessageEntry logEntry = new MessageEntry(messageInfo, method, url, comment, length, color, status);
+            if (messageInfo != null) {
+                HttpRequest httpRequest = messageInfo.request();
+                HttpResponse httpResponse = messageInfo.response();
 
+                reqByteA = httpRequest.toByteArray().getBytes();
+                resByteA = httpResponse.toByteArray().getBytes();
+            }
+
+            // 比较Hash，如若存在重复的请求或响应，则不放入消息内容里
             try {
-                // 比较Hash，如若存在重复的请求或响应，则不放入消息内容里
-                byte[] reqByteA = httpRequest.toByteArray().getBytes();
-                byte[] resByteA = httpResponse.toByteArray().getBytes();
-                boolean isDuplicate = false;
-
-                if (log.size() > 0) {
+                if (!log.isEmpty()) {
                     for (MessageEntry entry : log) {
                         HttpRequestResponse reqResMessage = entry.getRequestResponse();
                         byte[] reqByteB = reqResMessage.request().toByteArray().getBytes();
@@ -125,11 +130,11 @@ public class MessageTableModel extends AbstractTableModel {
                         }
                     }
                 }
-
-                if (!isDuplicate) {
-                    log.add(logEntry);
-                }
             } catch (Exception ignored) {
+            }
+
+            if (!isDuplicate) {
+                log.add(logEntry);
             }
         }
 
@@ -138,52 +143,113 @@ public class MessageTableModel extends AbstractTableModel {
     public void deleteByHost(String filterText) {
         filteredLog.clear();
         List<Integer> rowsToRemove = new ArrayList<>();
-        for (int i = 0; i < log.size(); i++) {
-            MessageEntry entry = log.get(i);
-            String host = StringProcessor.getHostByUrl(entry.getUrl());
-            if (!host.isEmpty()) {
-                if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
-                    rowsToRemove.add(i);
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                for (int i = 0; i < log.size(); i++) {
+                    MessageEntry entry = log.get(i);
+                    String host = StringProcessor.getHostByUrl(entry.getUrl());
+                    if (!host.isEmpty()) {
+                        if (StringProcessor.matchesHostPattern(host, filterText) || filterText.equals("*")) {
+                            rowsToRemove.add(i);
+                        }
+                    }
+                }
+
+                for (int i = rowsToRemove.size() - 1; i >= 0; i--) {
+                    int row = rowsToRemove.get(i);
+                    log.remove(row);
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                if (!rowsToRemove.isEmpty()) {
+                    int[] rows = rowsToRemove.stream().mapToInt(Integer::intValue).toArray();
+                    fireTableRowsDeleted(rows[0], rows[rows.length - 1]);
                 }
             }
-        }
-
-        for (int i = rowsToRemove.size() - 1; i >= 0; i--) {
-            int row = rowsToRemove.get(i);
-            log.remove(row);
-        }
-
-        if (!rowsToRemove.isEmpty()) {
-            int[] rows = rowsToRemove.stream().mapToInt(Integer::intValue).toArray();
-            fireTableRowsDeleted(rows[0], rows[rows.length - 1]);
-        }
+        }.execute();
     }
 
     public void applyHostFilter(String filterText) {
         filteredLog.clear();
-        fireTableDataChanged();
-        String cleanedText = StringProcessor.replaceFirstOccurrence(filterText, "*.", "");
 
-        for (MessageEntry entry : log) {
-            String host = StringProcessor.getHostByUrl(entry.getUrl());
-            if (!host.isEmpty()) {
-                if (filterText.contains("*.") && StringProcessor.matchFromEnd(StringProcessor.extractHostname(host), cleanedText)) {
-                    filteredLog.add(entry);
-                } else if (host.equals(filterText) || filterText.contains("*")) {
-                    filteredLog.add(entry);
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+        List<Future<?>> futures = new ArrayList<>();
+        try {
+            log.parallelStream().forEach(entry -> {
+                Future<?> future = executor.submit(() -> {
+                    MessageEntry finalEntry = getEntryByFile(entry);
+                    String host = StringProcessor.getHostByUrl(finalEntry.getUrl());
+                    if (!host.isEmpty()) {
+                        synchronized (filteredLog) {
+                            if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
+                                filteredLog.add(finalEntry);
+                            }
+                        }
+                    }
+                });
+
+                futures.add(future);
+            });
+
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    Thread.currentThread().interrupt();
                 }
+            }
+
+        } catch (Exception e) {
+            api.logging().logToError("applyHostFilter: " + e.getMessage());
+        } finally {
+            executor.shutdown();
+            fireTableDataChanged();
+        }
+    }
+
+    private MessageEntry getEntryByFile(MessageEntry entry) {
+        HttpRequestResponse requestResponse = entry.getRequestResponse();
+        if (requestResponse == null) {
+            String url = entry.getUrl();
+            String method = entry.getMethod();
+            String status = entry.getStatus();
+            String comment = entry.getComment();
+            String color = entry.getColor();
+            String path = entry.getPath();
+            String hash = entry.getHash();
+            int length = Integer.parseInt(entry.getLength());
+
+            byte[] contents = FileProcessor.readFileContent(path, hash);
+
+            if (contents.length > length) {
+                byte[] response = Arrays.copyOf(contents, length);
+                byte[] request = Arrays.copyOfRange(contents, length, contents.length);
+                requestResponse = StringProcessor.createHttpRequestResponse(url, request, response);
+
+                int index = log.indexOf(entry);
+                entry = new MessageEntry(requestResponse, method, url, comment, String.valueOf(length), color, status, "", "");
+                log.set(index, entry);
             }
         }
 
-        fireTableDataChanged();
+        return entry;
     }
 
     public void applyMessageFilter(String tableName, String filterText) {
         filteredLog.clear();
         for (MessageEntry entry : log) {
             HttpRequestResponse requestResponse = entry.getRequestResponse();
-            HttpRequest httpRequest = requestResponse.request();
-            HttpResponse httpResponse = requestResponse.response();
+            // 标志变量，表示是否满足过滤条件
+            AtomicBoolean isMatched = new AtomicBoolean(false);
+
+            HttpRequest httpRequest = entry.getRequestResponse().request();
+            HttpResponse httpResponse = entry.getRequestResponse().response();
 
             String requestString = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
             String requestBody = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
@@ -197,9 +263,7 @@ public class MessageTableModel extends AbstractTableModel {
                     .map(HttpHeader::toString)
                     .collect(Collectors.joining("\n"));
 
-            // 标志变量，表示是否满足过滤条件
-            AtomicBoolean isMatched = new AtomicBoolean(false);
-
+            MessageEntry finalEntry = entry;
             Config.globalRules.keySet().forEach(i -> {
                 for (Object[] objects : Config.globalRules.get(i)) {
                     String name = objects[1].toString();
@@ -207,7 +271,7 @@ public class MessageTableModel extends AbstractTableModel {
                     String scope = objects[6].toString();
 
                     // 从注释中查看是否包含当前规则名，包含的再进行查询，有效减少无意义的检索时间
-                    if (entry.getComment().contains(name)) {
+                    if (finalEntry.getComment().contains(name)) {
                         if (name.equals(tableName)) {
                             // 标志变量，表示当前规则是否匹配
                             boolean isMatch = false;
@@ -305,7 +369,7 @@ public class MessageTableModel extends AbstractTableModel {
             if (!map2.containsKey(key)) {
                 return false;
             }
-            if (!areInnerMapsEqual(map1.get(key), map2.get(key))) {
+            if (areInnerMapsEqual(map1.get(key), map2.get(key))) {
                 return false;
             }
         }
@@ -315,29 +379,28 @@ public class MessageTableModel extends AbstractTableModel {
 
     private boolean areInnerMapsEqual(Map<String, Object> innerMap1, Map<String, Object> innerMap2) {
         if (innerMap1.size() != innerMap2.size()) {
-            return false;
+            return true;
         }
 
         for (String key : innerMap1.keySet()) {
             if (!innerMap2.containsKey(key)) {
-                return false;
+                return true;
             }
             Object value1 = innerMap1.get(key);
             Object value2 = innerMap2.get(key);
 
             // 如果值是Map，则递归对比
             if (value1 instanceof Map && value2 instanceof Map) {
-                if (!areInnerMapsEqual((Map<String, Object>) value1, (Map<String, Object>) value2)) {
-                    return false;
+                if (areInnerMapsEqual((Map<String, Object>) value1, (Map<String, Object>) value2)) {
+                    return true;
                 }
             } else if (!value1.equals(value2)) {
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
-
 
     public JSplitPane getSplitPane() {
         return splitPane;
@@ -366,6 +429,7 @@ public class MessageTableModel extends AbstractTableModel {
         if (filteredLog.isEmpty()) {
             return "";
         }
+
         MessageEntry messageEntry = filteredLog.get(rowIndex);
 
         return switch (columnIndex) {
@@ -393,7 +457,7 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     public class MessageTable extends JTable {
-        private MessageEntry MessageEntry;
+        private MessageEntry messageEntry;
         private SwingWorker<Object, Void> currentWorker;
         // 设置响应报文返回的最大长度
         private final int MAX_LENGTH = 5242880;
@@ -413,7 +477,7 @@ public class MessageTableModel extends AbstractTableModel {
             int selectedIndex = convertRowIndexToModel(row);
             if (lastSelectedIndex != selectedIndex) {
                 lastSelectedIndex = selectedIndex;
-                MessageEntry = filteredLog.get(selectedIndex);
+                messageEntry = filteredLog.get(selectedIndex);
 
                 requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
                 responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
@@ -425,8 +489,10 @@ public class MessageTableModel extends AbstractTableModel {
                 currentWorker = new SwingWorker<>() {
                     @Override
                     protected ByteArray[] doInBackground() {
-                        ByteArray requestByte = MessageEntry.getRequestResponse().request().toByteArray();
-                        ByteArray responseByte = MessageEntry.getRequestResponse().response().toByteArray();
+                        HttpRequestResponse httpRequestResponse = messageEntry.getRequestResponse();
+
+                        ByteArray requestByte = messageEntry.getRequestResponse().request().toByteArray();
+                        ByteArray responseByte = messageEntry.getRequestResponse().response().toByteArray();
 
                         if (responseByte.length() > MAX_LENGTH) {
                             String ellipsis = "\r\n......";
@@ -441,7 +507,7 @@ public class MessageTableModel extends AbstractTableModel {
                         if (!isCancelled()) {
                             try {
                                 ByteArray[] result = (ByteArray[]) get();
-                                requestEditor.setRequest(HttpRequest.httpRequest(MessageEntry.getRequestResponse().httpService(), result[0]));
+                                requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), result[0]));
                                 responseEditor.setResponse(HttpResponse.httpResponse(result[1]));
                             } catch (Exception ignored) {
                             }

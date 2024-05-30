@@ -80,7 +80,12 @@ public class HttpMessageHandler implements HttpHandler {
                 HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(httpRequest.get(), httpResponseReceived);
 
                 // 添加到Databoard
-                messageTableModel.add(httpRequestResponse, comment, color);
+                String method = httpRequest.get().method();
+                String url = httpRequest.get().url();
+                String status = String.valueOf(httpResponseReceived.statusCode());
+                String length = String.valueOf(httpResponseReceived.toByteArray().length());
+
+                messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
             }
         }
 

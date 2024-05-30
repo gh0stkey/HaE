@@ -1,8 +1,17 @@
 package hae.utils.string;
 
+import burp.api.montoya.core.ByteArray;
+import burp.api.montoya.http.HttpService;
+import burp.api.montoya.http.message.HttpRequestResponse;
+import burp.api.montoya.http.message.requests.HttpRequest;
+import burp.api.montoya.http.message.responses.HttpResponse;
+
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class StringProcessor {
     public static String replaceFirstOccurrence(String original, String find, String replace) {
@@ -55,6 +64,24 @@ public class StringProcessor {
         return matchesDirectly || matchesPattern;
     }
 
+    public static HttpRequestResponse createHttpRequestResponse(String url, byte[] request, byte[] response) {
+        HttpService httpService = HttpService.httpService(url);
+        HttpRequest httpRequest = HttpRequest.httpRequest(httpService, ByteArray.byteArray(request));
+        HttpResponse httpResponse = HttpResponse.httpResponse(ByteArray.byteArray(response));
+        return HttpRequestResponse.httpRequestResponse(httpRequest, httpResponse);
+    }
+
+    public static String getCurrentTime() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+        LocalDateTime now = LocalDateTime.now();
+        return now.format(formatter);
+    }
+
+    public static String getRandomUUID() {
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString();
+    }
+
     public static String mergeComment(String comment) {
         if (!comment.contains(",")) {
             return comment;
@@ -90,6 +117,21 @@ public class StringProcessor {
         }
 
         return host;
+    }
+
+    public static String getBaseDomain(String host) {
+        int lastIndex = host.lastIndexOf('.');
+        if (lastIndex > 0) {
+            int secondLastIndex = host.substring(0, lastIndex).lastIndexOf('.');
+            if (secondLastIndex >= 0) {
+                return host.substring(secondLastIndex + 1);
+            }
+        }
+        return host;
+    }
+
+    public static boolean matchHostIsIp(String host) {
+        return host.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
     }
 
     private static Map<String, Integer> getStringIntegerMap(String comment) {

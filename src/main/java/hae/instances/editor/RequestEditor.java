@@ -122,7 +122,9 @@ public class RequestEditor implements HttpRequestEditorProvider {
         boolean isBlockHost = false;
         for (String hostName : hostList) {
             String cleanedHost = StringProcessor.replaceFirstOccurrence(hostName, "*.", "");
-            if (StringProcessor.matchFromEnd(host, cleanedHost)) {
+            if (hostName.contains("*.") && StringProcessor.matchFromEnd(host, cleanedHost)) {
+                isBlockHost = true;
+            } else if (host.equals(hostName) || hostName.equals("*")) {
                 isBlockHost = true;
             }
         }

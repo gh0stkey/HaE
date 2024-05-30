@@ -1,10 +1,6 @@
 package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.http.HttpService;
-import burp.api.montoya.http.message.HttpRequestResponse;
-import burp.api.montoya.http.message.requests.HttpRequest;
-import burp.api.montoya.http.message.responses.HttpResponse;
 import hae.Config;
 import hae.component.board.message.MessageEntry;
 import hae.component.board.message.MessageTableModel;
@@ -27,7 +23,8 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
@@ -35,14 +32,18 @@ public class Databoard extends JPanel {
     private final ConfigLoader configLoader;
     private final ProjectProcessor projectProcessor;
     private final MessageTableModel messageTableModel;
+
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
     private JSplitPane splitPane;
     private MessageTable messageTable;
+    private JProgressBar progressBar;
 
     private static Boolean isMatchHost = false;
     private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
     private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
+
+    private SwingWorker<Boolean, Void> currentWorker;
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
@@ -56,9 +57,9 @@ public class Databoard extends JPanel {
     private void initComponents() {
         setLayout(new GridBagLayout());
         ((GridBagLayout) getLayout()).columnWidths = new int[]{25, 0, 0, 0, 20, 0};
-        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0};
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 25, 0};
         ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
-        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 0.0, 1.0E-4};
 
         JLabel hostLabel = new JLabel("Host:");
 
@@ -78,6 +79,10 @@ public class Databoard extends JPanel {
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
+        dataTabbedPane.setPreferredSize(new Dimension(500, 0));
+        dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        splitPane.setLeftComponent(dataTabbedPane);
+
         actionButton.addActionListener(e -> {
             int x = 0;
             int y = actionButton.getHeight();
@@ -88,6 +93,8 @@ public class Databoard extends JPanel {
         exportButton.addActionListener(this::exportActionPerformed);
         importButton.addActionListener(this::importActionPerformed);
 
+        progressBar = new JProgressBar();
+
         splitPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -96,6 +103,7 @@ public class Databoard extends JPanel {
         });
 
         splitPane.setVisible(false);
+        progressBar.setVisible(false);
 
         add(hostLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
@@ -103,9 +111,13 @@ public class Databoard extends JPanel {
                 new Insets(8, 0, 5, 5), 0, 0));
         add(actionButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
-        add(splitPane, new GridBagConstraints(1, 1, 3, 3, 0.0, 0.0,
+
+        add(splitPane, new GridBagConstraints(1, 1, 3, 1, 0.0, 1.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(8, 0, 5, 5), 0, 0));
+                new Insets(0, 5, 0, 5), 0, 0));
+        add(progressBar, new GridBagConstraints(1, 3, 3, 1, 1.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                new Insets(0, 5, 0, 5), 0, 0));
         hostComboBox.setMaximumRowCount(5);
         add(hostComboBox, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
@@ -123,6 +135,19 @@ public class Databoard extends JPanel {
         columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.1));
         columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
         columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
+    }
+
+    private void setProgressBar(boolean status) {
+        progressBar.setIndeterminate(status);
+        if (!status) {
+            progressBar.setMaximum(100);
+            progressBar.setString("OK");
+            progressBar.setStringPainted(true);
+            progressBar.setValue(progressBar.getMaximum());
+        } else {
+            progressBar.setString("Loading...");
+            progressBar.setStringPainted(true);
+        }
     }
 
     private void setAutoMatch() {
@@ -157,9 +182,45 @@ public class Databoard extends JPanel {
 
     private void handleComboBoxAction(ActionEvent e) {
         if (!isMatchHost && hostComboBox.getSelectedItem() != null) {
+            progressBar.setVisible(true);
+            setProgressBar(true);
             String selectedHost = hostComboBox.getSelectedItem().toString();
             hostTextField.setText(selectedHost);
-            populateTabbedPaneByHost(selectedHost);
+
+            if (currentWorker != null && !currentWorker.isDone()) {
+                currentWorker.cancel(true);
+            }
+
+            currentWorker = new SwingWorker<Boolean, Void>() {
+                @Override
+                protected Boolean doInBackground() {
+                    return populateTabbedPaneByHost(selectedHost);
+                }
+
+                @Override
+                protected void done() {
+                    if (!isCancelled()) {
+                        try {
+                            boolean status = get();
+                            if (status) {
+                                JSplitPane messageSplitPane = messageTableModel.getSplitPane();
+                                splitPane.setRightComponent(messageSplitPane);
+                                messageTable = messageTableModel.getMessageTable();
+                                resizePanel();
+
+                                splitPane.setVisible(true);
+                                hostTextField.setText(selectedHost);
+
+                                hostComboBox.setPopupVisible(false);
+                                applyHostFilter(selectedHost);
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            };
+
+            currentWorker.execute();
         }
     }
 
@@ -178,7 +239,6 @@ public class Databoard extends JPanel {
         if (keyCode == KeyEvent.VK_ENTER) {
             isMatchHost = false;
             handleComboBoxAction(null);
-            hostComboBox.setPopupVisible(false);
         }
 
         if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -188,10 +248,52 @@ public class Databoard extends JPanel {
         isMatchHost = false;
     }
 
+    private boolean populateTabbedPaneByHost(String selectedHost) {
+        ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
+        Map<String, List<String>> selectedDataMap;
+
+        if (selectedHost.contains("*")) {
+            selectedDataMap = new HashMap<>();
+            dataMap.keySet().parallelStream().forEach(key -> {
+                if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
+                    Map<String, List<String>> ruleMap = dataMap.get(key);
+                    for (String ruleKey : ruleMap.keySet()) {
+                        List<String> dataList = ruleMap.get(ruleKey);
+                        if (selectedDataMap.containsKey(ruleKey)) {
+                            List<String> mergedList = new ArrayList<>(selectedDataMap.get(ruleKey));
+                            mergedList.addAll(dataList);
+                            HashSet<String> uniqueSet = new HashSet<>(mergedList);
+                            selectedDataMap.put(ruleKey, new ArrayList<>(uniqueSet));
+                        } else {
+                            selectedDataMap.put(ruleKey, dataList);
+                        }
+                    }
+                }
+            });
+        } else {
+            selectedDataMap = dataMap.get(selectedHost);
+        }
+
+        if (!selectedDataMap.isEmpty()) {
+            dataTabbedPane.removeAll();
+
+            for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
+                String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
+                Datatable datatablePanel = new Datatable(api, entry.getKey(), entry.getValue());
+                datatablePanel.setTableListener(messageTableModel);
+                dataTabbedPane.addTab(tabTitle, datatablePanel);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
     private void filterComboBoxList() {
         isMatchHost = true;
         comboBoxModel.removeAllElements();
         String input = hostTextField.getText().toLowerCase();
+
         if (!input.isEmpty()) {
             for (String host : getHostByList()) {
                 String lowerCaseHost = host.toLowerCase();
@@ -210,83 +312,40 @@ public class Databoard extends JPanel {
         isMatchHost = false;
     }
 
-    private void populateTabbedPaneByHost(String selectedHost) {
-        if (!Objects.equals(selectedHost, "")) {
-            ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
-            Map<String, List<String>> selectedDataMap;
-
-            dataTabbedPane.removeAll();
-            dataTabbedPane.setPreferredSize(new Dimension(500, 0));
-            dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-            splitPane.setLeftComponent(dataTabbedPane);
-
-            if (selectedHost.contains("*")) {
-                // 通配符数据
-                selectedDataMap = new HashMap<>();
-                for (String key : dataMap.keySet()) {
-                    if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
-                        Map<String, List<String>> ruleMap = dataMap.get(key);
-                        for (String ruleKey : ruleMap.keySet()) {
-                            List<String> dataList = ruleMap.get(ruleKey);
-                            if (selectedDataMap.containsKey(ruleKey)) {
-                                List<String> mergedList = new ArrayList<>(selectedDataMap.get(ruleKey));
-                                mergedList.addAll(dataList);
-                                HashSet<String> uniqueSet = new HashSet<>(mergedList);
-                                selectedDataMap.put(ruleKey, new ArrayList<>(uniqueSet));
-                            } else {
-                                selectedDataMap.put(ruleKey, dataList);
-                            }
-                        }
-                    }
-                }
-            } else {
-                selectedDataMap = dataMap.get(selectedHost);
-            }
-
-            for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
-                String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                Datatable datatablePanel = new Datatable(api, entry.getKey(), entry.getValue());
-                datatablePanel.setTableListener(messageTableModel);
-                dataTabbedPane.addTab(tabTitle, datatablePanel);
-            }
-
-            // 展示请求消息表单
-            JSplitPane messageSplitPane = messageTableModel.getSplitPane();
-            this.splitPane.setRightComponent(messageSplitPane);
-            messageTable = messageTableModel.getMessageTable();
-
-            resizePanel();
-            splitPane.setVisible(true);
-
-            applyHostFilter(selectedHost);
-            hostTextField.setText(selectedHost);
-        }
-    }
-
     private void applyHostFilter(String filterText) {
         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) messageTable.getRowSorter();
-
         String cleanedText = StringProcessor.replaceFirstOccurrence(filterText, "*.", "");
 
-        RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
-            public boolean include(Entry<?, ?> entry) {
-                if (cleanedText.equals("*")) {
-                    return true;
-                } else {
-                    String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
+                    public boolean include(Entry<?, ?> entry) {
+                        if (cleanedText.equals("*")) {
+                            return true;
+                        } else {
+                            String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
+                            return StringProcessor.matchesHostPattern(host, filterText);
+                        }
+                    }
+                };
 
-                    return StringProcessor.matchesHostPattern(host, filterText);
-                }
+                sorter.setRowFilter(rowFilter);
+                messageTableModel.applyHostFilter(filterText);
+
+                return null;
             }
-        };
 
-        sorter.setRowFilter(rowFilter);
+            @Override
+            protected void done() {
+                setProgressBar(false);
+            }
+        }.execute();
 
-        messageTableModel.applyHostFilter(filterText);
     }
 
     private List<String> getHostByList() {
-        if (!(Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.contains("*")))) {
+        if (!Config.globalDataMap.keySet().isEmpty()) {
             return new ArrayList<>(Config.globalDataMap.keySet());
         }
         return new ArrayList<>();
@@ -305,13 +364,25 @@ public class Databoard extends JPanel {
             return;
         }
 
-        ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
-        List<String> taskStatusList = exportData(selectedHost, exportDir, dataMap);
+        new SwingWorker<List<String>, Void>() {
+            @Override
+            protected List<String> doInBackground() {
+                ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
+                return exportData(selectedHost, exportDir, dataMap);
+            }
 
-        if (!taskStatusList.isEmpty()) {
-            String exportStatusMessage = String.format("Exported File List Status:\n%s", String.join("\n", taskStatusList));
-            JOptionPane.showConfirmDialog(null, exportStatusMessage, "Info", JOptionPane.YES_OPTION);
-        }
+            @Override
+            protected void done() {
+                try {
+                    List<String> taskStatusList = get();
+                    if (!taskStatusList.isEmpty()) {
+                        String exportStatusMessage = String.format("Exported File List Status:\n%s", String.join("\n", taskStatusList));
+                        JOptionPane.showConfirmDialog(Databoard.this, exportStatusMessage, "Info", JOptionPane.YES_OPTION);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }.execute();
     }
 
     private List<String> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
@@ -332,28 +403,63 @@ public class Databoard extends JPanel {
         }
 
         List<MessageEntry> messageEntryList = messageTableModel.getLogs();
-        Map<String, Map<String, String>> httpMap = messageEntryList.stream()
-                .filter(messageEntry -> !StringProcessor.getHostByUrl(messageEntry.getUrl()).isEmpty())
-                .filter(messageEntry -> StringProcessor.getHostByUrl(messageEntry.getUrl()).equals(key))
+
+        Map<MessageEntry, String> entryUUIDMap = messageEntryList.stream()
                 .collect(Collectors.toMap(
-                        MessageEntry::getUrl,
-                        this::createHttpItemMap,
-                        (existing, replacement) -> existing
+                        messageEntry -> messageEntry,
+                        messageEntry -> StringProcessor.getRandomUUID(),
+                        (existing, replacement) -> existing // 在冲突时保留现有的映射
                 ));
 
+        Map<String, Map<String, Object>> httpMap = processEntries(
+                messageEntryList,
+                key,
+                entryUUIDMap,
+                this::createHttpItemMap
+        );
+
+        Map<String, Map<String, Object>> urlMap = processEntries(
+                messageEntryList,
+                key,
+                entryUUIDMap,
+                this::creteUrlItemMap
+        );
+
         String hostName = key.replace(":", "_");
-        String filename = String.format("%s/%s.hae", exportDir, hostName);
-        boolean createdStatus = projectProcessor.createHaeFile(filename, key, ruleMap, httpMap);
+        String filename = String.format("%s/%s-%s.hae", exportDir, StringProcessor.getCurrentTime(), hostName);
+        boolean createdStatus = projectProcessor.createHaeFile(filename, key, ruleMap, urlMap, httpMap);
 
         return String.format("Filename: %s, Status: %s", filename, createdStatus);
     }
 
-    private Map<String, String> createHttpItemMap(MessageEntry entry) {
-        Map<String, String> httpItemMap = new HashMap<>();
-        httpItemMap.put("comment", entry.getComment());
-        httpItemMap.put("color", entry.getColor());
-        httpItemMap.put("request", entry.getRequestResponse().request().toString());
-        httpItemMap.put("response", entry.getRequestResponse().response().toString());
+
+    private Map<String, Map<String, Object>> processEntries(List<MessageEntry> messageEntryList, String key, Map<MessageEntry, String> entryUUIDMap, Function<MessageEntry, Map<String, Object>> mapFunction) {
+        return messageEntryList.stream()
+                .filter(messageEntry -> !StringProcessor.getHostByUrl(messageEntry.getUrl()).isEmpty())
+                .filter(messageEntry -> StringProcessor.getHostByUrl(messageEntry.getUrl()).equals(key))
+                .collect(Collectors.toMap(
+                        entryUUIDMap::get,
+                        mapFunction,
+                        (existing, replacement) -> existing
+                ));
+    }
+
+    private Map<String, Object> creteUrlItemMap(MessageEntry entry) {
+        Map<String, Object> urlItemMap = new LinkedHashMap<>();
+        urlItemMap.put("url", entry.getUrl());
+        urlItemMap.put("method", entry.getMethod());
+        urlItemMap.put("status", entry.getStatus());
+        urlItemMap.put("length", entry.getLength());
+        urlItemMap.put("comment", entry.getComment());
+        urlItemMap.put("color", entry.getColor());
+        urlItemMap.put("size", String.valueOf(entry.getRequestResponse().request().toByteArray().length()));
+        return urlItemMap;
+    }
+
+    private Map<String, Object> createHttpItemMap(MessageEntry entry) {
+        Map<String, Object> httpItemMap = new LinkedHashMap<>();
+        httpItemMap.put("request", entry.getRequestResponse().request().toByteArray().getBytes());
+        httpItemMap.put("response", entry.getRequestResponse().response().toByteArray().getBytes());
         return httpItemMap;
     }
 
@@ -363,41 +469,72 @@ public class Databoard extends JPanel {
             return;
         }
 
-        List<String> filesWithExtension = findFilesWithExtension(new File(exportDir), ".hae");
-        List<String> taskStatusList = filesWithExtension.stream()
-                .map(this::importData)
-                .collect(Collectors.toList());
+        new SwingWorker<List<String>, Void>() {
+            @Override
+            protected List<String> doInBackground() {
+                List<String> filesWithExtension = findFilesWithExtension(new File(exportDir), ".hae");
+                return filesWithExtension.stream()
+                        .map(Databoard.this::importData)
+                        .collect(Collectors.toList());
+            }
 
-        if (!taskStatusList.isEmpty()) {
-            String importStatusMessage = "Imported File List Status:\n" + String.join("\n", taskStatusList);
-            JOptionPane.showConfirmDialog(null, importStatusMessage, "Info", JOptionPane.YES_OPTION);
-        }
+            @Override
+            protected void done() {
+                try {
+                    List<String> taskStatusList = get();
+                    if (!taskStatusList.isEmpty()) {
+                        String importStatusMessage = "Imported File List Status:\n" + String.join("\n", taskStatusList);
+                        JOptionPane.showConfirmDialog(Databoard.this, importStatusMessage, "Info", JOptionPane.YES_OPTION);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }.execute();
     }
 
     private String importData(String filename) {
         HaeFileContent haeFileContent = projectProcessor.readHaeFile(filename);
         boolean readStatus = haeFileContent != null;
 
-        if (readStatus) {
-            String host = haeFileContent.getHost();
-            haeFileContent.getDataMap().forEach((key, value) -> RegularMatcher.putDataToGlobalMap(host, key, value));
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+        List<Future<?>> futures = new ArrayList<>();
 
-            haeFileContent.getHttpMap().forEach((key, httpItemMap) -> {
-                String comment = httpItemMap.get("comment");
-                String color = httpItemMap.get("color");
-                HttpRequestResponse httpRequestResponse = createHttpRequestResponse(key, httpItemMap);
-                messageTableModel.add(httpRequestResponse, comment, color);
-            });
+        if (readStatus) {
+            try {
+                String host = haeFileContent.getHost();
+                haeFileContent.getDataMap().forEach((key, value) -> RegularMatcher.putDataToGlobalMap(host, key, value));
+
+                haeFileContent.getUrlMap().forEach((key, urlItemMap) -> {
+                    Future<?> future = executor.submit(() -> {
+                        String url = urlItemMap.get("url");
+                        String comment = urlItemMap.get("comment");
+                        String color = urlItemMap.get("color");
+                        String length = urlItemMap.get("length");
+                        String method = urlItemMap.get("method");
+                        String status = urlItemMap.get("status");
+                        String path = haeFileContent.getHttpPath();
+
+                        messageTableModel.add(null, url, method, status, length, comment, color, key, path);
+                    });
+
+                    futures.add(future);
+                });
+
+                for (Future<?> future : futures) {
+                    try {
+                        future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            } catch (Exception e) {
+                api.logging().logToError("importData: " + e.getMessage());
+            } finally {
+                executor.shutdown();
+            }
         }
 
         return String.format("Filename: %s, Status: %s", filename, readStatus);
-    }
-
-    private HttpRequestResponse createHttpRequestResponse(String key, Map<String, String> httpItemMap) {
-        HttpService httpService = HttpService.httpService(key);
-        HttpRequest httpRequest = HttpRequest.httpRequest(httpService, httpItemMap.get("request"));
-        HttpResponse httpResponse = HttpResponse.httpResponse(httpItemMap.get("response"));
-        return HttpRequestResponse.httpRequestResponse(httpRequest, httpResponse);
     }
 
     private List<String> findFilesWithExtension(File directory, String extension) {
@@ -413,8 +550,9 @@ public class Databoard extends JPanel {
                     }
                 }
             }
+        } else {
+            filePaths.add(directory.getAbsolutePath());
         }
-        filePaths.add(directory.getAbsolutePath());
         return filePaths;
     }
 
@@ -438,19 +576,35 @@ public class Databoard extends JPanel {
     }
 
     private void clearActionPerformed(ActionEvent e) {
-        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to clear data?", "Info",
+        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear data?", "Info",
                 JOptionPane.YES_NO_OPTION);
         String host = hostTextField.getText();
         if (retCode == JOptionPane.YES_OPTION && !host.isEmpty()) {
             dataTabbedPane.removeAll();
             splitPane.setVisible(false);
+            progressBar.setVisible(false);
 
-            String cleanedHost = StringProcessor.replaceFirstOccurrence(host, "*.", "");
+            Config.globalDataMap.keySet().parallelStream().forEach(key -> {
+                if (StringProcessor.matchesHostPattern(key, host) || host.equals("*")) {
+                    Config.globalDataMap.remove(key);
+                }
+            });
 
-            if (host.contains("*")) {
-                Config.globalDataMap.keySet().removeIf(i -> i.contains(cleanedHost) || cleanedHost.contains("*"));
-            } else {
-                Config.globalDataMap.remove(host);
+            if (!StringProcessor.matchHostIsIp(host) && !host.contains("*.")) {
+                String baseDomain = StringProcessor.getBaseDomain(StringProcessor.extractHostname(host));
+
+                long count = Config.globalDataMap.keySet().stream()
+                        .filter(k -> !k.equals("*." + baseDomain))
+                        .filter(k -> StringProcessor.matchFromEnd(k, baseDomain))
+                        .count();
+
+                if (count == 0) {
+                    Config.globalDataMap.remove("*." + baseDomain);
+                }
+            }
+
+            if (Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.contains("*"))) {
+                Config.globalDataMap.keySet().remove("*");
             }
 
             messageTableModel.deleteByHost(host);

@@ -126,7 +126,7 @@ public class RegularMatcher {
             String[] splitHost = host.split("\\.");
             String onlyHost = host.split(":")[0];
 
-            String anyHost = (splitHost.length > 2 && !onlyHost.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
+            String anyHost = (splitHost.length > 2 && !StringProcessor.matchHostIsIp(onlyHost)) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
 
             if (!Config.globalDataMap.containsKey(anyHost) && anyHost.length() > 0) {
                 // 添加通配符Host，实际数据从查询哪里将所有数据提取

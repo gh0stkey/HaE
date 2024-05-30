@@ -97,7 +97,7 @@ public class Rule extends JPanel {
         Display ruleDisplay = new Display();
         ruleDisplay.formatTextField.setText("{0}");
 
-        int showState = JOptionPane.showConfirmDialog(null, ruleDisplay, "Add Rule", JOptionPane.OK_OPTION);
+        int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Add Rule", JOptionPane.OK_OPTION);
         if (showState == YES_OPTION) {
             Vector<Object> ruleData = new Vector<>();
             ruleData.add(false);
@@ -132,7 +132,7 @@ public class Rule extends JPanel {
 
             ruleDisplay.formatTextField.setEnabled(ruleDisplay.engineComboBox.getSelectedItem().toString().equals("nfa"));
 
-            int showState = JOptionPane.showConfirmDialog(null, ruleDisplay, "Edit Rule", JOptionPane.OK_OPTION);
+            int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Edit Rule", JOptionPane.OK_OPTION);
             if (showState == 0) {
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.setValueAt(ruleDisplay.ruleNameTextField.getText(), select, 1);
@@ -151,7 +151,7 @@ public class Rule extends JPanel {
 
     private void ruleRemoveActionPerformed(ActionEvent e, JTable ruleTable, JTabbedPane tabbedPane) {
         if (ruleTable.getSelectedRowCount() >= 1) {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to remove this rule?", "Info", JOptionPane.YES_NO_OPTION) == 0) {
+            if (JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this rule?", "Info", JOptionPane.YES_NO_OPTION) == 0) {
                 DefaultTableModel model = (DefaultTableModel) ruleTable.getModel();
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
 

@@ -109,7 +109,7 @@ public class Rules extends JTabbedPane {
 
     private void deleteRuleGroupActionPerformed(ActionEvent e) {
         if (getTabCount() > 2) {
-            int retCode = JOptionPane.showConfirmDialog(null, "Do you want to delete this rule group?", "Info",
+            int retCode = JOptionPane.showConfirmDialog(this, "Do you want to delete this rule group?", "Info",
                     JOptionPane.YES_NO_OPTION);
             if (retCode == JOptionPane.YES_OPTION) {
                 String title = getTitleAt(getSelectedIndex());

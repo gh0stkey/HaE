@@ -54,4 +54,6 @@ public class Config {
     public static Map<String, Object[][]> globalRules = new HashMap<>();
 
     public static ConcurrentHashMap<String, Map<String, List<String>>> globalDataMap = new ConcurrentHashMap<>();
+
+    public static ConcurrentHashMap<String, Map<String, Object>> globalHostHashMap = new ConcurrentHashMap<>();
 }

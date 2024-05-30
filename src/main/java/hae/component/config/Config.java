@@ -250,7 +250,7 @@ public class Config extends JPanel {
 
     private void onlineUpdateActionPerformed(ActionEvent e) {
         // 添加提示框防止用户误触导致配置更新
-        int retCode = JOptionPane.showConfirmDialog(null, "Do you want to update rules?", "Info", JOptionPane.YES_NO_OPTION);
+        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to update rules?", "Info", JOptionPane.YES_NO_OPTION);
         if (retCode == JOptionPane.YES_OPTION) {
             configLoader.initRulesByNet();
             reloadActionPerformed(null);
