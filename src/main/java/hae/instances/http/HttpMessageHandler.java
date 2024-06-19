@@ -12,6 +12,7 @@ import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,19 +46,23 @@ public class HttpMessageHandler implements HttpHandler {
 
         Annotations annotations = httpRequestToBeSent.annotations();
 
-        httpRequest.set(httpRequestToBeSent);
+        try {
+            httpRequest.set(httpRequestToBeSent);
 
-        host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
+            host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
 
-        String[] hostList = configLoader.getBlockHost().split("\\|");
-        boolean isBlockHost = RequestEditor.isBlockHost(hostList, host.get());
+            String[] hostList = configLoader.getBlockHost().split("\\|");
+            boolean isBlockHost = RequestEditor.isBlockHost(hostList, host.get());
 
-        List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-        matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost);
+            List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
+            matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost);
 
-        if (!matches.get()) {
-            List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);
-            setColorAndCommentList(result);
+            if (!matches.get()) {
+                List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);
+                setColorAndCommentList(result);
+            }
+        } catch (Exception e) {
+            api.logging().logToError("handleHttpRequestToBeSent: " + e.getMessage());
         }
 
         return RequestToBeSentAction.continueWith(httpRequestToBeSent, annotations);
@@ -85,7 +90,14 @@ public class HttpMessageHandler implements HttpHandler {
                 String status = String.valueOf(httpResponseReceived.statusCode());
                 String length = String.valueOf(httpResponseReceived.toByteArray().length());
 
-                messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
+                // 后台提交，防止线程阻塞
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() {
+                        messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
+                        return null;
+                    }
+                }.run();
             }
         }
 
@@ -93,7 +105,7 @@ public class HttpMessageHandler implements HttpHandler {
     }
 
     private void setColorAndCommentList(List<Map<String, String>> result) {
-        if (result != null && !result.isEmpty() && result.size() > 0) {
+        if (result != null && !result.isEmpty()) {
             colorList.get().add(result.get(0).get("color"));
             commentList.get().add(result.get(1).get("comment"));
         }

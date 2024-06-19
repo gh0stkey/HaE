@@ -119,17 +119,6 @@ public class StringProcessor {
         return host;
     }
 
-    public static String getBaseDomain(String host) {
-        int lastIndex = host.lastIndexOf('.');
-        if (lastIndex > 0) {
-            int secondLastIndex = host.substring(0, lastIndex).lastIndexOf('.');
-            if (secondLastIndex >= 0) {
-                return host.substring(secondLastIndex + 1);
-            }
-        }
-        return host;
-    }
-
     public static boolean matchHostIsIp(String host) {
         return host.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
     }

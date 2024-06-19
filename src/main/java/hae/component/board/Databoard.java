@@ -23,7 +23,10 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,7 +46,10 @@ public class Databoard extends JPanel {
     private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
     private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
 
-    private SwingWorker<Boolean, Void> currentWorker;
+    private SwingWorker<Boolean, Void> handleComboBoxWorker;
+    private SwingWorker<Void, Void> applyHostFilterWorker;
+    private SwingWorker<List<String>, Void> exportActionWorker;
+    private SwingWorker<List<String>, Void> importActionWorker;
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
@@ -77,11 +83,10 @@ public class Databoard extends JPanel {
 
         hostTextField = new JTextField();
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
+        dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
         dataTabbedPane.setPreferredSize(new Dimension(500, 0));
         dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        splitPane.setLeftComponent(dataTabbedPane);
 
         actionButton.addActionListener(e -> {
             int x = 0;
@@ -185,42 +190,46 @@ public class Databoard extends JPanel {
             progressBar.setVisible(true);
             setProgressBar(true);
             String selectedHost = hostComboBox.getSelectedItem().toString();
-            hostTextField.setText(selectedHost);
 
-            if (currentWorker != null && !currentWorker.isDone()) {
-                currentWorker.cancel(true);
-            }
+            if (getHostByList().contains(selectedHost)) {
+                hostTextField.setText(selectedHost);
 
-            currentWorker = new SwingWorker<Boolean, Void>() {
-                @Override
-                protected Boolean doInBackground() {
-                    return populateTabbedPaneByHost(selectedHost);
+                if (handleComboBoxWorker != null && !handleComboBoxWorker.isDone()) {
+                    handleComboBoxWorker.cancel(true);
                 }
 
-                @Override
-                protected void done() {
-                    if (!isCancelled()) {
-                        try {
-                            boolean status = get();
-                            if (status) {
-                                JSplitPane messageSplitPane = messageTableModel.getSplitPane();
-                                splitPane.setRightComponent(messageSplitPane);
-                                messageTable = messageTableModel.getMessageTable();
-                                resizePanel();
+                handleComboBoxWorker = new SwingWorker<Boolean, Void>() {
+                    @Override
+                    protected Boolean doInBackground() {
+                        return populateTabbedPaneByHost(selectedHost);
+                    }
 
-                                splitPane.setVisible(true);
-                                hostTextField.setText(selectedHost);
+                    @Override
+                    protected void done() {
+                        if (!isCancelled()) {
+                            try {
+                                boolean status = get();
+                                if (status) {
+                                    JSplitPane messageSplitPane = messageTableModel.getSplitPane();
+                                    splitPane.setLeftComponent(dataTabbedPane);
+                                    splitPane.setRightComponent(messageSplitPane);
+                                    messageTable = messageTableModel.getMessageTable();
+                                    resizePanel();
 
-                                hostComboBox.setPopupVisible(false);
-                                applyHostFilter(selectedHost);
+                                    splitPane.setVisible(true);
+                                    hostTextField.setText(selectedHost);
+
+                                    hostComboBox.setPopupVisible(false);
+                                    applyHostFilter(selectedHost);
+                                }
+                            } catch (Exception ignored) {
                             }
-                        } catch (Exception ignored) {
                         }
                     }
-                }
-            };
+                };
 
-            currentWorker.execute();
+                handleComboBoxWorker.execute();
+            }
         }
     }
 
@@ -254,7 +263,7 @@ public class Databoard extends JPanel {
 
         if (selectedHost.contains("*")) {
             selectedDataMap = new HashMap<>();
-            dataMap.keySet().parallelStream().forEach(key -> {
+            dataMap.keySet().forEach(key -> {
                 if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
                     Map<String, List<String>> ruleMap = dataMap.get(key);
                     for (String ruleKey : ruleMap.keySet()) {
@@ -286,6 +295,7 @@ public class Databoard extends JPanel {
 
             return true;
         }
+
         return false;
     }
 
@@ -316,7 +326,11 @@ public class Databoard extends JPanel {
         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) messageTable.getRowSorter();
         String cleanedText = StringProcessor.replaceFirstOccurrence(filterText, "*.", "");
 
-        new SwingWorker<Void, Void>() {
+        if (applyHostFilterWorker != null && !applyHostFilterWorker.isDone()) {
+            applyHostFilterWorker.cancel(true);
+        }
+
+        applyHostFilterWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
                 RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
@@ -340,8 +354,9 @@ public class Databoard extends JPanel {
             protected void done() {
                 setProgressBar(false);
             }
-        }.execute();
+        };
 
+        applyHostFilterWorker.execute();
     }
 
     private List<String> getHostByList() {
@@ -364,7 +379,11 @@ public class Databoard extends JPanel {
             return;
         }
 
-        new SwingWorker<List<String>, Void>() {
+        if (exportActionWorker != null && !exportActionWorker.isDone()) {
+            exportActionWorker.cancel(true);
+        }
+
+        exportActionWorker = new SwingWorker<List<String>, Void>() {
             @Override
             protected List<String> doInBackground() {
                 ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
@@ -382,7 +401,9 @@ public class Databoard extends JPanel {
                 } catch (Exception ignored) {
                 }
             }
-        }.execute();
+        };
+
+        exportActionWorker.execute();
     }
 
     private List<String> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
@@ -469,7 +490,11 @@ public class Databoard extends JPanel {
             return;
         }
 
-        new SwingWorker<List<String>, Void>() {
+        if (importActionWorker != null && !importActionWorker.isDone()) {
+            importActionWorker.cancel(true);
+        }
+
+        importActionWorker = new SwingWorker<List<String>, Void>() {
             @Override
             protected List<String> doInBackground() {
                 List<String> filesWithExtension = findFilesWithExtension(new File(exportDir), ".hae");
@@ -489,15 +514,18 @@ public class Databoard extends JPanel {
                 } catch (Exception ignored) {
                 }
             }
-        }.execute();
+        };
+
+        importActionWorker.execute();
     }
 
     private String importData(String filename) {
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
         HaeFileContent haeFileContent = projectProcessor.readHaeFile(filename);
         boolean readStatus = haeFileContent != null;
 
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-        List<Future<?>> futures = new ArrayList<>();
+        List<Callable<Void>> tasks = new ArrayList<>();
 
         if (readStatus) {
             try {
@@ -505,7 +533,7 @@ public class Databoard extends JPanel {
                 haeFileContent.getDataMap().forEach((key, value) -> RegularMatcher.putDataToGlobalMap(host, key, value));
 
                 haeFileContent.getUrlMap().forEach((key, urlItemMap) -> {
-                    Future<?> future = executor.submit(() -> {
+                    tasks.add(() -> {
                         String url = urlItemMap.get("url");
                         String comment = urlItemMap.get("comment");
                         String color = urlItemMap.get("color");
@@ -515,18 +543,11 @@ public class Databoard extends JPanel {
                         String path = haeFileContent.getHttpPath();
 
                         messageTableModel.add(null, url, method, status, length, comment, color, key, path);
+                        return null;
                     });
-
-                    futures.add(future);
                 });
 
-                for (Future<?> future : futures) {
-                    try {
-                        future.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
+                executor.invokeAll(tasks);
             } catch (Exception e) {
                 api.logging().logToError("importData: " + e.getMessage());
             } finally {
@@ -590,20 +611,26 @@ public class Databoard extends JPanel {
                 }
             });
 
-            if (!StringProcessor.matchHostIsIp(host) && !host.contains("*.")) {
-                String baseDomain = StringProcessor.getBaseDomain(StringProcessor.extractHostname(host));
+            // 删除无用的数据
+            Set<String> wildcardKeys = Config.globalDataMap.keySet().stream()
+                    .filter(key -> key.startsWith("*."))
+                    .collect(Collectors.toSet());
 
-                long count = Config.globalDataMap.keySet().stream()
-                        .filter(k -> !k.equals("*." + baseDomain))
-                        .filter(k -> StringProcessor.matchFromEnd(k, baseDomain))
-                        .count();
+            Set<String> existingSuffixes = Config.globalDataMap.keySet().stream()
+                    .filter(key -> !key.startsWith("*."))
+                    .map(key -> {
+                        int dotIndex = key.indexOf(".");
+                        return dotIndex != -1 ? key.substring(dotIndex) : "";
+                    })
+                    .collect(Collectors.toSet());
 
-                if (count == 0) {
-                    Config.globalDataMap.remove("*." + baseDomain);
-                }
-            }
+            Set<String> keysToRemove = wildcardKeys.stream()
+                    .filter(key -> !existingSuffixes.contains(key.substring(1)))
+                    .collect(Collectors.toSet());
 
-            if (Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.contains("*"))) {
+            keysToRemove.forEach(Config.globalDataMap::remove);
+
+            if (Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.equals("*"))) {
                 Config.globalDataMap.keySet().remove("*");
             }
 

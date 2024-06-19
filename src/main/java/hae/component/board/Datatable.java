@@ -158,7 +158,7 @@ public class Datatable extends JPanel {
             @Override
             public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
                 if (comp instanceof JTable) {
-                    StringSelection stringSelection = new StringSelection(getSelectedDataAtTable((JTable) comp));
+                    StringSelection stringSelection = new StringSelection(getSelectedDataAtTable((JTable) comp).replace("\0", "").replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", ""));
                     clip.setContents(stringSelection, null);
                 } else {
                     super.exportToClipboard(comp, clip, action);
@@ -191,13 +191,11 @@ public class Datatable extends JPanel {
             selectData.append(table.getValueAt(row, 1).toString()).append("\n");
         }
 
-        // 便于单行复制，去除最后一个换行符
         if (!selectData.isEmpty()) {
             selectData.deleteCharAt(selectData.length() - 1);
-            return selectData.toString();
-        } else {
-            return "";
         }
+
+        return selectData.toString();
     }
 
     public JTable getDataTable() {

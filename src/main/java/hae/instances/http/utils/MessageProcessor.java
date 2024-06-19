@@ -71,7 +71,7 @@ public class MessageProcessor {
         List<Map<String, String>> highlightList = new ArrayList<>();
         List<Map<String, String>> extractList = new ArrayList<>();
 
-        if (obj != null && !obj.isEmpty() && obj.size() > 0) {
+        if (obj != null && !obj.isEmpty()) {
             if (actionFlag) {
                 List<List<String>> resultList = extractColorsAndComments(obj);
                 List<String> colorList = resultList.get(0);

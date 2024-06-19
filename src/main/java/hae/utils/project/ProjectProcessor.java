@@ -11,10 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -27,8 +26,9 @@ public class ProjectProcessor {
     }
 
     public boolean createHaeFile(String haeFilePath, String host, Map<String, List<String>> dataMap, Map<String, Map<String, Object>> urlMap, Map<String, Map<String, Object>> httpMap) {
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<?>> futures = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
+        List<Callable<Void>> tasks = new ArrayList<>();
 
         ByteArrayOutputStream dataYamlStream = new ByteArrayOutputStream();
         ByteArrayOutputStream urlYamlStream = new ByteArrayOutputStream();
@@ -52,7 +52,7 @@ public class ProjectProcessor {
 
             for (String httpHash : httpMap.keySet()) {
                 Map<String, Object> httpItem = httpMap.get(httpHash);
-                futures.add(executorService.submit(() -> {
+                tasks.add(() -> {
                     try {
                         ByteArrayOutputStream httpOutStream = new ByteArrayOutputStream();
                         byte[] request = (byte[]) httpItem.get("request");
@@ -69,29 +69,25 @@ public class ProjectProcessor {
                     } catch (Exception e) {
                         api.logging().logToError("createHaeFile: " + e.getMessage());
                     }
-                }));
+
+                    return null;
+                });
             }
 
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
+            executor.invokeAll(tasks);
         } catch (Exception e) {
             api.logging().logToError("createHaeFile: " + e.getMessage());
             return false;
         } finally {
-            executorService.shutdown();
+            executor.shutdown();
         }
 
         return true;
     }
 
     public HaeFileContent readHaeFile(String haeFilePath) {
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<?>> futures = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+        List<Callable<Void>> tasks = new ArrayList<>();
 
         HaeFileContent haeFileContent = new HaeFileContent(api);
         LoaderOptions loaderOptions = new LoaderOptions();
@@ -112,13 +108,16 @@ public class ProjectProcessor {
                         String fileName = entry.getName();
                         if (fileName.startsWith("http/")) {
                             Path filePath = tempDirectory.resolve(fileName.substring("http/".length()));
-                            futures.add(executorService.submit(() -> {
+
+                            tasks.add(() -> {
                                 try (InputStream in = zipFile.getInputStream(entry)) {
                                     Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
                                 } catch (IOException e) {
                                     api.logging().logToError("readHaeFile: " + e.getMessage());
                                 }
-                            }));
+
+                                return null;
+                            });
                         } else {
                             try (InputStream in = zipFile.getInputStream(entry)) {
                                 switch (fileName) {
@@ -133,13 +132,7 @@ public class ProjectProcessor {
                         }
                     }
 
-                    for (Future<?> future : futures) {
-                        try {
-                            future.get();
-                        } catch (InterruptedException | ExecutionException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }
+                    executor.invokeAll(tasks);
                 }
             }
         } catch (Exception e) {
@@ -149,7 +142,7 @@ public class ProjectProcessor {
             }
             haeFileContent = null;
         } finally {
-            executorService.shutdown();
+            executor.shutdown();
         }
 
         return haeFileContent;

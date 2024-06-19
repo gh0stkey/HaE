@@ -23,10 +23,6 @@ import javax.swing.table.TableRowSorter;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -35,16 +31,16 @@ import static burp.api.montoya.ui.editor.EditorOptions.READ_ONLY;
 public class MessageTableModel extends AbstractTableModel {
     private final MontoyaApi api;
     private final MessageTable messageTable;
-    private final JTabbedPane messageTab;
     private final JSplitPane splitPane;
     private final LinkedList<MessageEntry> log = new LinkedList<>();
     private final LinkedList<MessageEntry> filteredLog;
+    private SwingWorker<Void, Void> currentWorker;
 
     public MessageTableModel(MontoyaApi api) {
         this.filteredLog = new LinkedList<>();
         this.api = api;
 
-        messageTab = new JTabbedPane();
+        JTabbedPane messageTab = new JTabbedPane();
         UserInterface userInterface = api.userInterface();
         HttpRequestEditor requestViewer = userInterface.createHttpRequestEditor(READ_ONLY);
         HttpResponseEditor responseViewer = userInterface.createHttpResponseEditor(READ_ONLY);
@@ -144,7 +140,11 @@ public class MessageTableModel extends AbstractTableModel {
         filteredLog.clear();
         List<Integer> rowsToRemove = new ArrayList<>();
 
-        new SwingWorker<Void, Void>() {
+        if (currentWorker != null && !currentWorker.isDone()) {
+            currentWorker.cancel(true);
+        }
+
+        currentWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
                 for (int i = 0; i < log.size(); i++) {
@@ -164,53 +164,25 @@ public class MessageTableModel extends AbstractTableModel {
 
                 return null;
             }
+        };
 
-            @Override
-            protected void done() {
-                if (!rowsToRemove.isEmpty()) {
-                    int[] rows = rowsToRemove.stream().mapToInt(Integer::intValue).toArray();
-                    fireTableRowsDeleted(rows[0], rows[rows.length - 1]);
-                }
-            }
-        }.execute();
+        currentWorker.execute();
     }
 
     public void applyHostFilter(String filterText) {
         filteredLog.clear();
 
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-        List<Future<?>> futures = new ArrayList<>();
-        try {
-            log.parallelStream().forEach(entry -> {
-                Future<?> future = executor.submit(() -> {
-                    MessageEntry finalEntry = getEntryByFile(entry);
-                    String host = StringProcessor.getHostByUrl(finalEntry.getUrl());
-                    if (!host.isEmpty()) {
-                        synchronized (filteredLog) {
-                            if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
-                                filteredLog.add(finalEntry);
-                            }
-                        }
-                    }
-                });
-
-                futures.add(future);
-            });
-
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    Thread.currentThread().interrupt();
+        log.forEach(entry -> {
+            MessageEntry finalEntry = getEntryByFile(entry);
+            String host = StringProcessor.getHostByUrl(finalEntry.getUrl());
+            if (!host.isEmpty()) {
+                if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
+                    filteredLog.add(finalEntry);
                 }
             }
+        });
 
-        } catch (Exception e) {
-            api.logging().logToError("applyHostFilter: " + e.getMessage());
-        } finally {
-            executor.shutdown();
-            fireTableDataChanged();
-        }
+        fireTableDataChanged();
     }
 
     private MessageEntry getEntryByFile(MessageEntry entry) {
@@ -244,12 +216,12 @@ public class MessageTableModel extends AbstractTableModel {
     public void applyMessageFilter(String tableName, String filterText) {
         filteredLog.clear();
         for (MessageEntry entry : log) {
-            HttpRequestResponse requestResponse = entry.getRequestResponse();
             // 标志变量，表示是否满足过滤条件
             AtomicBoolean isMatched = new AtomicBoolean(false);
 
-            HttpRequest httpRequest = entry.getRequestResponse().request();
-            HttpResponse httpResponse = entry.getRequestResponse().response();
+            HttpRequestResponse requestResponse = entry.getRequestResponse();
+            HttpRequest httpRequest = requestResponse.request();
+            HttpResponse httpResponse = requestResponse.response();
 
             String requestString = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
             String requestBody = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
@@ -263,7 +235,6 @@ public class MessageTableModel extends AbstractTableModel {
                     .map(HttpHeader::toString)
                     .collect(Collectors.joining("\n"));
 
-            MessageEntry finalEntry = entry;
             Config.globalRules.keySet().forEach(i -> {
                 for (Object[] objects : Config.globalRules.get(i)) {
                     String name = objects[1].toString();
@@ -271,7 +242,7 @@ public class MessageTableModel extends AbstractTableModel {
                     String scope = objects[6].toString();
 
                     // 从注释中查看是否包含当前规则名，包含的再进行查询，有效减少无意义的检索时间
-                    if (finalEntry.getComment().contains(name)) {
+                    if (entry.getComment().contains(name)) {
                         if (name.equals(tableName)) {
                             // 标志变量，表示当前规则是否匹配
                             boolean isMatch = false;
@@ -410,7 +381,7 @@ public class MessageTableModel extends AbstractTableModel {
         return messageTable;
     }
 
-    public List<MessageEntry> getLogs() {
+    public LinkedList<MessageEntry> getLogs() {
         return log;
     }
 
@@ -426,21 +397,27 @@ public class MessageTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (filteredLog.isEmpty()) {
-            return "";
+        if (!filteredLog.isEmpty()) {
+            try {
+                MessageEntry messageEntry = filteredLog.get(rowIndex);
+
+                if (messageEntry != null) {
+                    return switch (columnIndex) {
+                        case 0 -> messageEntry.getMethod();
+                        case 1 -> messageEntry.getUrl();
+                        case 2 -> messageEntry.getComment();
+                        case 3 -> messageEntry.getStatus();
+                        case 4 -> messageEntry.getLength();
+                        case 5 -> messageEntry.getColor();
+                        default -> "";
+                    };
+                }
+            } catch (Exception e) {
+                api.logging().logToError("getValueAt: " + e.getMessage());
+            }
         }
 
-        MessageEntry messageEntry = filteredLog.get(rowIndex);
-
-        return switch (columnIndex) {
-            case 0 -> messageEntry.getMethod();
-            case 1 -> messageEntry.getUrl();
-            case 2 -> messageEntry.getComment();
-            case 3 -> messageEntry.getStatus();
-            case 4 -> messageEntry.getLength();
-            case 5 -> messageEntry.getColor();
-            default -> "";
-        };
+        return "";
     }
 
     @Override
@@ -459,8 +436,6 @@ public class MessageTableModel extends AbstractTableModel {
     public class MessageTable extends JTable {
         private MessageEntry messageEntry;
         private SwingWorker<Object, Void> currentWorker;
-        // 设置响应报文返回的最大长度
-        private final int MAX_LENGTH = 5242880;
         private int lastSelectedIndex = -1;
         private final HttpRequestEditor requestEditor;
         private final HttpResponseEditor responseEditor;
@@ -477,7 +452,7 @@ public class MessageTableModel extends AbstractTableModel {
 
             requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
             responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
-            
+
             if (currentWorker != null && !currentWorker.isDone()) {
                 currentWorker.cancel(true);
             }
@@ -494,11 +469,6 @@ public class MessageTableModel extends AbstractTableModel {
 
                         ByteArray requestByte = httpRequestResponse.request().toByteArray();
                         ByteArray responseByte = httpRequestResponse.response().toByteArray();
-
-                        if (responseByte.length() > MAX_LENGTH) {
-                            String ellipsis = "\r\n......";
-                            responseByte = responseByte.subArray(0, MAX_LENGTH).withAppended(ellipsis);
-                        }
 
                         requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), requestByte));
                         responseEditor.setResponse(HttpResponse.httpResponse(responseByte));

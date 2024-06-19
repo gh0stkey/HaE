@@ -4,16 +4,16 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class MessageRenderer extends DefaultTableCellRenderer {
 
-    private final List<MessageEntry> log;
+    private final LinkedList<MessageEntry> log;
     private final Map<String, Color> colorMap = new HashMap<>();
     private final JTable table; // 保存对表格的引用
 
-    public MessageRenderer(List<MessageEntry> log, JTable table) {
+    public MessageRenderer(LinkedList<MessageEntry> log, JTable table) {
         this.log = log;
         // 与BurpSuite的颜色保持一致
         this.colorMap.put("red", new Color(0xFF, 0x64, 0x64));

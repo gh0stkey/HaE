@@ -2,7 +2,9 @@ package hae;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.extension.ExtensionUnloadingHandler;
 import burp.api.montoya.logging.Logging;
+import hae.cache.CachePool;
 import hae.component.Main;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.editor.RequestEditor;
@@ -16,7 +18,7 @@ public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.2.1";
+        String version = "3.2.2";
         api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 加载扩展后输出的项目信息
@@ -43,5 +45,14 @@ public class HaE implements BurpExtension {
         api.userInterface().registerHttpRequestEditorProvider(new RequestEditor(api, configLoader));
         api.userInterface().registerHttpResponseEditorProvider(new ResponseEditor(api, configLoader));
         api.userInterface().registerWebSocketMessageEditorProvider(new WebSocketEditor(api));
+
+        api.extension().registerUnloadingHandler(new ExtensionUnloadingHandler() {
+            @Override
+            public void extensionUnloaded() {
+                // 卸载清空数据
+                Config.globalDataMap.clear();
+                CachePool.clear();
+            }
+        });
     }
 }
