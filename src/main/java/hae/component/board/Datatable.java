@@ -193,6 +193,8 @@ public class Datatable extends JPanel {
 
         if (!selectData.isEmpty()) {
             selectData.deleteCharAt(selectData.length() - 1);
+        } else {
+            return "";
         }
 
         return selectData.toString();
