@@ -6,22 +6,27 @@
 
 ## 项目介绍
 
-**HaE**是一款网络安全（数据安全）领域下的辅助型框架式项目，旨在实现对HTTP消息（包含WebSocket）的高亮标记和信息提取。本项目通过自定义正则表达式匹配响应报文或请求报文，并对匹配成功的报文进行标记和提取。
+**HaE**是一款**网络安全（数据安全）领域**下的**结合人工智能（AI）大模型辅助**的框架式项目，旨在实现对HTTP消息（包含WebSocket）的高亮标记和信息提取。本项目通过自定义正则表达式匹配响应报文或请求报文，并对匹配成功的报文进行标记和提取。
 
 > 随着现代化Web应用采用前后端分离的开发模式，日常漏洞挖掘的过程中，捕获的HTTP请求流量也相应增加。若想全面评估一个Web应用，会花费大量时间在无用的报文上。**HaE的出现旨在解决这类情况**，借助HaE，您能够**有效减少**测试时间，将更多精力集中在**有价值且有意义**的报文上，从而**提高漏洞挖掘效率**。
 
 **注意事项**: 
 
-1. 由于HaE 3.0版本开始采用`Montoya API`进行开发，因此使用新版HaE需要升级你的BurpSuite版本（>=2023.12.1）。
-2. 由于HaE 2.6版本后对规则字段进行了更新，因此无法适配<=2.6版本的规则，请用户自行前往[规则转换页面](https://gh0st.cn/HaE/ConversionRule.html)进行转换。
-3. HaE官方规则库存放在[Github](https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml)上，因此点击`Update`升级HaE官方规则库时需使用代理（BApp审核考虑安全性，不允许使用CDN）。
-4. 自定义HaE规则必须用左右括号`()`将所需提取的表达式内容包含，例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，在HaE的规则中就需要变成`(rememberMe=delete)`。
+1. HaE 3.3版本开启了AI+新功能，该功能仅支持阿里的`Qweb-Long`模型和月之暗面的`moonshot-v1-128k`模型，请配置和使用时注意。
+2. HaE 3.0版本开始采用`Montoya API`进行开发，使用新版HaE需要升级你的BurpSuite版本（>=2023.12.1）。
+3. HaE 2.6版本后对规则字段进行了更新，因此无法适配<=2.6版本的规则，请用户自行前往[规则转换页面](https://gh0st.cn/HaE/ConversionRule.html)进行转换。
+4. HaE官方规则库存放在[Github](https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml)上，因此点击`Update`升级HaE官方规则库时需使用代理（BApp审核考虑安全性，不允许使用CDN）。
+5. 自定义HaE规则必须用左右括号`()`将所需提取的表达式内容包含，例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，在HaE的规则中就需要变成`(rememberMe=delete)`。
+
+**温馨暖语**:
+
+> HaE与你同行，点亮BurpSuite那最后一抹光芒，踏上漏洞挖掘的征途，在这场智慧与技巧的角逐中，共同发掘数字世界的隐秘角落。
 
 ## 使用方法
 
 插件装载: `Extender - Extensions - Add - Select File - Next`
 
-初次装载`HaE`会自动获取官方规则库`https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml`，配置文件（`Config.yml`）和规则文件（`Rules.yml`）会放在固定目录下：
+初次装载`HaE`会从Jar包中加载离线的规则库，如果更新的话则会向官方规则库地址拉取`https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml`，配置文件（`Config.yml`）和规则文件（`Rules.yml`）会放在固定目录下：
 
 1. Linux/Mac用户的配置文件目录：`~/.config/HaE/`
 2. Windows用户的配置文件目录：`%USERPROFILE%/.config/HaE/`
@@ -52,11 +57,13 @@ HaE目前的规则一共有8个字段，详细的含义如下所示：
 4. **算法**：内置高亮颜色的升级算法，当出现相同颜色时**会自动向上升级一个颜色**进行标记，**避免`屠龙者终成恶龙`场景**。
 5. **管理**：支持对数据的一键导出、导入，以**自定义`.hae`文件的方式**进行项目数据存储，**便于存储和共享项目数据**。
 6. **实战**：官方规则库和规则字段作用功能，都是**基于实战化场景总结输出**的，**以此提高数据的有效性、精准性发现**。
+7. **智能**：集成阿里、月之暗面**人工智能（AI）大模型**API，对匹配的数据进行优化处理，**提高数据式漏洞挖掘效率**。
 
 | 界面名称                  | 界面展示                                              |
 | ------------------------ | ---------------------------------------------------- |
 | Rules（规则管理）     | <img src="images/rules.png" style="width: 80%" />     |
-| Config（配置管理）    | <img src="images/config.png" style="width: 80%" />    |
+| Config-Setting（Setting配置管理）    | <img src="images/config-setting.png" style="width: 80%" />    |
+| Config-AI+（AI+配置管理）    | <img src="images/config-ai.png" style="width: 80%" />    |
 | Databoard（数据集合） | <img src="images/databoard.png" style="width: 80%" /> |
 | MarkInfo（数据展示） | <img src="images/markinfo.png" style="width: 80%" /> |
 
