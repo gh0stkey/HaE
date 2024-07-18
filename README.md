@@ -12,7 +12,7 @@
 
 **注意事项**: 
 
-1. HaE 3.3版本开启了AI+新功能，该功能仅支持阿里的`Qweb-Long`模型和月之暗面的`moonshot-v1-128k`模型，请配置和使用时注意。
+1. HaE 3.3版本开启了AI+新功能，该功能仅支持阿里的`Qwen-Long`模型和月之暗面的`moonshot-v1-128k`模型，请配置和使用时注意。
 2. HaE 3.0版本开始采用`Montoya API`进行开发，使用新版HaE需要升级你的BurpSuite版本（>=2023.12.1）。
 3. HaE 2.6版本后对规则字段进行了更新，因此无法适配<=2.6版本的规则，请用户自行前往[规则转换页面](https://gh0st.cn/HaE/ConversionRule.html)进行转换。
 4. HaE官方规则库存放在[Github](https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml)上，因此点击`Update`升级HaE官方规则库时需使用代理（BApp审核考虑安全性，不允许使用CDN）。
