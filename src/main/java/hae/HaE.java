@@ -18,7 +18,7 @@ public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.2.2";
+        String version = "3.3";
         api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 加载扩展后输出的项目信息
@@ -44,7 +44,7 @@ public class HaE implements BurpExtension {
         // 注册消息编辑框（用于展示数据）
         api.userInterface().registerHttpRequestEditorProvider(new RequestEditor(api, configLoader));
         api.userInterface().registerHttpResponseEditorProvider(new ResponseEditor(api, configLoader));
-        api.userInterface().registerWebSocketMessageEditorProvider(new WebSocketEditor(api));
+        api.userInterface().registerWebSocketMessageEditorProvider(new WebSocketEditor(api, configLoader));
 
         api.extension().registerUnloadingHandler(new ExtensionUnloadingHandler() {
             @Override

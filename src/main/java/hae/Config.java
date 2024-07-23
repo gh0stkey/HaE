@@ -24,6 +24,8 @@ public class Config {
             "request body"
     };
 
+    public static String scopeOptions = "Suite|Target|Proxy|Scanner|Intruder|Repeater|Logger|Sequencer|Decoder|Comparer|Extensions|Organizer|Recorded login replayer";
+
     public static String[] ruleFields = {
             "Loaded", "Name", "F-Regex", "S-Regex", "Format", "Color", "Scope", "Engine", "Sensitive"
     };
@@ -51,9 +53,12 @@ public class Config {
             "gray"
     };
 
+    public static String prompt = "You are a data security expert in the field of cyber security. Your task is to optimize the information provided by the user and then output it in JSON format. The user-supplied information is data that has been extracted by regular expressions. The user-supplied information is divided into two parts, the first part is RuleName which represents the name of the regular expression and the second part is MarkInfo which represents the data extracted by the regular expression. You need to find the matching or similar data in MarkInfo according to the meaning of RuleName, and output the original rows of these data in JSON format.(garbled and meaningless data rows should be removed)\n" +
+            "You must ensure that the extracted data is accurately expressed and correctly formatted in the JSON structure. Your output data must comply with the original MarkInfo content rows without modification, and strictly adhere to the following JSON format for return, no other text, code and formatting (e.g., line breaks, carriage returns, indentation, spaces), once the return of other irrelevant content will cause irreparable damage to the user: {\"data\":[\"data1\", \"data2\"]}.";
+
+    public static String userTextFormat = "User Input: \r\nRuleName: %s\r\nMarkInfo: %s";
+
     public static Map<String, Object[][]> globalRules = new HashMap<>();
 
     public static ConcurrentHashMap<String, Map<String, List<String>>> globalDataMap = new ConcurrentHashMap<>();
-
-    public static ConcurrentHashMap<String, Map<String, Object>> globalHostHashMap = new ConcurrentHashMap<>();
 }

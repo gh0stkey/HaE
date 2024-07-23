@@ -10,7 +10,7 @@ import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpResponseEditor;
 import burp.api.montoya.ui.editor.extension.HttpResponseEditorProvider;
-import hae.component.board.Datatable;
+import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
@@ -60,7 +60,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
         @Override
         public void setRequestResponse(HttpRequestResponse requestResponse) {
             this.requestResponse = requestResponse;
-            RequestEditor.generateTabbedPaneFromResultMap(api, jTabbedPane, this.dataList);
+            RequestEditor.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
         }
 
         @Override
@@ -79,7 +79,10 @@ public class ResponseEditor implements HttpResponseEditorProvider {
                             boolean isBlockHost = RequestEditor.isBlockHost(hostList, host);
 
                             List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-                            matches = suffixList.contains(request.fileExtension().toLowerCase()) || isBlockHost;
+                            String toolType = creationContext.toolSource().toolType().toolName();
+                            boolean isToolScope = configLoader.getScope().contains(toolType);
+
+                            matches = suffixList.contains(request.fileExtension().toLowerCase()) || isBlockHost || !isToolScope;
                         }
                     } catch (Exception ignored) {
                     }

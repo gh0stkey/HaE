@@ -7,6 +7,9 @@ import hae.utils.UIEnhancer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -14,12 +17,11 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Config extends JPanel {
     private final MontoyaApi api;
@@ -27,21 +29,21 @@ public class Config extends JPanel {
     private final Rules rules;
     private JTextField addTextField;
     private final String defaultText = "Enter a new item";
+    private final GridBagConstraints constraints = new GridBagConstraints();
 
     public Config(MontoyaApi api, ConfigLoader configLoader, Rules rules) {
         this.api = api;
         this.configLoader = configLoader;
         this.rules = rules;
 
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+
         initComponents();
     }
 
     private void initComponents() {
         setLayout(new BorderLayout());
-
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel ruleInfoPanel = new JPanel(new GridBagLayout());
         ruleInfoPanel.setBorder(new EmptyBorder(10, 15, 5, 15));
@@ -62,6 +64,153 @@ public class Config extends JPanel {
         reloadButton.addActionListener(this::reloadActionPerformed);
         updateButton.addActionListener(this::onlineUpdateActionPerformed);
 
+        constraints.gridx = 1;
+        JTabbedPane configTabbedPanel = new JTabbedPane();
+
+        String[] settingMode = new String[]{"Exclude suffix", "Block host"};
+        JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
+        JPanel scopePanel = getScopePanel();
+        JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
+        scopeScrollPane.setBorder(new TitledBorder("Scope"));
+        settingPanel.add(scopeScrollPane, BorderLayout.NORTH);
+        configTabbedPanel.add("Setting", settingPanel);
+
+        String[] aiMode = new String[]{"Alibaba", "Moonshot"};
+        JPanel aiPanel = createConfigTablePanel(aiMode, "AI+");
+        JTextArea promptTextArea = new JTextArea();
+        promptTextArea.setLineWrap(true);
+        promptTextArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            private void onTextChange() {
+                String promptText = promptTextArea.getText();
+                configLoader.setAIPrompt(promptText);
+            }
+        });
+        promptTextArea.setText(configLoader.getAIPrompt());
+        JScrollPane promptScrollPane = new JScrollPane(promptTextArea);
+        promptScrollPane.setBorder(new TitledBorder("Prompt"));
+        promptScrollPane.setPreferredSize(new Dimension(0, 100));
+        aiPanel.add(promptScrollPane, BorderLayout.NORTH);
+        configTabbedPanel.add("AI+", aiPanel);
+        add(ruleInfoPanel, BorderLayout.NORTH);
+        add(configTabbedPanel, BorderLayout.CENTER);
+    }
+
+    private JPanel getScopePanel() {
+        JPanel scopePanel = new JPanel();
+        scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.X_AXIS));
+
+        String[] scopeInit = hae.Config.scopeOptions.split("\\|");
+        String[] scopeMode = configLoader.getScope().split("\\|");
+        for (String scope : scopeInit) {
+            JCheckBox checkBox = new JCheckBox(scope);
+            scopePanel.add(checkBox);
+            for (String mode : scopeMode) {
+                if (scope.equals(mode)) {
+                    checkBox.setSelected(true);
+                }
+            }
+
+            checkBox.addActionListener(e -> updateScope(checkBox));
+        }
+        return scopePanel;
+    }
+
+    private TableModelListener craeteSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+        return new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                String selected = (String) setTypeComboBox.getSelectedItem();
+                String values = getFirstColumnDataAsString(model);
+
+                if (selected.equals("Exclude suffix")) {
+                    if (!values.equals(configLoader.getExcludeSuffix()) && !values.isEmpty()) {
+                        configLoader.setExcludeSuffix(values);
+                    }
+                }
+
+                if (selected.equals("Block host")) {
+                    if (!values.equals(configLoader.getBlockHost()) && !values.isEmpty()) {
+                        configLoader.setBlockHost(values);
+                    }
+                }
+            }
+        };
+    }
+
+    private ActionListener createSettingActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+        return new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selected = (String) setTypeComboBox.getSelectedItem();
+                model.setRowCount(0);
+
+                if (selected.equals("Exclude suffix")) {
+                    addDataToTable(configLoader.getExcludeSuffix().replaceAll("\\|", "\r\n"), model);
+                }
+
+                if (selected.equals("Block host")) {
+                    addDataToTable(configLoader.getBlockHost().replaceAll("\\|", "\r\n"), model);
+                }
+            }
+        };
+    }
+
+    private TableModelListener craeteAITableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+        return new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                String selected = (String) setTypeComboBox.getSelectedItem();
+                String values = getFirstColumnDataAsString(model);
+
+                if (selected.equals("Alibaba")) {
+                    if (!values.equals(configLoader.getAlibabaAIAPIKey()) && !values.isEmpty()) {
+                        configLoader.setAlibabaAIAPIKey(values);
+                    }
+                }
+
+                if (selected.equals("Moonshot")) {
+                    if (!values.equals(configLoader.getMoonshotAIAPIKey()) && !values.isEmpty()) {
+                        configLoader.setMoonshotAIAPIKey(values);
+                    }
+                }
+            }
+        };
+    }
+
+    private ActionListener createAIActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+        return new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selected = (String) setTypeComboBox.getSelectedItem();
+                model.setRowCount(0);
+
+                if (selected.equals("Alibaba")) {
+                    addDataToTable(configLoader.getAlibabaAIAPIKey().replaceAll("\\|", "\r\n"), model);
+                }
+
+                if (selected.equals("Moonshot")) {
+                    addDataToTable(configLoader.getMoonshotAIAPIKey().replaceAll("\\|", "\r\n"), model);
+                }
+            }
+        };
+    }
+
+    private JPanel createConfigTablePanel(String[] mode, String type) {
         JPanel settingPanel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel();
 
@@ -80,48 +229,19 @@ public class Config extends JPanel {
         JPanel inputPanelB = new JPanel(new BorderLayout());
         inputPanelB.setBorder(new EmptyBorder(0, 0, 3, 0));
 
-        constraints.gridx = 1;
         JButton addButton = new JButton("Add");
         JButton removeButton = new JButton("Remove");
         JButton pasteButton = new JButton("Paste");
         JButton clearButton = new JButton("Clear");
 
         JComboBox<String> setTypeComboBox = new JComboBox<>();
-        String[] mode = new String[]{"Exclude suffix", "Block host"};
         setTypeComboBox.setModel(new DefaultComboBoxModel<>(mode));
-        setTypeComboBox.addActionListener(e -> {
-            String selected = (String) setTypeComboBox.getSelectedItem();
-            model.setRowCount(0);
 
-            if (selected.equals("Exclude suffix")) {
-                addDataToTable(configLoader.getExcludeSuffix().replaceAll("\\|", "\r\n"), model);
-            }
+        setTypeComboBox.addActionListener(type.equals("AI+") ? createAIActionListener(setTypeComboBox, model) : createSettingActionListener(setTypeComboBox, model));
 
-            if (selected.equals("Block host")) {
-                addDataToTable(configLoader.getBlockHost().replaceAll("\\|", "\r\n"), model);
-            }
-        });
-        setTypeComboBox.setSelectedItem("Exclude suffix");
+        setTypeComboBox.setSelectedItem(mode[0]);
 
-        model.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                String selected = (String) setTypeComboBox.getSelectedItem();
-                String values = getFirstColumnDataAsString(model);
-
-                if (selected.equals("Exclude suffix")) {
-                    if (!values.equals(configLoader.getExcludeSuffix()) && !values.isEmpty()) {
-                        configLoader.setExcludeSuffix(values);
-                    }
-                }
-
-                if (selected.equals("Block host")) {
-                    if (!values.equals(configLoader.getBlockHost()) && !values.isEmpty()) {
-                        configLoader.setBlockHost(values);
-                    }
-                }
-            }
-        });
+        model.addTableModelListener(type.equals("AI+") ? craeteAITableModelListener(setTypeComboBox, model) : craeteSettingTableModelListener(setTypeComboBox, model));
 
         constraints.insets = new Insets(0, 0, 3, 0);
         constraints.gridy = 0;
@@ -146,13 +266,13 @@ public class Config extends JPanel {
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
 
-        addButton.addActionListener(e -> addActionPerformedAction(e, model));
+        addButton.addActionListener(e -> addActionPerformed(e, model));
 
         addTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addActionPerformedAction(null, model);
+                    addActionPerformed(null, model);
                 }
             }
         });
@@ -178,16 +298,14 @@ public class Config extends JPanel {
 
         clearButton.addActionListener(e -> model.setRowCount(0));
 
-        JPanel settingMainPanel = new JPanel(new BorderLayout());
-        JLabel settingLabel = new JLabel("Setting:");
-        JPanel settingLabelPanel = new JPanel(new BorderLayout());
-        settingLabelPanel.add(settingLabel, BorderLayout.WEST);
-        settingMainPanel.setBorder(new EmptyBorder(0, 15, 10, 15));
-        settingMainPanel.add(settingLabelPanel, BorderLayout.NORTH);
-        settingMainPanel.add(settingPanel, BorderLayout.CENTER);
 
-        add(ruleInfoPanel, BorderLayout.NORTH);
-        add(settingMainPanel, BorderLayout.CENTER);
+        JPanel settingMainPanel = new JPanel(new BorderLayout());
+        settingMainPanel.setBorder(new EmptyBorder(5, 15, 10, 15));
+        JScrollPane settingScroller = new JScrollPane(settingPanel);
+        settingScroller.setBorder(new TitledBorder(type.equals("AI+") ? "API Key" : "Setting"));
+        settingMainPanel.add(settingScroller, BorderLayout.CENTER);
+
+        return settingMainPanel;
     }
 
 
@@ -239,7 +357,22 @@ public class Config extends JPanel {
         }
     }
 
-    private void addActionPerformedAction(ActionEvent e, DefaultTableModel model) {
+    public void updateScope(JCheckBox checkBox) {
+        String boxText = checkBox.getText();
+        boolean selected = checkBox.isSelected();
+
+        Set<String> HaEScope = new HashSet<>(Arrays.asList(configLoader.getScope().split("\\|")));
+
+        if (selected) {
+            HaEScope.add(boxText);
+        } else {
+            HaEScope.remove(boxText);
+        }
+
+        configLoader.setScope(String.join("|", HaEScope));
+    }
+
+    private void addActionPerformed(ActionEvent e, DefaultTableModel model) {
         String addTextFieldText = addTextField.getText();
         if (!addTextFieldText.equals(defaultText)) {
             addDataToTable(addTextFieldText, model);

@@ -9,7 +9,7 @@ import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
-import hae.component.board.Datatable;
+import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
@@ -59,7 +59,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
         @Override
         public void setRequestResponse(HttpRequestResponse requestResponse) {
             this.requestResponse = requestResponse;
-            generateTabbedPaneFromResultMap(api, jTabbedPane, this.dataList);
+            generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
         }
 
         @Override
@@ -73,7 +73,10 @@ public class RequestEditor implements HttpRequestEditorProvider {
                         boolean isBlockHost = isBlockHost(hostList, host);
 
                         List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-                        boolean matches = suffixList.contains(request.fileExtension().toLowerCase()) || isBlockHost;
+                        String toolType = creationContext.toolSource().toolType().toolName();
+                        boolean isToolScope = configLoader.getScope().contains(toolType);
+
+                        boolean matches = suffixList.contains(request.fileExtension().toLowerCase()) || isBlockHost || !isToolScope;
 
                         if (!matches && !request.bodyToString().equals("Loading...")) {
                             this.dataList = messageProcessor.processRequest("", request, false);
@@ -139,14 +142,14 @@ public class RequestEditor implements HttpRequestEditorProvider {
         return false;
     }
 
-    public static void generateTabbedPaneFromResultMap(MontoyaApi api, JTabbedPane tabbedPane, List<Map<String, String>> result) {
+    public static void generateTabbedPaneFromResultMap(MontoyaApi api, ConfigLoader configLoader, JTabbedPane tabbedPane, List<Map<String, String>> result) {
         tabbedPane.removeAll();
         if (result != null && !result.isEmpty()) {
             Map<String, String> dataMap = result.get(0);
             if (dataMap != null && !dataMap.isEmpty()) {
                 dataMap.keySet().forEach(i -> {
                     String[] extractData = dataMap.get(i).split("\n");
-                    Datatable dataPanel = new Datatable(api, i, Arrays.asList(extractData));
+                    Datatable dataPanel = new Datatable(api, configLoader, i, Arrays.asList(extractData));
                     tabbedPane.addTab(i, dataPanel);
                 });
             }

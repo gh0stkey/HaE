@@ -5,6 +5,7 @@ import hae.Config;
 import hae.component.board.message.MessageEntry;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
+import hae.component.board.table.Datatable;
 import hae.instances.http.utils.RegularMatcher;
 import hae.utils.ConfigLoader;
 import hae.utils.project.ProjectProcessor;
@@ -46,7 +47,7 @@ public class Databoard extends JPanel {
     private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
     private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
 
-    private SwingWorker<Boolean, Void> handleComboBoxWorker;
+    private SwingWorker<Map<String, List<String>>, Void> handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
     private SwingWorker<List<String>, Void> exportActionWorker;
     private SwingWorker<List<String>, Void> importActionWorker;
@@ -63,7 +64,7 @@ public class Databoard extends JPanel {
     private void initComponents() {
         setLayout(new GridBagLayout());
         ((GridBagLayout) getLayout()).columnWidths = new int[]{25, 0, 0, 0, 20, 0};
-        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 25, 0};
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0, 0};
         ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
         ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 0.0, 1.0E-4};
 
@@ -120,7 +121,7 @@ public class Databoard extends JPanel {
         add(splitPane, new GridBagConstraints(1, 1, 3, 1, 0.0, 1.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(0, 5, 0, 5), 0, 0));
-        add(progressBar, new GridBagConstraints(1, 3, 3, 1, 1.0, 0.0,
+        add(progressBar, new GridBagConstraints(1, 2, 3, 1, 1.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                 new Insets(0, 5, 0, 5), 0, 0));
         hostComboBox.setMaximumRowCount(5);
@@ -143,6 +144,11 @@ public class Databoard extends JPanel {
     }
 
     private void setProgressBar(boolean status) {
+        setProgressBar(status, progressBar, "Loading ...");
+    }
+
+
+    public static void setProgressBar(boolean status, JProgressBar progressBar, String showString) {
         progressBar.setIndeterminate(status);
         if (!status) {
             progressBar.setMaximum(100);
@@ -150,7 +156,7 @@ public class Databoard extends JPanel {
             progressBar.setStringPainted(true);
             progressBar.setValue(progressBar.getMaximum());
         } else {
-            progressBar.setString("Loading...");
+            progressBar.setString(showString);
             progressBar.setStringPainted(true);
         }
     }
@@ -198,18 +204,27 @@ public class Databoard extends JPanel {
                     handleComboBoxWorker.cancel(true);
                 }
 
-                handleComboBoxWorker = new SwingWorker<Boolean, Void>() {
+                handleComboBoxWorker = new SwingWorker<Map<String, List<String>>, Void>() {
                     @Override
-                    protected Boolean doInBackground() {
-                        return populateTabbedPaneByHost(selectedHost);
+                    protected Map<String, List<String>> doInBackground() {
+                        return getSelectedMapByHost(selectedHost);
                     }
 
                     @Override
                     protected void done() {
                         if (!isCancelled()) {
                             try {
-                                boolean status = get();
-                                if (status) {
+                                Map<String, List<String>> selectedDataMap = get();
+                                if (!selectedDataMap.isEmpty()) {
+                                    dataTabbedPane.removeAll();
+
+                                    for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
+                                        String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
+                                        Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
+                                        datatablePanel.setTableListener(messageTableModel);
+                                        dataTabbedPane.addTab(tabTitle, datatablePanel);
+                                    }
+
                                     JSplitPane messageSplitPane = messageTableModel.getSplitPane();
                                     splitPane.setLeftComponent(dataTabbedPane);
                                     splitPane.setRightComponent(messageSplitPane);
@@ -257,7 +272,7 @@ public class Databoard extends JPanel {
         isMatchHost = false;
     }
 
-    private boolean populateTabbedPaneByHost(String selectedHost) {
+    private Map<String, List<String>> getSelectedMapByHost(String selectedHost) {
         ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
         Map<String, List<String>> selectedDataMap;
 
@@ -283,20 +298,7 @@ public class Databoard extends JPanel {
             selectedDataMap = dataMap.get(selectedHost);
         }
 
-        if (!selectedDataMap.isEmpty()) {
-            dataTabbedPane.removeAll();
-
-            for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
-                String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                Datatable datatablePanel = new Datatable(api, entry.getKey(), entry.getValue());
-                datatablePanel.setTableListener(messageTableModel);
-                dataTabbedPane.addTab(tabTitle, datatablePanel);
-            }
-
-            return true;
-        }
-
-        return false;
+        return selectedDataMap;
     }
 
     private void filterComboBoxList() {
@@ -396,7 +398,8 @@ public class Databoard extends JPanel {
                     List<String> taskStatusList = get();
                     if (!taskStatusList.isEmpty()) {
                         String exportStatusMessage = String.format("Exported File List Status:\n%s", String.join("\n", taskStatusList));
-                        JOptionPane.showConfirmDialog(Databoard.this, exportStatusMessage, "Info", JOptionPane.YES_OPTION);
+
+                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(exportStatusMessage), "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ignored) {
                 }
@@ -404,6 +407,16 @@ public class Databoard extends JPanel {
         };
 
         exportActionWorker.execute();
+    }
+
+    private JScrollPane generateTaskStatusPane(String message) {
+        JTextArea textArea = new JTextArea(message);
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+
+        return scrollPane;
     }
 
     private List<String> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
@@ -509,7 +522,7 @@ public class Databoard extends JPanel {
                     List<String> taskStatusList = get();
                     if (!taskStatusList.isEmpty()) {
                         String importStatusMessage = "Imported File List Status:\n" + String.join("\n", taskStatusList);
-                        JOptionPane.showConfirmDialog(Databoard.this, importStatusMessage, "Info", JOptionPane.YES_OPTION);
+                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(importStatusMessage), "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ignored) {
                 }

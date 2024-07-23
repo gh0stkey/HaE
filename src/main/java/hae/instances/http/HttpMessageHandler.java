@@ -48,14 +48,16 @@ public class HttpMessageHandler implements HttpHandler {
 
         try {
             httpRequest.set(httpRequestToBeSent);
-
             host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
 
             String[] hostList = configLoader.getBlockHost().split("\\|");
             boolean isBlockHost = RequestEditor.isBlockHost(hostList, host.get());
 
+            String toolType = httpRequestToBeSent.toolSource().toolType().toolName();
+            boolean isToolScope = configLoader.getScope().contains(toolType);
+
             List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-            matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost);
+            matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost || !isToolScope);
 
             if (!matches.get()) {
                 List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);

@@ -134,40 +134,80 @@ public class ConfigLoader {
         return rules;
     }
 
+    public String getAlibabaAIAPIKey() {
+        return getValueFromConfig("AlibabaAIAPIKey", "");
+    }
+
+    public String getMoonshotAIAPIKey() {
+        return getValueFromConfig("MoonshotAIAPIKey", "");
+    }
+
+    public String getAIPrompt() {
+        return getValueFromConfig("AIPrompt", Config.prompt);
+    }
+
     public String getBlockHost() {
-        File yamlSetting = new File(configFilePath);
-        if (!yamlSetting.exists() || !yamlSetting.isFile()) {
-            return Config.host;
-        }
-
-        try (InputStream inorder = Files.newInputStream(Paths.get(configFilePath))) {
-            Map<String, Object> r = new Yaml().load(inorder);
-
-            if (r.containsKey("blockHost")) {
-                return r.get("blockHost").toString();
-            }
-        } catch (Exception ignored) {
-        }
-
-        return Config.host;
+        return getValueFromConfig("blockHost", Config.host);
     }
 
     public String getExcludeSuffix() {
+        return getValueFromConfig("excludeSuffix", Config.suffix);
+    }
+
+    public String getScope() {
+        return getValueFromConfig("HaEScope", Config.scopeOptions);
+    }
+
+    private String getValueFromConfig(String name, String value) {
         File yamlSetting = new File(configFilePath);
         if (!yamlSetting.exists() || !yamlSetting.isFile()) {
-            return Config.suffix;
+            return value;
         }
 
         try (InputStream inorder = Files.newInputStream(Paths.get(configFilePath))) {
             Map<String, Object> r = new Yaml().load(inorder);
 
-            if (r.containsKey("excludeSuffix")) {
-                return r.get("excludeSuffix").toString();
+            if (r.containsKey(name)) {
+                return r.get(name).toString();
             }
         } catch (Exception ignored) {
         }
 
-        return Config.suffix;
+        return value;
+    }
+
+    public void setAlibabaAIAPIKey(String apiKey) {
+        setValueToConfig("AlibabaAIAPIKey", apiKey);
+    }
+
+    public void setMoonshotAIAPIKey(String apiKey) {
+        setValueToConfig("MoonshotAIAPIKey", apiKey);
+    }
+
+    public void setAIPrompt(String prompt) {
+        setValueToConfig("AIPrompt", prompt);
+    }
+
+    public void setExcludeSuffix(String excludeSuffix) {
+        setValueToConfig("excludeSuffix", excludeSuffix);
+    }
+
+    public void setBlockHost(String blockHost) {
+        setValueToConfig("blockHost", blockHost);
+    }
+
+    public void setScope(String scope) {
+        setValueToConfig("HaEScope", scope);
+    }
+
+    private void setValueToConfig(String name, String value) {
+        Map<String, Object> currentConfig = loadCurrentConfig();
+        currentConfig.put(name, value);
+
+        try (Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
+            yaml.dump(currentConfig, ws);
+        } catch (Exception ignored) {
+        }
     }
 
     private Map<String, Object> loadCurrentConfig() {
@@ -180,26 +220,6 @@ public class ConfigLoader {
             return yaml.load(in);
         } catch (Exception e) {
             return new LinkedHashMap<>(); // 读取失败时也返回空的Map
-        }
-    }
-
-    public void setExcludeSuffix(String excludeSuffix) {
-        Map<String, Object> currentConfig = loadCurrentConfig();
-        currentConfig.put("excludeSuffix", excludeSuffix); // 更新配置
-
-        try (Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
-            yaml.dump(currentConfig, ws);
-        } catch (Exception ignored) {
-        }
-    }
-
-    public void setBlockHost(String blockHost) {
-        Map<String, Object> currentConfig = loadCurrentConfig();
-        currentConfig.put("blockHost", blockHost); // 更新配置
-
-        try (Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
-            yaml.dump(currentConfig, ws);
-        } catch (Exception ignored) {
         }
     }
 
