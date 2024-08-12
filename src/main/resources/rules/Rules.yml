@@ -209,7 +209,7 @@ rules:
     sensitive: false
   - name: Sensitive Field
     loaded: true
-    f_regex: ((\[)?('|")?([\w]{0,10})((key)|(secret)|(token)|(config)|(auth)|(access)|(admin))([\w]{0,10})('|")?(\])?(
+    f_regex: ((\[)?('|")?([\w]{0,10})((key)|(secret)|(token)|(config)|(auth)|(access)|(admin)|(ticket))([\w]{0,10})('|")?(\])?(
       |)(:|=)( |)('|")(.*?)('|")(|,))
     s_regex: ''
     format: '{0}'
@@ -248,7 +248,7 @@ rules:
     sensitive: false
   - name: Create Script
     loaded: true
-    f_regex: (\+\{.*?\}\[[a-zA-Z]\]\+".*?\.js")
+    f_regex: (\{[^{}]*\}\s*\[[^\s]*\]\s*\+\s*"[^\s]*\.js")
     s_regex: '"?([\w].*?)"?:"(.*?)"'
     format: '{0}.{1}'
     color: green
@@ -282,3 +282,12 @@ rules:
     scope: response body
     engine: nfa
     sensitive: true
+  - name: Request URI
+    loaded: true
+    f_regex: ' ((?!.*\.js(\?.*)?$)(.*?[^.js$])) '
+    s_regex: ''
+    format: '{0}'
+    color: gray
+    scope: request line
+    engine: nfa
+    sensitive: false
