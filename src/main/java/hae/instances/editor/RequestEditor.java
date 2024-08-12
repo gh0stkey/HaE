@@ -12,6 +12,7 @@ import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
 import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
+import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
@@ -37,6 +38,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
     private static class Editor implements ExtensionProvidedHttpRequestEditor {
         private final MontoyaApi api;
         private final ConfigLoader configLoader;
+        private final HttpUtils httpUtils;
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
         private HttpRequestResponse requestResponse;
@@ -47,6 +49,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
         public Editor(MontoyaApi api, ConfigLoader configLoader, EditorCreationContext creationContext) {
             this.api = api;
             this.configLoader = configLoader;
+            this.httpUtils = new HttpUtils(api, configLoader);
             this.creationContext = creationContext;
             this.messageProcessor = new MessageProcessor(api);
         }
@@ -69,16 +72,10 @@ public class RequestEditor implements HttpRequestEditorProvider {
                 try {
                     String host = StringProcessor.getHostByUrl(request.url());
                     if (!host.isEmpty()) {
-                        String[] hostList = configLoader.getBlockHost().split("\\|");
-                        boolean isBlockHost = isBlockHost(hostList, host);
-
-                        List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
                         String toolType = creationContext.toolSource().toolType().toolName();
-                        boolean isToolScope = configLoader.getScope().contains(toolType);
+                        boolean matches = httpUtils.verifyHttpRequestResponse(requestResponse, toolType);
 
-                        boolean matches = suffixList.contains(request.fileExtension().toLowerCase()) || isBlockHost || !isToolScope;
-
-                        if (!matches && !request.bodyToString().equals("Loading...")) {
+                        if (!matches) {
                             this.dataList = messageProcessor.processRequest("", request, false);
                             return isListHasData(this.dataList);
                         }
@@ -119,19 +116,6 @@ public class RequestEditor implements HttpRequestEditorProvider {
         public boolean isModified() {
             return false;
         }
-    }
-
-    public static boolean isBlockHost(String[] hostList, String host) {
-        boolean isBlockHost = false;
-        for (String hostName : hostList) {
-            String cleanedHost = StringProcessor.replaceFirstOccurrence(hostName, "*.", "");
-            if (hostName.contains("*.") && StringProcessor.matchFromEnd(host, cleanedHost)) {
-                isBlockHost = true;
-            } else if (host.equals(hostName) || hostName.equals("*")) {
-                isBlockHost = true;
-            }
-        }
-        return isBlockHost;
     }
 
     public static boolean isListHasData(List<Map<String, String>> dataList) {

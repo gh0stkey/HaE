@@ -147,11 +147,15 @@ public class ConfigLoader {
     }
 
     public String getBlockHost() {
-        return getValueFromConfig("blockHost", Config.host);
+        return getValueFromConfig("BlockHost", Config.host);
     }
 
     public String getExcludeSuffix() {
-        return getValueFromConfig("excludeSuffix", Config.suffix);
+        return getValueFromConfig("ExcludeSuffix", Config.suffix);
+    }
+
+    public String getExcludeStatus() {
+        return getValueFromConfig("ExcludeStatus", Config.status);
     }
 
     public String getScope() {
@@ -189,11 +193,15 @@ public class ConfigLoader {
     }
 
     public void setExcludeSuffix(String excludeSuffix) {
-        setValueToConfig("excludeSuffix", excludeSuffix);
+        setValueToConfig("ExcludeSuffix", excludeSuffix);
     }
 
     public void setBlockHost(String blockHost) {
-        setValueToConfig("blockHost", blockHost);
+        setValueToConfig("BlockHost", blockHost);
+    }
+
+    public void setExcludeStatus(String status) {
+        setValueToConfig("ExcludeStatus", status);
     }
 
     public void setScope(String scope) {

@@ -7,20 +7,20 @@ import burp.api.montoya.http.handler.*;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import hae.component.board.message.MessageTableModel;
-import hae.instances.editor.RequestEditor;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
+import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class HttpMessageHandler implements HttpHandler {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final HttpUtils httpUtils;
     private final MessageTableModel messageTableModel;
     private final MessageProcessor messageProcessor;
 
@@ -29,12 +29,12 @@ public class HttpMessageHandler implements HttpHandler {
     private final ThreadLocal<String> host = ThreadLocal.withInitial(() -> "");
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> commentList = ThreadLocal.withInitial(ArrayList::new);
-    private final ThreadLocal<Boolean> matches = ThreadLocal.withInitial(() -> false);
     private final ThreadLocal<HttpRequest> httpRequest = new ThreadLocal<>();
 
     public HttpMessageHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
         this.configLoader = configLoader;
+        this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
         this.messageProcessor = new MessageProcessor(api);
     }
@@ -49,20 +49,6 @@ public class HttpMessageHandler implements HttpHandler {
         try {
             httpRequest.set(httpRequestToBeSent);
             host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
-
-            String[] hostList = configLoader.getBlockHost().split("\\|");
-            boolean isBlockHost = RequestEditor.isBlockHost(hostList, host.get());
-
-            String toolType = httpRequestToBeSent.toolSource().toolType().toolName();
-            boolean isToolScope = configLoader.getScope().contains(toolType);
-
-            List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-            matches.set(suffixList.contains(httpRequestToBeSent.fileExtension().toLowerCase()) || isBlockHost || !isToolScope);
-
-            if (!matches.get()) {
-                List<Map<String, String>> result = messageProcessor.processRequest(host.get(), httpRequestToBeSent, true);
-                setColorAndCommentList(result);
-            }
         } catch (Exception e) {
             api.logging().logToError("handleHttpRequestToBeSent: " + e.getMessage());
         }
@@ -73,33 +59,43 @@ public class HttpMessageHandler implements HttpHandler {
     @Override
     public ResponseReceivedAction handleHttpResponseReceived(HttpResponseReceived httpResponseReceived) {
         Annotations annotations = httpResponseReceived.annotations();
+        HttpRequest request = httpResponseReceived.initiatingRequest();
+        HttpRequestResponse requestResponse = HttpRequestResponse.httpRequestResponse(request, httpResponseReceived);
+        String toolType = httpResponseReceived.toolSource().toolType().toolName();
 
-        if (!matches.get()) {
-            List<Map<String, String>> result = messageProcessor.processResponse(host.get(), httpResponseReceived, true);
-            setColorAndCommentList(result);
-            // 设置高亮颜色和注释
-            if (!colorList.get().isEmpty() && !commentList.get().isEmpty()) {
-                String color = messageProcessor.retrieveFinalColor(messageProcessor.retrieveColorIndices(colorList.get()));
-                annotations.setHighlightColor(HighlightColor.highlightColor(color));
-                String comment = StringProcessor.mergeComment(String.join(", ", commentList.get()));
-                annotations.setNotes(comment);
+        boolean matches = httpUtils.verifyHttpRequestResponse(requestResponse, toolType);
 
-                HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(httpRequest.get(), httpResponseReceived);
+        if (!matches) {
+            try {
+                setColorAndCommentList(messageProcessor.processRequest(host.get(), request, true));
+                setColorAndCommentList(messageProcessor.processResponse(host.get(), httpResponseReceived, true));
 
-                // 添加到Databoard
-                String method = httpRequest.get().method();
-                String url = httpRequest.get().url();
-                String status = String.valueOf(httpResponseReceived.statusCode());
-                String length = String.valueOf(httpResponseReceived.toByteArray().length());
+                // 设置高亮颜色和注释
+                if (!colorList.get().isEmpty() && !commentList.get().isEmpty()) {
+                    String color = messageProcessor.retrieveFinalColor(messageProcessor.retrieveColorIndices(colorList.get()));
+                    annotations.setHighlightColor(HighlightColor.highlightColor(color));
+                    String comment = StringProcessor.mergeComment(String.join(", ", commentList.get()));
+                    annotations.setNotes(comment);
 
-                // 后台提交，防止线程阻塞
-                new SwingWorker<Void, Void>() {
-                    @Override
-                    protected Void doInBackground() {
-                        messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
-                        return null;
-                    }
-                }.run();
+                    HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(httpRequest.get(), httpResponseReceived);
+
+                    // 添加到Databoard
+                    String method = httpRequest.get().method();
+                    String url = httpRequest.get().url();
+                    String status = String.valueOf(httpResponseReceived.statusCode());
+                    String length = String.valueOf(httpResponseReceived.toByteArray().length());
+
+                    // 后台提交，防止线程阻塞
+                    new SwingWorker<Void, Void>() {
+                        @Override
+                        protected Void doInBackground() {
+                            messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
+                            return null;
+                        }
+                    }.run();
+                }
+            } catch (Exception e) {
+                api.logging().logToError("handleHttpResponseReceived: " + e.getMessage());
             }
         }
 

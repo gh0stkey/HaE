@@ -13,9 +13,11 @@ import hae.utils.project.model.HaeFileContent;
 import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -49,8 +51,8 @@ public class Databoard extends JPanel {
 
     private SwingWorker<Map<String, List<String>>, Void> handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
-    private SwingWorker<List<String>, Void> exportActionWorker;
-    private SwingWorker<List<String>, Void> importActionWorker;
+    private SwingWorker<List<Object[]>, Void> exportActionWorker;
+    private SwingWorker<List<Object[]>, Void> importActionWorker;
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
@@ -193,11 +195,11 @@ public class Databoard extends JPanel {
 
     private void handleComboBoxAction(ActionEvent e) {
         if (!isMatchHost && hostComboBox.getSelectedItem() != null) {
-            progressBar.setVisible(true);
-            setProgressBar(true);
             String selectedHost = hostComboBox.getSelectedItem().toString();
 
             if (getHostByList().contains(selectedHost)) {
+                progressBar.setVisible(true);
+                setProgressBar(true);
                 hostTextField.setText(selectedHost);
 
                 if (handleComboBoxWorker != null && !handleComboBoxWorker.isDone()) {
@@ -385,9 +387,9 @@ public class Databoard extends JPanel {
             exportActionWorker.cancel(true);
         }
 
-        exportActionWorker = new SwingWorker<List<String>, Void>() {
+        exportActionWorker = new SwingWorker<List<Object[]>, Void>() {
             @Override
-            protected List<String> doInBackground() {
+            protected List<Object[]> doInBackground() {
                 ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
                 return exportData(selectedHost, exportDir, dataMap);
             }
@@ -395,11 +397,9 @@ public class Databoard extends JPanel {
             @Override
             protected void done() {
                 try {
-                    List<String> taskStatusList = get();
+                    List<Object[]> taskStatusList = get();
                     if (!taskStatusList.isEmpty()) {
-                        String exportStatusMessage = String.format("Exported File List Status:\n%s", String.join("\n", taskStatusList));
-
-                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(exportStatusMessage), "Info", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(taskStatusList), "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ignored) {
                 }
@@ -409,17 +409,36 @@ public class Databoard extends JPanel {
         exportActionWorker.execute();
     }
 
-    private JScrollPane generateTaskStatusPane(String message) {
-        JTextArea textArea = new JTextArea(message);
-        textArea.setEditable(false);
-        textArea.setLineWrap(true);
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setPreferredSize(new Dimension(400, 200));
+    private JScrollPane generateTaskStatusPane(List<Object[]> dataList) {
+        String[] columnNames = {"#", "Filename", "Status"};
+        DefaultTableModel taskStatusTableModel = new DefaultTableModel(columnNames, 0);
+        JTable taskStatusTable = new JTable(taskStatusTableModel);
+
+        for (Object[] data : dataList) {
+            int rowCount = taskStatusTable.getRowCount();
+            int id = rowCount > 0 ? (Integer) taskStatusTable.getValueAt(rowCount - 1, 0) + 1 : 1;
+            Object[] rowData = new Object[data.length + 1];
+            rowData[0] = id;
+            System.arraycopy(data, 0, rowData, 1, data.length);
+            taskStatusTableModel.addRow(rowData);
+        }
+
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(taskStatusTableModel);
+        taskStatusTable.setRowSorter(sorter);
+
+        JScrollPane scrollPane = new JScrollPane(taskStatusTable);
+        scrollPane.setBorder(new TitledBorder("Task status"));
+        scrollPane.setPreferredSize(new Dimension(500, 300));
+
+        int paneWidth = scrollPane.getPreferredSize().width;
+        taskStatusTable.getColumnModel().getColumn(0).setPreferredWidth((int) (paneWidth * 0.1));
+        taskStatusTable.getColumnModel().getColumn(1).setPreferredWidth((int) (paneWidth * 0.7));
+        taskStatusTable.getColumnModel().getColumn(2).setPreferredWidth((int) (paneWidth * 0.2));
 
         return scrollPane;
     }
 
-    private List<String> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
+    private List<Object[]> exportData(String selectedHost, String exportDir, Map<String, Map<String, List<String>>> dataMap) {
         return dataMap.entrySet().stream()
                 .filter(entry -> selectedHost.equals("*") || StringProcessor.matchesHostPattern(entry.getKey(), selectedHost))
                 .filter(entry -> !entry.getKey().contains("*"))
@@ -428,7 +447,7 @@ public class Databoard extends JPanel {
                 .collect(Collectors.toList());
     }
 
-    private String exportEntry(Map.Entry<String, Map<String, List<String>>> entry, String exportDir) {
+    private Object[] exportEntry(Map.Entry<String, Map<String, List<String>>> entry, String exportDir) {
         String key = entry.getKey();
         Map<String, List<String>> ruleMap = entry.getValue();
 
@@ -442,7 +461,7 @@ public class Databoard extends JPanel {
                 .collect(Collectors.toMap(
                         messageEntry -> messageEntry,
                         messageEntry -> StringProcessor.getRandomUUID(),
-                        (existing, replacement) -> existing // 在冲突时保留现有的映射
+                        (existing, replacement) -> existing
                 ));
 
         Map<String, Map<String, Object>> httpMap = processEntries(
@@ -463,7 +482,7 @@ public class Databoard extends JPanel {
         String filename = String.format("%s/%s-%s.hae", exportDir, StringProcessor.getCurrentTime(), hostName);
         boolean createdStatus = projectProcessor.createHaeFile(filename, key, ruleMap, urlMap, httpMap);
 
-        return String.format("Filename: %s, Status: %s", filename, createdStatus);
+        return new Object[]{filename, createdStatus};
     }
 
 
@@ -507,9 +526,9 @@ public class Databoard extends JPanel {
             importActionWorker.cancel(true);
         }
 
-        importActionWorker = new SwingWorker<List<String>, Void>() {
+        importActionWorker = new SwingWorker<List<Object[]>, Void>() {
             @Override
-            protected List<String> doInBackground() {
+            protected List<Object[]> doInBackground() {
                 List<String> filesWithExtension = findFilesWithExtension(new File(exportDir), ".hae");
                 return filesWithExtension.stream()
                         .map(Databoard.this::importData)
@@ -519,10 +538,9 @@ public class Databoard extends JPanel {
             @Override
             protected void done() {
                 try {
-                    List<String> taskStatusList = get();
+                    List<Object[]> taskStatusList = get();
                     if (!taskStatusList.isEmpty()) {
-                        String importStatusMessage = "Imported File List Status:\n" + String.join("\n", taskStatusList);
-                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(importStatusMessage), "Info", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(Databoard.this, generateTaskStatusPane(taskStatusList), "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ignored) {
                 }
@@ -532,7 +550,7 @@ public class Databoard extends JPanel {
         importActionWorker.execute();
     }
 
-    private String importData(String filename) {
+    private Object[] importData(String filename) {
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
         HaeFileContent haeFileContent = projectProcessor.readHaeFile(filename);
@@ -568,7 +586,7 @@ public class Databoard extends JPanel {
             }
         }
 
-        return String.format("Filename: %s, Status: %s", filename, readStatus);
+        return new Object[]{filename, readStatus};
     }
 
     private List<String> findFilesWithExtension(File directory, String extension) {
@@ -648,6 +666,8 @@ public class Databoard extends JPanel {
             }
 
             messageTableModel.deleteByHost(host);
+
+            hostTextField.setText("");
         }
     }
 }

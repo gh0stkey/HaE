@@ -34,7 +34,7 @@ public class AIPower {
     public AIPower(MontoyaApi api, ConfigLoader configLoader, String aiModel, String aiBaseUrl, String[] apiKey) {
         this.api = api;
         this.configLoader = configLoader;
-        this.httpUtils = new HttpUtils(api);
+        this.httpUtils = new HttpUtils(api, configLoader);
         this.aiModel = aiModel;
         this.aiBaseUrl = aiBaseUrl;
 

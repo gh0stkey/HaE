@@ -435,7 +435,7 @@ public class MessageTableModel extends AbstractTableModel {
 
     public class MessageTable extends JTable {
         private MessageEntry messageEntry;
-        private SwingWorker<Object, Void> currentWorker;
+        private SwingWorker<ByteArray[], Void> currentWorker;
         private int lastSelectedIndex = -1;
         private final HttpRequestEditor requestEditor;
         private final HttpResponseEditor responseEditor;
@@ -450,16 +450,13 @@ public class MessageTableModel extends AbstractTableModel {
         public void changeSelection(int row, int col, boolean toggle, boolean extend) {
             super.changeSelection(row, col, toggle, extend);
 
-            requestEditor.setRequest(HttpRequest.httpRequest("Loading..."));
-            responseEditor.setResponse(HttpResponse.httpResponse("Loading..."));
-
             if (currentWorker != null && !currentWorker.isDone()) {
                 currentWorker.cancel(true);
             }
 
             currentWorker = new SwingWorker<>() {
                 @Override
-                protected Void doInBackground() {
+                protected ByteArray[] doInBackground() {
                     int selectedIndex = convertRowIndexToModel(row);
                     if (lastSelectedIndex != selectedIndex) {
                         lastSelectedIndex = selectedIndex;
@@ -470,14 +467,28 @@ public class MessageTableModel extends AbstractTableModel {
                         ByteArray requestByte = httpRequestResponse.request().toByteArray();
                         ByteArray responseByte = httpRequestResponse.response().toByteArray();
 
-                        requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), requestByte));
-                        responseEditor.setResponse(HttpResponse.httpResponse(responseByte));
-
+                        ByteArray[] httpByteArray = new ByteArray[2];
+                        httpByteArray[0] = requestByte;
+                        httpByteArray[1] = responseByte;
+                        return httpByteArray;
                     }
 
                     return null;
                 }
+
+                @Override
+                protected void done() {
+                    try {
+                        ByteArray[] retByteArray = get();
+                        if (retByteArray != null) {
+                            requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), retByteArray[0]));
+                            responseEditor.setResponse(HttpResponse.httpResponse(retByteArray[1]));
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
             };
+
             currentWorker.execute();
         }
     }

@@ -10,6 +10,8 @@ public class Config {
 
     public static String host = "gh0st.cn";
 
+    public static String status = "404";
+
     public static String[] scope = new String[]{
             "any",
             "any header",

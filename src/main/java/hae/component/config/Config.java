@@ -27,23 +27,22 @@ public class Config extends JPanel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final Rules rules;
-    private JTextField addTextField;
     private final String defaultText = "Enter a new item";
-    private final GridBagConstraints constraints = new GridBagConstraints();
 
     public Config(MontoyaApi api, ConfigLoader configLoader, Rules rules) {
         this.api = api;
         this.configLoader = configLoader;
         this.rules = rules;
 
-        constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-
         initComponents();
     }
 
     private void initComponents() {
         setLayout(new BorderLayout());
+
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel ruleInfoPanel = new JPanel(new GridBagLayout());
         ruleInfoPanel.setBorder(new EmptyBorder(10, 15, 5, 15));
@@ -67,7 +66,7 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host"};
+        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status"};
         JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
         JPanel scopePanel = getScopePanel();
         JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
@@ -148,6 +147,12 @@ public class Config extends JPanel {
                         configLoader.setBlockHost(values);
                     }
                 }
+
+                if (selected.equals("Exclude status")) {
+                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
+                        configLoader.setExcludeStatus(values);
+                    }
+                }
             }
         };
     }
@@ -165,6 +170,10 @@ public class Config extends JPanel {
 
                 if (selected.equals("Block host")) {
                     addDataToTable(configLoader.getBlockHost().replaceAll("\\|", "\r\n"), model);
+                }
+
+                if (selected.equals("Exclude status")) {
+                    addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
                 }
             }
         };
@@ -211,6 +220,10 @@ public class Config extends JPanel {
     }
 
     private JPanel createConfigTablePanel(String[] mode, String type) {
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+
         JPanel settingPanel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel();
 
@@ -255,7 +268,7 @@ public class Config extends JPanel {
         constraints.gridy = 4;
         buttonPanel.add(clearButton, constraints);
 
-        addTextField = new JTextField();
+        JTextField addTextField = new JTextField();
         UIEnhancer.setTextFieldPlaceholder(addTextField, defaultText);
 
         inputPanelB.add(addTextField, BorderLayout.CENTER);
@@ -266,13 +279,13 @@ public class Config extends JPanel {
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
 
-        addButton.addActionListener(e -> addActionPerformed(e, model));
+        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField));
 
         addTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addActionPerformed(null, model);
+                    addActionPerformed(null, model, addTextField);
                 }
             }
         });
@@ -372,8 +385,9 @@ public class Config extends JPanel {
         configLoader.setScope(String.join("|", HaEScope));
     }
 
-    private void addActionPerformed(ActionEvent e, DefaultTableModel model) {
+    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {
         String addTextFieldText = addTextField.getText();
+        api.logging().logToOutput(addTextFieldText);
         if (!addTextFieldText.equals(defaultText)) {
             addDataToTable(addTextFieldText, model);
         }
