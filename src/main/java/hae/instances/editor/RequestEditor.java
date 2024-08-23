@@ -9,6 +9,7 @@ import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
+import hae.Config;
 import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.utils.ConfigLoader;
@@ -132,7 +133,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
             Map<String, String> dataMap = result.get(0);
             if (dataMap != null && !dataMap.isEmpty()) {
                 dataMap.keySet().forEach(i -> {
-                    String[] extractData = dataMap.get(i).split("\n");
+                    String[] extractData = dataMap.get(i).split(Config.boundary);
                     Datatable dataPanel = new Datatable(api, configLoader, i, Arrays.asList(extractData));
                     tabbedPane.addTab(i, dataPanel);
                 });

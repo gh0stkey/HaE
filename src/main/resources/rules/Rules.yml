@@ -237,15 +237,6 @@ rules:
     scope: response body
     engine: dfa
     sensitive: false
-  - name: HTML Notes
-    loaded: true
-    f_regex: (<!--.*?-->)
-    s_regex: ''
-    format: '{0}'
-    color: magenta
-    scope: response body
-    engine: nfa
-    sensitive: false
   - name: Create Script
     loaded: true
     f_regex: (\{[^{}]*\}\s*\[[^\s]*\]\s*\+\s*"[^\s]*\.js")

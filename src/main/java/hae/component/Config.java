@@ -1,4 +1,4 @@
-package hae.component.config;
+package hae.component;
 
 import burp.api.montoya.MontoyaApi;
 import hae.component.rule.Rules;
@@ -387,7 +387,6 @@ public class Config extends JPanel {
 
     private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {
         String addTextFieldText = addTextField.getText();
-        api.logging().logToOutput(addTextFieldText);
         if (!addTextFieldText.equals(defaultText)) {
             addDataToTable(addTextFieldText, model);
         }

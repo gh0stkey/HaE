@@ -29,7 +29,6 @@ public class HttpMessageHandler implements HttpHandler {
     private final ThreadLocal<String> host = ThreadLocal.withInitial(() -> "");
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> commentList = ThreadLocal.withInitial(ArrayList::new);
-    private final ThreadLocal<HttpRequest> httpRequest = new ThreadLocal<>();
 
     public HttpMessageHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
@@ -47,7 +46,6 @@ public class HttpMessageHandler implements HttpHandler {
         Annotations annotations = httpRequestToBeSent.annotations();
 
         try {
-            httpRequest.set(httpRequestToBeSent);
             host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
         } catch (Exception e) {
             api.logging().logToError("handleHttpRequestToBeSent: " + e.getMessage());
@@ -77,11 +75,10 @@ public class HttpMessageHandler implements HttpHandler {
                     String comment = StringProcessor.mergeComment(String.join(", ", commentList.get()));
                     annotations.setNotes(comment);
 
-                    HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(httpRequest.get(), httpResponseReceived);
+                    HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(request, httpResponseReceived);
 
-                    // 添加到Databoard
-                    String method = httpRequest.get().method();
-                    String url = httpRequest.get().url();
+                    String method = request.method();
+                    String url = request.url();
                     String status = String.valueOf(httpResponseReceived.statusCode());
                     String length = String.valueOf(httpResponseReceived.toByteArray().length());
 
@@ -92,7 +89,7 @@ public class HttpMessageHandler implements HttpHandler {
                             messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
                             return null;
                         }
-                    }.run();
+                    }.execute();
                 }
             } catch (Exception e) {
                 api.logging().logToError("handleHttpResponseReceived: " + e.getMessage());

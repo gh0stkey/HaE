@@ -92,7 +92,7 @@ public class RegularMatcher {
 
                         if (!result.isEmpty()) {
                             tmpMap.put("color", color);
-                            String dataStr = String.join("\n", result);
+                            String dataStr = String.join(Config.boundary, result);
                             tmpMap.put("data", dataStr);
 
                             String nameAndSize = String.format("%s (%s)", name, result.size());

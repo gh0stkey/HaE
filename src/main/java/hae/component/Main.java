@@ -3,7 +3,6 @@ package hae.component;
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.Databoard;
 import hae.component.board.message.MessageTableModel;
-import hae.component.config.Config;
 import hae.component.rule.Rules;
 import hae.utils.ConfigLoader;
 

@@ -77,8 +77,10 @@ public class ConfigLoader {
 
     public void initConfig() {
         Map<String, Object> r = new LinkedHashMap<>();
-        r.put("excludeSuffix", getExcludeSuffix());
-        r.put("blockHost", getBlockHost());
+        r.put("ExcludeSuffix", getExcludeSuffix());
+        r.put("BlockHost", getBlockHost());
+        r.put("ExcludeStatus", getExcludeStatus());
+        r.put("HaEScope", getScope());
         try {
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
@@ -162,10 +164,10 @@ public class ConfigLoader {
         return getValueFromConfig("HaEScope", Config.scopeOptions);
     }
 
-    private String getValueFromConfig(String name, String value) {
+    private String getValueFromConfig(String name, String defaultValue) {
         File yamlSetting = new File(configFilePath);
         if (!yamlSetting.exists() || !yamlSetting.isFile()) {
-            return value;
+            return defaultValue;
         }
 
         try (InputStream inorder = Files.newInputStream(Paths.get(configFilePath))) {
@@ -177,7 +179,7 @@ public class ConfigLoader {
         } catch (Exception ignored) {
         }
 
-        return value;
+        return defaultValue;
     }
 
     public void setAlibabaAIAPIKey(String apiKey) {

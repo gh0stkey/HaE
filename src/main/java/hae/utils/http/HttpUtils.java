@@ -26,12 +26,11 @@ public class HttpUtils {
 
         String boundary = api.utilities().randomUtils().randomString(32, RandomUtils.CharacterSet.ASCII_LETTERS);
 
-        StringBuilder newBody = new StringBuilder();
-        newBody.append(String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n\r\n%s\r\n", boundary, name, filename, content));
-        newBody.append(String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n", boundary, "purpose", "file-extract"));
-        newBody.append("--").append(boundary).append("--\r\n");
+        String newBody = String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n\r\n%s\r\n", boundary, name, filename, content) +
+                String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n", boundary, "purpose", "file-extract") +
+                "--" + boundary + "--\r\n";
 
-        baseRequest = baseRequest.withUpdatedHeader("Content-Type", "multipart/form-data; boundary=" + boundary).withBody(newBody.toString());
+        baseRequest = baseRequest.withUpdatedHeader("Content-Type", "multipart/form-data; boundary=" + boundary).withBody(newBody);
 
         return baseRequest;
     }
@@ -44,20 +43,25 @@ public class HttpUtils {
     public boolean verifyHttpRequestResponse(HttpRequestResponse requestResponse, String toolType) {
         HttpRequest request = requestResponse.request();
         HttpResponse response = requestResponse.response();
+        boolean retStatus = false;
+        try {
+            String host = StringProcessor.getHostByUrl(request.url());
+            String[] hostList = configLoader.getBlockHost().split("\\|");
+            boolean isBlockHost = isBlockHost(hostList, host);
 
-        String host = StringProcessor.getHostByUrl(request.url());
-        String[] hostList = configLoader.getBlockHost().split("\\|");
-        boolean isBlockHost = isBlockHost(hostList, host);
+            List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
+            boolean isExcludeSuffix = suffixList.contains(request.fileExtension().toLowerCase());
 
-        List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-        boolean isExcludeSuffix = suffixList.contains(request.fileExtension().toLowerCase());
+            boolean isToolScope = !configLoader.getScope().contains(toolType);
 
-        boolean isToolScope = !configLoader.getScope().contains(toolType);
+            List<String> statusList = Arrays.asList(configLoader.getExcludeStatus().split("\\|"));
+            boolean isExcludeStatus = statusList.contains(String.valueOf(response.statusCode()));
 
-        List<String> statusList = Arrays.asList(configLoader.getExcludeStatus().split("\\|"));
-        boolean isExcludeStatus = statusList.contains(String.valueOf(response.statusCode()));
+            retStatus = isExcludeSuffix || isBlockHost || isToolScope || isExcludeStatus;
+        } catch (Exception ignored) {
+        }
 
-        return isExcludeSuffix || isBlockHost || isToolScope || isExcludeStatus;
+        return retStatus;
     }
 
     private boolean isBlockHost(String[] hostList, String host) {

@@ -8,6 +8,7 @@ import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
 import hae.instances.http.utils.RegularMatcher;
 import hae.utils.ConfigLoader;
+import hae.utils.UIEnhancer;
 import hae.utils.project.ProjectProcessor;
 import hae.utils.project.model.HaeFileContent;
 import hae.utils.string.StringProcessor;
@@ -54,6 +55,8 @@ public class Databoard extends JPanel {
     private SwingWorker<List<Object[]>, Void> exportActionWorker;
     private SwingWorker<List<Object[]>, Void> importActionWorker;
 
+    private final String defaultText = "Please enter the host";
+
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
         this.configLoader = configLoader;
@@ -85,6 +88,7 @@ public class Databoard extends JPanel {
         menu.add(menuPanel);
 
         hostTextField = new JTextField();
+        UIEnhancer.setTextFieldPlaceholder(hostTextField, defaultText);
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
         dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
