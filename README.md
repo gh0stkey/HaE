@@ -12,14 +12,14 @@
 
 > 随着现代化Web应用采用前后端分离的开发模式，日常漏洞挖掘的过程中，捕获的HTTP请求流量也相应增加。若想全面评估一个Web应用，会花费大量时间在无用的报文上。**HaE的出现旨在解决这类情况**，借助HaE，您能够**有效减少**测试时间，将更多精力集中在**有价值且有意义**的报文上，从而**提高漏洞挖掘效率**。
 
-Github项目地址：https://github.com/gh0stkey/HaE
+GitHub项目地址：https://github.com/gh0stkey/HaE
 
-Gitcode项目地址：https://gitcode.com/gh0stkey/HaE
+GitCode项目地址：https://gitcode.com/gh0stkey/HaE
 
 **所获荣誉**:
 
 1. [入选2022年KCon兵器谱](https://mp.weixin.qq.com/s/JohMsl1WD29LHCHuLf8mVQ)
-2. [GitCode G-Star项目](https://gitcode.com/gh0stkey/HaE)
+2. [入选GitCode G-Star项目](https://gitcode.com/gh0stkey/HaE)
 
 **注意事项**:
 
