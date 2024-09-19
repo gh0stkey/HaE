@@ -66,7 +66,7 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Limit size"};
+        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Limit size (MB)"};
         JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
         JPanel scopePanel = getScopePanel();
         JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
@@ -154,7 +154,7 @@ public class Config extends JPanel {
                     }
                 }
 
-                if (selected.equals("Limit size")) {
+                if (selected.contains("Limit size")) {
                     if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
                         String[] limit = values.split("\\|");
                         configLoader.setLimitSize(limit[limit.length - 1]);
@@ -183,7 +183,7 @@ public class Config extends JPanel {
                     addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
                 }
 
-                if (selected.equals("Limit size")) {
+                if (selected.contains("Limit size")) {
                     addDataToTable(configLoader.getLimitSize(), model);
                 }
             }
@@ -305,7 +305,7 @@ public class Config extends JPanel {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
                 String data = (String) clipboard.getData(DataFlavor.stringFlavor);
-                if (setTypeComboBox.getSelectedItem().toString().equals("Limit size")) {
+                if (setTypeComboBox.getSelectedItem().toString().contains("Limit size")) {
                     model.setRowCount(0);
                 }
                 if (data != null && !data.isEmpty()) {
@@ -401,7 +401,7 @@ public class Config extends JPanel {
     private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField, String comboBoxSelected) {
         String addTextFieldText = addTextField.getText();
         if (addTextField.getForeground().equals(Color.BLACK)) {
-            if (comboBoxSelected.equals("Limit size")) {
+            if (comboBoxSelected.contains("Limit size")) {
                 model.setRowCount(0);
             }
             addDataToTable(addTextFieldText, model);
