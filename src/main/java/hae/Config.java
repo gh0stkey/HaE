@@ -12,6 +12,8 @@ public class Config {
 
     public static String status = "404";
 
+    public static String size = "0";
+
     public static String boundary = "\n\t\n";
 
     public static String[] scope = new String[]{

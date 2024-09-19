@@ -18,7 +18,7 @@ public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.3.2";
+        String version = "3.3.3";
         api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
 
         // 加载扩展后输出的项目信息
@@ -30,7 +30,7 @@ public class HaE implements BurpExtension {
         // 配置文件加载
         ConfigLoader configLoader = new ConfigLoader(api);
 
-        MessageTableModel messageTableModel = new MessageTableModel(api);
+        MessageTableModel messageTableModel = new MessageTableModel(api, configLoader);
 
         // 注册Tab页（用于查询数据）
         api.userInterface().registerSuiteTab("HaE", new Main(api, configLoader, messageTableModel));

@@ -66,7 +66,7 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status"};
+        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Limit size"};
         JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
         JPanel scopePanel = getScopePanel();
         JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
@@ -153,6 +153,13 @@ public class Config extends JPanel {
                         configLoader.setExcludeStatus(values);
                     }
                 }
+
+                if (selected.equals("Limit size")) {
+                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
+                        String[] limit = values.split("\\|");
+                        configLoader.setLimitSize(limit[limit.length - 1]);
+                    }
+                }
             }
         };
     }
@@ -174,6 +181,10 @@ public class Config extends JPanel {
 
                 if (selected.equals("Exclude status")) {
                     addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
+                }
+
+                if (selected.equals("Limit size")) {
+                    addDataToTable(configLoader.getLimitSize(), model);
                 }
             }
         };
@@ -279,13 +290,13 @@ public class Config extends JPanel {
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
 
-        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField));
+        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField, setTypeComboBox.getSelectedItem().toString()));
 
         addTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addActionPerformed(null, model, addTextField);
+                    addActionPerformed(null, model, addTextField, setTypeComboBox.getSelectedItem().toString());
                 }
             }
         });
@@ -294,7 +305,9 @@ public class Config extends JPanel {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
                 String data = (String) clipboard.getData(DataFlavor.stringFlavor);
-
+                if (setTypeComboBox.getSelectedItem().toString().equals("Limit size")) {
+                    model.setRowCount(0);
+                }
                 if (data != null && !data.isEmpty()) {
                     addDataToTable(data, model);
                 }
@@ -385,13 +398,16 @@ public class Config extends JPanel {
         configLoader.setScope(String.join("|", HaEScope));
     }
 
-    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {
+    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField, String comboBoxSelected) {
         String addTextFieldText = addTextField.getText();
-        if (!addTextFieldText.equals(defaultText)) {
+        if (addTextField.getForeground().equals(Color.BLACK)) {
+            if (comboBoxSelected.equals("Limit size")) {
+                model.setRowCount(0);
+            }
             addDataToTable(addTextFieldText, model);
+            addTextField.setText("");
+            addTextField.requestFocusInWindow();
         }
-        addTextField.setText("");
-        addTextField.requestFocusInWindow();
     }
 
     private void onlineUpdateActionPerformed(ActionEvent e) {

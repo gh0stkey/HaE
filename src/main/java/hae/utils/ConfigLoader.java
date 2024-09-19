@@ -80,6 +80,7 @@ public class ConfigLoader {
         r.put("ExcludeSuffix", getExcludeSuffix());
         r.put("BlockHost", getBlockHost());
         r.put("ExcludeStatus", getExcludeStatus());
+        r.put("LimitSize", getLimitSize());
         r.put("HaEScope", getScope());
         try {
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8);
@@ -160,6 +161,10 @@ public class ConfigLoader {
         return getValueFromConfig("ExcludeStatus", Config.status);
     }
 
+    public String getLimitSize() {
+        return getValueFromConfig("LimitSize", Config.size);
+    }
+
     public String getScope() {
         return getValueFromConfig("HaEScope", Config.scopeOptions);
     }
@@ -204,6 +209,10 @@ public class ConfigLoader {
 
     public void setExcludeStatus(String status) {
         setValueToConfig("ExcludeStatus", status);
+    }
+
+    public void setLimitSize(String size) {
+        setValueToConfig("LimitSize", size);
     }
 
     public void setScope(String scope) {

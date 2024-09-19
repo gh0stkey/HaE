@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class Datatable extends JPanel {
     private final JTable dataTable;
     private final DefaultTableModel dataTableModel;
     private final JTextField searchField;
+    private final JTextField secondSearchField;
     private final TableRowSorter<DefaultTableModel> sorter;
     private final JCheckBox searchMode = new JCheckBox("Reverse search");
     private final String tabName;
@@ -52,7 +54,8 @@ public class Datatable extends JPanel {
 
         this.dataTable = new JTable(dataTableModel);
         this.sorter = new TableRowSorter<>(dataTableModel);
-        this.searchField = new JTextField();
+        this.searchField = new JTextField(10);
+        this.secondSearchField = new JTextField(10);
         this.aiEmpoweredMenu = new JPopupMenu();
         this.footerPanel = new JPanel(new BorderLayout(0, 5));
 
@@ -80,12 +83,27 @@ public class Datatable extends JPanel {
             }
         }
 
-        // 设置灰色默认文本
-        String searchText = "Search";
-        UIEnhancer.setTextFieldPlaceholder(searchField, searchText);
-
-        // 监听输入框内容输入、更新、删除
+        UIEnhancer.setTextFieldPlaceholder(searchField, "Search");
         searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                performSearch();
+            }
+
+        });
+
+        UIEnhancer.setTextFieldPlaceholder(secondSearchField, "Second search");
+        secondSearchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 performSearch();
@@ -161,6 +179,8 @@ public class Datatable extends JPanel {
         optionsPanel.add(settingsButton);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(searchField);
+        optionsPanel.add(Box.createHorizontalStrut(5));
+        optionsPanel.add(secondSearchField);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(aiEmpoweredButton);
 
@@ -252,27 +272,59 @@ public class Datatable extends JPanel {
     }
 
     private void performSearch() {
+        RowFilter<Object, Object> firstRowFilter = applyFirstSearchFilter();
+        RowFilter<Object, Object> secondRowFilter = applySecondFilter();
         if (searchField.getForeground().equals(Color.BLACK)) {
-            RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
-                public boolean include(Entry<?, ?> entry) {
-                    String searchFieldTextText = searchField.getText();
-                    Pattern pattern = null;
-                    try {
-                        pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
-                    } catch (Exception ignored) {
-                    }
-
-                    String entryValue = ((String) entry.getValue(1)).toLowerCase();
-                    searchFieldTextText = searchFieldTextText.toLowerCase();
-                    if (pattern != null) {
-                        return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find() != searchMode.isSelected();
-                    } else {
-                        return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
-                    }
-                }
-            };
-            sorter.setRowFilter(rowFilter);
+            sorter.setRowFilter(firstRowFilter);
+            if (secondSearchField.getForeground().equals(Color.BLACK)) {
+                List<RowFilter<Object, Object>> filters = new ArrayList<>();
+                filters.add(firstRowFilter);
+                filters.add(secondRowFilter);
+                sorter.setRowFilter(RowFilter.andFilter(filters));
+            }
         }
+    }
+
+    private RowFilter<Object, Object> applyFirstSearchFilter() {
+        return new RowFilter<Object, Object>() {
+            public boolean include(Entry<?, ?> entry) {
+                String searchFieldTextText = searchField.getText();
+                Pattern pattern = null;
+                try {
+                    pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
+                } catch (Exception ignored) {
+                }
+
+                String entryValue = ((String) entry.getValue(1)).toLowerCase();
+                searchFieldTextText = searchFieldTextText.toLowerCase();
+                if (pattern != null) {
+                    return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find() != searchMode.isSelected();
+                } else {
+                    return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
+                }
+            }
+        };
+    }
+
+    private RowFilter<Object, Object> applySecondFilter() {
+        return new RowFilter<Object, Object>() {
+            public boolean include(Entry<?, ?> entry) {
+                String searchFieldTextText = secondSearchField.getText();
+                Pattern pattern = null;
+                try {
+                    pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
+                } catch (Exception ignored) {
+                }
+
+                String entryValue = ((String) entry.getValue(1)).toLowerCase();
+                searchFieldTextText = searchFieldTextText.toLowerCase();
+                if (pattern != null) {
+                    return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find();
+                } else {
+                    return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText);
+                }
+            }
+        };
     }
 
     public void setTableListener(MessageTableModel messagePanel) {

@@ -1,7 +1,6 @@
 package hae.component.board.message;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.core.ByteArray;
 import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
@@ -11,6 +10,7 @@ import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.HttpResponseEditor;
 import hae.Config;
 import hae.cache.CachePool;
+import hae.utils.ConfigLoader;
 import hae.utils.project.FileProcessor;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
@@ -23,6 +23,8 @@ import javax.swing.table.TableRowSorter;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -30,15 +32,17 @@ import static burp.api.montoya.ui.editor.EditorOptions.READ_ONLY;
 
 public class MessageTableModel extends AbstractTableModel {
     private final MontoyaApi api;
+    private final ConfigLoader configLoader;
     private final MessageTable messageTable;
     private final JSplitPane splitPane;
     private final LinkedList<MessageEntry> log = new LinkedList<>();
     private final LinkedList<MessageEntry> filteredLog;
     private SwingWorker<Void, Void> currentWorker;
 
-    public MessageTableModel(MontoyaApi api) {
+    public MessageTableModel(MontoyaApi api, ConfigLoader configLoader) {
         this.filteredLog = new LinkedList<>();
         this.api = api;
+        this.configLoader = configLoader;
 
         JTabbedPane messageTab = new JTabbedPane();
         UserInterface userInterface = api.userInterface();
@@ -435,7 +439,7 @@ public class MessageTableModel extends AbstractTableModel {
 
     public class MessageTable extends JTable {
         private MessageEntry messageEntry;
-        private SwingWorker<ByteArray[], Void> currentWorker;
+        private final ExecutorService executorService;
         private int lastSelectedIndex = -1;
         private final HttpRequestEditor requestEditor;
         private final HttpResponseEditor responseEditor;
@@ -444,52 +448,31 @@ public class MessageTableModel extends AbstractTableModel {
             super(messageTableModel);
             this.requestEditor = requestEditor;
             this.responseEditor = responseEditor;
+            this.executorService = Executors.newSingleThreadExecutor();
         }
 
         @Override
         public void changeSelection(int row, int col, boolean toggle, boolean extend) {
             super.changeSelection(row, col, toggle, extend);
-
-            if (currentWorker != null && !currentWorker.isDone()) {
-                currentWorker.cancel(true);
+            int selectedIndex = convertRowIndexToModel(row);
+            if (lastSelectedIndex != selectedIndex) {
+                lastSelectedIndex = selectedIndex;
+                executorService.execute(this::getSelectedMessage);
             }
+        }
 
-            currentWorker = new SwingWorker<>() {
-                @Override
-                protected ByteArray[] doInBackground() {
-                    int selectedIndex = convertRowIndexToModel(row);
-                    if (lastSelectedIndex != selectedIndex) {
-                        lastSelectedIndex = selectedIndex;
-                        messageEntry = filteredLog.get(selectedIndex);
+        private void getSelectedMessage() {
+            messageEntry = filteredLog.get(lastSelectedIndex);
 
-                        HttpRequestResponse httpRequestResponse = messageEntry.getRequestResponse();
+            HttpRequestResponse httpRequestResponse = messageEntry.getRequestResponse();
 
-                        ByteArray requestByte = httpRequestResponse.request().toByteArray();
-                        ByteArray responseByte = httpRequestResponse.response().toByteArray();
-
-                        ByteArray[] httpByteArray = new ByteArray[2];
-                        httpByteArray[0] = requestByte;
-                        httpByteArray[1] = responseByte;
-                        return httpByteArray;
-                    }
-
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        ByteArray[] retByteArray = get();
-                        if (retByteArray != null) {
-                            requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), retByteArray[0]));
-                            responseEditor.setResponse(HttpResponse.httpResponse(retByteArray[1]));
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-            };
-
-            currentWorker.execute();
+            requestEditor.setRequest(HttpRequest.httpRequest(messageEntry.getRequestResponse().httpService(), httpRequestResponse.request().toByteArray()));
+            int responseSizeWithMb = httpRequestResponse.response().toString().length() / 1024 / 1024;
+            if ((responseSizeWithMb < Integer.parseInt(configLoader.getLimitSize())) || configLoader.getLimitSize().equals("0")) {
+                responseEditor.setResponse(httpRequestResponse.response());
+            } else {
+                responseEditor.setResponse(HttpResponse.httpResponse("Exceeds length limit."));
+            }
         }
     }
 }

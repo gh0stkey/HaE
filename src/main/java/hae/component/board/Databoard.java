@@ -419,8 +419,8 @@ public class Databoard extends JPanel {
         JTable taskStatusTable = new JTable(taskStatusTableModel);
 
         for (Object[] data : dataList) {
-            int rowCount = taskStatusTable.getRowCount();
-            int id = rowCount > 0 ? (Integer) taskStatusTable.getValueAt(rowCount - 1, 0) + 1 : 1;
+            int rowCount = taskStatusTableModel.getRowCount();
+            int id = rowCount > 0 ? (Integer) taskStatusTableModel.getValueAt(rowCount - 1, 0) + 1 : 1;
             Object[] rowData = new Object[data.length + 1];
             rowData[0] = id;
             System.arraycopy(data, 0, rowData, 1, data.length);
