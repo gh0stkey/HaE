@@ -73,10 +73,6 @@ public class Datatable extends JPanel {
             }
         });
 
-        dataTable.setRowSorter(sorter);
-        TableColumn idColumn = dataTable.getColumnModel().getColumn(0);
-        idColumn.setMaxWidth(50);
-
         for (String item : dataList) {
             if (!item.isEmpty()) {
                 addRowToTable(new Object[]{item});
@@ -124,6 +120,11 @@ public class Datatable extends JPanel {
         // 设置布局
         JScrollPane scrollPane = new JScrollPane(dataTable);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        dataTable.setRowSorter(sorter);
+        TableColumn idColumn = dataTable.getColumnModel().getColumn(0);
+        idColumn.setPreferredWidth(50);
+        idColumn.setMaxWidth(100);
 
         setLayout(new BorderLayout(0, 5));
 
