@@ -70,9 +70,9 @@ public class ConfigLoader {
         return userConfigPath;
     }
 
-    private static boolean isValidConfigPath(String configPath) {
-        File configPathFile = new File(configPath);
-        return configPathFile.exists() && configPathFile.isDirectory();
+    private static boolean isValidConfigPath(String path) {
+        Path configPath = Paths.get(path);
+        return Files.exists(configPath) && Files.isDirectory(configPath);
     }
 
     public void initConfig() {
