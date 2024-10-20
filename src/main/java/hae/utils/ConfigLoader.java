@@ -71,8 +71,8 @@ public class ConfigLoader {
     }
 
     private static boolean isValidConfigPath(String configPath) {
-        File configPathFile = new File(configPath);
-        return configPathFile.exists() && configPathFile.isDirectory();
+        Path configPath = new Path(configPath);
+        return configPath.exists() && configPath.isDirectory();
     }
 
     public void initConfig() {
