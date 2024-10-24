@@ -153,7 +153,7 @@ rules:
         sensitive: false
       - name: Windows File/Dir Path
         loaded: true
-        f_regex: '[^\w](([a-zA-Z]:\\(?:\w+\\?)*)|([a-zA-Z]:\\(?:\w+\\)*\w+\.\w+))'
+        f_regex: '[^\w]([a-zA-Z]:\\\\?(?:[^<>:/\\|?*]+\\\\?)*)([^<>:/\\|?*]+(?:\.[^<>:/\\|?*]+)?)'
         s_regex: ''
         format: '{0}'
         color: green
