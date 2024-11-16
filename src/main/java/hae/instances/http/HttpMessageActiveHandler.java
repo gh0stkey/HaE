@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class HttpMessageHandler implements HttpHandler {
+public class HttpMessageActiveHandler implements HttpHandler {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final HttpUtils httpUtils;
@@ -30,7 +30,7 @@ public class HttpMessageHandler implements HttpHandler {
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> commentList = ThreadLocal.withInitial(ArrayList::new);
 
-    public HttpMessageHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
+    public HttpMessageActiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
@@ -68,21 +68,19 @@ public class HttpMessageHandler implements HttpHandler {
                 setColorAndCommentList(messageProcessor.processRequest(host.get(), request, true));
                 setColorAndCommentList(messageProcessor.processResponse(host.get(), httpResponseReceived, true));
 
-                // 设置高亮颜色和注释
                 if (!colorList.get().isEmpty() && !commentList.get().isEmpty()) {
+                    HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(request, httpResponseReceived);
+
                     String color = messageProcessor.retrieveFinalColor(messageProcessor.retrieveColorIndices(colorList.get()));
                     annotations.setHighlightColor(HighlightColor.highlightColor(color));
                     String comment = StringProcessor.mergeComment(String.join(", ", commentList.get()));
                     annotations.setNotes(comment);
-
-                    HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(request, httpResponseReceived);
 
                     String method = request.method();
                     String url = request.url();
                     String status = String.valueOf(httpResponseReceived.statusCode());
                     String length = String.valueOf(httpResponseReceived.toByteArray().length());
 
-                    // 后台提交，防止线程阻塞
                     new SwingWorker<Void, Void>() {
                         @Override
                         protected Void doInBackground() {

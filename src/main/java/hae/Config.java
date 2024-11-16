@@ -32,6 +32,8 @@ public class Config {
 
     public static String scopeOptions = "Suite|Target|Proxy|Scanner|Intruder|Repeater|Logger|Sequencer|Decoder|Comparer|Extensions|Organizer|Recorded login replayer";
 
+    public static String modeStatus = "true";
+
     public static String[] ruleFields = {
             "Loaded", "Name", "F-Regex", "S-Regex", "Format", "Color", "Scope", "Engine", "Sensitive"
     };

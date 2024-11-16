@@ -169,6 +169,10 @@ public class ConfigLoader {
         return getValueFromConfig("HaEScope", Config.scopeOptions);
     }
 
+    public boolean getMode() {
+        return getValueFromConfig("HaEModeStatus", Config.modeStatus).equals("true");
+    }
+
     private String getValueFromConfig(String name, String defaultValue) {
         File yamlSetting = new File(configFilePath);
         if (!yamlSetting.exists() || !yamlSetting.isFile()) {
@@ -217,6 +221,10 @@ public class ConfigLoader {
 
     public void setScope(String scope) {
         setValueToConfig("HaEScope", scope);
+    }
+
+    public void setMode(String mode) {
+        setValueToConfig("HaEModeStatus", mode);
     }
 
     private void setValueToConfig(String name, String value) {

@@ -1,7 +1,11 @@
 package hae.component;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.core.Registration;
+import hae.component.board.message.MessageTableModel;
 import hae.component.rule.Rules;
+import hae.instances.http.HttpMessageActiveHandler;
+import hae.instances.http.HttpMessagePassiveHandler;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
 
@@ -16,23 +20,28 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
 public class Config extends JPanel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final MessageTableModel messageTableModel;
     private final Rules rules;
     private final String defaultText = "Enter a new item";
 
-    public Config(MontoyaApi api, ConfigLoader configLoader, Rules rules) {
+    private Registration activeHandler;
+    private Registration passiveHandler;
+
+    public Config(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel, Rules rules) {
         this.api = api;
         this.configLoader = configLoader;
+        this.messageTableModel = messageTableModel;
         this.rules = rules;
+
+        this.activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
+        this.passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
 
         initComponents();
     }
@@ -66,12 +75,35 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Limit size (MB)"};
+        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status"};
         JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
+
+        JPanel northPanel = new JPanel(new BorderLayout());
+
+        JPanel modePanel = getModePanel();
+        JScrollPane modeScrollPane = new JScrollPane(modePanel);
+        modeScrollPane.setBorder(new TitledBorder("Mode"));
+
+        JTextField limitPanel = getLimitPanel();
+        JScrollPane limitScrollPane = new JScrollPane(limitPanel);
+        limitScrollPane.setBorder(new TitledBorder("Limit Size (MB)"));
+
+        JSplitPane northTopPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, modeScrollPane, limitScrollPane);
+        northTopPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                northTopPanel.setDividerLocation(0.5);
+            }
+        });
+
         JPanel scopePanel = getScopePanel();
         JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
         scopeScrollPane.setBorder(new TitledBorder("Scope"));
-        settingPanel.add(scopeScrollPane, BorderLayout.NORTH);
+
+        northPanel.add(scopeScrollPane, BorderLayout.SOUTH);
+        northPanel.add(northTopPanel, BorderLayout.NORTH);
+        settingPanel.add(northPanel, BorderLayout.NORTH);
+
         configTabbedPanel.add("Setting", settingPanel);
 
         String[] aiMode = new String[]{"Alibaba", "Moonshot"};
@@ -112,21 +144,65 @@ public class Config extends JPanel {
     private JPanel getScopePanel() {
         JPanel scopePanel = new JPanel();
         scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.X_AXIS));
+        scopePanel.setBorder(new EmptyBorder(3, 0, 6, 0));
 
         String[] scopeInit = hae.Config.scopeOptions.split("\\|");
         String[] scopeMode = configLoader.getScope().split("\\|");
         for (String scope : scopeInit) {
             JCheckBox checkBox = new JCheckBox(scope);
             scopePanel.add(checkBox);
+            checkBox.addActionListener(e -> updateScope(checkBox));
             for (String mode : scopeMode) {
                 if (scope.equals(mode)) {
                     checkBox.setSelected(true);
                 }
             }
-
-            checkBox.addActionListener(e -> updateScope(checkBox));
+            updateScope(checkBox);
         }
+
         return scopePanel;
+    }
+
+    private JPanel getModePanel() {
+        JPanel modePanel = new JPanel();
+        modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.X_AXIS));
+
+        JCheckBox checkBox = new JCheckBox("Enable active http message handler");
+        modePanel.add(checkBox);
+        checkBox.addActionListener(e -> updateModeStatus(checkBox));
+        checkBox.setSelected(configLoader.getMode());
+        updateModeStatus(checkBox);
+
+        return modePanel;
+    }
+
+    private JTextField getLimitPanel() {
+        JTextField limitSizeTextField = new JTextField();
+        limitSizeTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                onTextChange();
+            }
+
+            private void onTextChange() {
+                String limitSizeText = limitSizeTextField.getText();
+                configLoader.setLimitSize(limitSizeText);
+            }
+        });
+
+        limitSizeTextField.setText(configLoader.getLimitSize());
+
+        return limitSizeTextField;
     }
 
     private TableModelListener craeteSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
@@ -154,12 +230,6 @@ public class Config extends JPanel {
                     }
                 }
 
-                if (selected.contains("Limit size")) {
-                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
-                        String[] limit = values.split("\\|");
-                        configLoader.setLimitSize(limit[limit.length - 1]);
-                    }
-                }
             }
         };
     }
@@ -181,10 +251,6 @@ public class Config extends JPanel {
 
                 if (selected.equals("Exclude status")) {
                     addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
-                }
-
-                if (selected.contains("Limit size")) {
-                    addDataToTable(configLoader.getLimitSize(), model);
                 }
             }
         };
@@ -261,11 +327,11 @@ public class Config extends JPanel {
         JComboBox<String> setTypeComboBox = new JComboBox<>();
         setTypeComboBox.setModel(new DefaultComboBoxModel<>(mode));
 
+        model.addTableModelListener(type.equals("AI+") ? craeteAITableModelListener(setTypeComboBox, model) : craeteSettingTableModelListener(setTypeComboBox, model));
+
         setTypeComboBox.addActionListener(type.equals("AI+") ? createAIActionListener(setTypeComboBox, model) : createSettingActionListener(setTypeComboBox, model));
 
         setTypeComboBox.setSelectedItem(mode[0]);
-
-        model.addTableModelListener(type.equals("AI+") ? craeteAITableModelListener(setTypeComboBox, model) : craeteSettingTableModelListener(setTypeComboBox, model));
 
         constraints.insets = new Insets(0, 0, 3, 0);
         constraints.gridy = 0;
@@ -305,9 +371,6 @@ public class Config extends JPanel {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
                 String data = (String) clipboard.getData(DataFlavor.stringFlavor);
-                if (setTypeComboBox.getSelectedItem().toString().contains("Limit size")) {
-                    model.setRowCount(0);
-                }
                 if (data != null && !data.isEmpty()) {
                     addDataToTable(data, model);
                 }
@@ -323,7 +386,6 @@ public class Config extends JPanel {
         });
 
         clearButton.addActionListener(e -> model.setRowCount(0));
-
 
         JPanel settingMainPanel = new JPanel(new BorderLayout());
         settingMainPanel.setBorder(new EmptyBorder(5, 15, 10, 15));
@@ -383,6 +445,29 @@ public class Config extends JPanel {
         }
     }
 
+    public void updateModeStatus(JCheckBox checkBox) {
+        boolean selected = checkBox.isSelected();
+        configLoader.setMode(selected ? "true" : "false");
+
+        if (checkBox.isSelected()) {
+            if (passiveHandler.isRegistered()) {
+                passiveHandler.deregister();
+            }
+
+            if (!activeHandler.isRegistered()) {
+                activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
+            }
+        } else {
+            if (!passiveHandler.isRegistered()) {
+                passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
+            }
+
+            if (activeHandler.isRegistered()) {
+                activeHandler.deregister();
+            }
+        }
+    }
+
     public void updateScope(JCheckBox checkBox) {
         String boxText = checkBox.getText();
         boolean selected = checkBox.isSelected();
@@ -401,9 +486,6 @@ public class Config extends JPanel {
     private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField, String comboBoxSelected) {
         String addTextFieldText = addTextField.getText();
         if (addTextField.getForeground().equals(Color.BLACK)) {
-            if (comboBoxSelected.contains("Limit size")) {
-                model.setRowCount(0);
-            }
             addDataToTable(addTextFieldText, model);
             addTextField.setText("");
             addTextField.requestFocusInWindow();

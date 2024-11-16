@@ -57,7 +57,7 @@ public class Main extends JPanel {
         Rules rules = new Rules(api, configLoader);
         mainTabbedPane.addTab("Rules", rules);
         mainTabbedPane.addTab("Databoard", new Databoard(api, configLoader, messageTableModel));
-        mainTabbedPane.addTab("Config", new Config(api, configLoader, rules));
+        mainTabbedPane.addTab("Config", new Config(api, configLoader, messageTableModel, rules));
     }
 
     private boolean isDarkBg(JTabbedPane HaETabbedPane) {
