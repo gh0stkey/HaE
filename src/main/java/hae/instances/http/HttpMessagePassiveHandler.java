@@ -32,9 +32,6 @@ public class HttpMessagePassiveHandler implements ScanCheck {
     private final MessageTableModel messageTableModel;
     private final MessageProcessor messageProcessor;
 
-    private final List<String> colorList = new ArrayList<>();
-    private final List<String> commentList = new ArrayList<>();
-
     public HttpMessagePassiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         this.api = api;
         this.configLoader = configLoader;
@@ -50,6 +47,9 @@ public class HttpMessagePassiveHandler implements ScanCheck {
 
     @Override
     public AuditResult passiveAudit(HttpRequestResponse httpRequestResponse) {
+        List<String> colorList = new ArrayList<>();
+        List<String> commentList = new ArrayList<>();
+
         HttpRequest request = httpRequestResponse.request();
         HttpResponse response = httpRequestResponse.response();
 
@@ -58,8 +58,8 @@ public class HttpMessagePassiveHandler implements ScanCheck {
         if (!matches) {
             try {
                 String host = StringProcessor.getHostByUrl(request.url());
-                setColorAndCommentList(messageProcessor.processRequest(host, request, true));
-                setColorAndCommentList(messageProcessor.processResponse(host, response, true));
+                setColorAndCommentList(messageProcessor.processRequest(host, request, true), colorList, commentList);
+                setColorAndCommentList(messageProcessor.processResponse(host, response, true), colorList, commentList);
 
                 String url = request.url();
                 String method = request.method();
@@ -83,7 +83,7 @@ public class HttpMessagePassiveHandler implements ScanCheck {
         return auditResult(emptyList());
     }
 
-    private void setColorAndCommentList(List<Map<String, String>> result) {
+    private void setColorAndCommentList(List<Map<String, String>> result, List<String> colorList, List<String> commentList) {
         if (result != null && !result.isEmpty()) {
             colorList.add(result.get(0).get("color"));
             commentList.add(result.get(1).get("comment"));
