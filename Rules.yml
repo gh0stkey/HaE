@@ -115,7 +115,7 @@ rules:
     sensitive: true
   - name: Chinese Mobile Number
     loaded: true
-    f_regex: '[^\w]((?:(?:\+|00)86)?1(?:(?:3[\d])|(?:4[5-79])|(?:5[0-35-9])|(?:6[5-7])|(?:7[0-8])|(?:8[\d])|(?:9[189]))\d{8})[^\w]'
+    f_regex: '[^\w]((?:(?:\+|0{0,2})86)?1(?:(?:3[\d])|(?:4[5-79])|(?:5[0-35-9])|(?:6[5-7])|(?:7[0-8])|(?:8[\d])|(?:9[189]))\d{8})[^\w]'
     s_regex: ''
     format: '{0}'
     color: orange
@@ -162,8 +162,8 @@ rules:
     sensitive: true
   - name: Password Field
     loaded: true
-    f_regex: ((|'|")(|[\w]{1,10})([p](ass|wd|asswd|assword))(|[\w]{1,10})(|'|")(:|=)(
-      |)('|")(.*?)('|")(|,))
+    f_regex: ((|\\)(|'|")(|[\w]{1,10})([p](ass|wd|asswd|assword))(|[\w]{1,10})(|\\)(|'|")(:|=|\)\.val\()(
+      |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))
     s_regex: ''
     format: '{0}'
     color: yellow
@@ -172,8 +172,8 @@ rules:
     sensitive: false
   - name: Username Field
     loaded: true
-    f_regex: ((|'|")(|[\w]{1,10})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\w]{1,10})(|'|")(:|=)(
-      |)('|")(.*?)('|")(|,))
+    f_regex: ((|\\)(|'|")(|[\w]{1,10})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\w]{1,10})(|\\)(|'|")(:|=|\)\.val\()(
+      |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))
     s_regex: ''
     format: '{0}'
     color: green
@@ -210,11 +210,30 @@ rules:
   - name: Sensitive Field
     loaded: true
     f_regex: ((\[)?('|")?([\w]{0,10})((key)|(secret)|(token)|(config)|(auth)|(access)|(admin)|(ticket))([\w]{0,10})('|")?(\])?(
-      |)(:|=)( |)('|")(.*?)('|")(|,))
+      |)(:|=|\)\.val\()( |)('|")([^'"]+?)('|")(|,|\)))
     s_regex: ''
     format: '{0}'
     color: yellow
     scope: response
+    engine: nfa
+    sensitive: false
+  - name: Mobile Number Field
+    loaded: true
+    f_regex: ((|\\)(|'|")(|[\w]{1,10})(mobile|phone|sjh|shoujihao|concat)(|[\w]{1,10})(|\\)(|'|")(:|=|\)\.val\()(
+      |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))
+    s_regex: ''
+    format: '{0}'
+    color: green
+    scope: response body
+    engine: nfa
+    sensitive: false
+  - name: User Identity
+    loaded: true
+    f_regex: (\b(?:(localStorage|sessionStorage)\.(setItem|getItem)|setCookie|Cookies\.set)\s*\(\s*['"](.+?)['"].*?)
+    s_regex: ''
+    format: '{0}'
+    color: green
+    scope: response body
     engine: nfa
     sensitive: false
 - group: Other
