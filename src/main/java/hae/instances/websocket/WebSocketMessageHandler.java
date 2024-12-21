@@ -22,7 +22,7 @@ public class WebSocketMessageHandler implements ProxyMessageHandler {
         String message = interceptedTextMessage.payload();
         List<Map<String, String>> result = messageProcessor.processMessage("", message, true);
 
-        if (result != null && !result.isEmpty() && result.size() > 0) {
+        if (result != null && !result.isEmpty()) {
             interceptedTextMessage.annotations().setHighlightColor(HighlightColor.highlightColor(result.get(0).get("color")));
             interceptedTextMessage.annotations().setNotes(result.get(1).get("comment"));
         }

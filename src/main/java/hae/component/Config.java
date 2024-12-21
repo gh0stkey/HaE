@@ -29,7 +29,6 @@ public class Config extends JPanel {
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final Rules rules;
-    private final String defaultText = "Enter a new item";
 
     private Registration activeHandler;
     private Registration passiveHandler;
@@ -61,22 +60,22 @@ public class Config extends JPanel {
         pathTextField.setEditable(false);
         pathTextField.setText(configLoader.getRulesFilePath());
         JButton reloadButton = new JButton("Reload");
-        JButton updateButton = new JButton("Update");
+        JButton reinitButton = new JButton("Reinit");
         ruleInfoPanel.add(ruleLabel);
         ruleInfoPanel.add(pathTextField, constraints);
         ruleInfoPanel.add(Box.createHorizontalStrut(5));
-        ruleInfoPanel.add(reloadButton);
+        ruleInfoPanel.add(reinitButton);
         ruleInfoPanel.add(Box.createHorizontalStrut(5));
-        ruleInfoPanel.add(updateButton);
+        ruleInfoPanel.add(reloadButton);
 
         reloadButton.addActionListener(this::reloadActionPerformed);
-        updateButton.addActionListener(this::onlineUpdateActionPerformed);
+        reinitButton.addActionListener(this::reinitActionPerformed);
 
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
         String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status"};
-        JPanel settingPanel = createConfigTablePanel(settingMode, "Setting");
+        JPanel settingPanel = createConfigTablePanel(settingMode);
 
         JPanel northPanel = new JPanel(new BorderLayout());
 
@@ -105,38 +104,6 @@ public class Config extends JPanel {
         settingPanel.add(northPanel, BorderLayout.NORTH);
 
         configTabbedPanel.add("Setting", settingPanel);
-
-        String[] aiMode = new String[]{"Alibaba", "Moonshot"};
-        JPanel aiPanel = createConfigTablePanel(aiMode, "AI+");
-        JTextArea promptTextArea = new JTextArea();
-        promptTextArea.setLineWrap(true);
-        promptTextArea.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onTextChange();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onTextChange();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                onTextChange();
-            }
-
-            private void onTextChange() {
-                String promptText = promptTextArea.getText();
-                configLoader.setAIPrompt(promptText);
-            }
-        });
-        promptTextArea.setText(configLoader.getAIPrompt());
-        JScrollPane promptScrollPane = new JScrollPane(promptTextArea);
-        promptScrollPane.setBorder(new TitledBorder("Prompt"));
-        promptScrollPane.setPreferredSize(new Dimension(0, 100));
-        aiPanel.add(promptScrollPane, BorderLayout.NORTH);
-        configTabbedPanel.add("AI+", aiPanel);
         add(ruleInfoPanel, BorderLayout.NORTH);
         add(configTabbedPanel, BorderLayout.CENTER);
     }
@@ -256,47 +223,8 @@ public class Config extends JPanel {
         };
     }
 
-    private TableModelListener craeteAITableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
-        return new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                String selected = (String) setTypeComboBox.getSelectedItem();
-                String values = getFirstColumnDataAsString(model);
 
-                if (selected.equals("Alibaba")) {
-                    if (!values.equals(configLoader.getAlibabaAIAPIKey()) && !values.isEmpty()) {
-                        configLoader.setAlibabaAIAPIKey(values);
-                    }
-                }
-
-                if (selected.equals("Moonshot")) {
-                    if (!values.equals(configLoader.getMoonshotAIAPIKey()) && !values.isEmpty()) {
-                        configLoader.setMoonshotAIAPIKey(values);
-                    }
-                }
-            }
-        };
-    }
-
-    private ActionListener createAIActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
-        return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selected = (String) setTypeComboBox.getSelectedItem();
-                model.setRowCount(0);
-
-                if (selected.equals("Alibaba")) {
-                    addDataToTable(configLoader.getAlibabaAIAPIKey().replaceAll("\\|", "\r\n"), model);
-                }
-
-                if (selected.equals("Moonshot")) {
-                    addDataToTable(configLoader.getMoonshotAIAPIKey().replaceAll("\\|", "\r\n"), model);
-                }
-            }
-        };
-    }
-
-    private JPanel createConfigTablePanel(String[] mode, String type) {
+    private JPanel createConfigTablePanel(String[] mode) {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.weightx = 1.0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -327,9 +255,9 @@ public class Config extends JPanel {
         JComboBox<String> setTypeComboBox = new JComboBox<>();
         setTypeComboBox.setModel(new DefaultComboBoxModel<>(mode));
 
-        model.addTableModelListener(type.equals("AI+") ? craeteAITableModelListener(setTypeComboBox, model) : craeteSettingTableModelListener(setTypeComboBox, model));
+        model.addTableModelListener(craeteSettingTableModelListener(setTypeComboBox, model));
 
-        setTypeComboBox.addActionListener(type.equals("AI+") ? createAIActionListener(setTypeComboBox, model) : createSettingActionListener(setTypeComboBox, model));
+        setTypeComboBox.addActionListener(createSettingActionListener(setTypeComboBox, model));
 
         setTypeComboBox.setSelectedItem(mode[0]);
 
@@ -346,6 +274,7 @@ public class Config extends JPanel {
         buttonPanel.add(clearButton, constraints);
 
         JTextField addTextField = new JTextField();
+        String defaultText = "Enter a new item";
         UIEnhancer.setTextFieldPlaceholder(addTextField, defaultText);
 
         inputPanelB.add(addTextField, BorderLayout.CENTER);
@@ -390,7 +319,7 @@ public class Config extends JPanel {
         JPanel settingMainPanel = new JPanel(new BorderLayout());
         settingMainPanel.setBorder(new EmptyBorder(5, 15, 10, 15));
         JScrollPane settingScroller = new JScrollPane(settingPanel);
-        settingScroller.setBorder(new TitledBorder(type.equals("AI+") ? "API Key" : "Setting"));
+        settingScroller.setBorder(new TitledBorder("Setting"));
         settingMainPanel.add(settingScroller, BorderLayout.CENTER);
 
         return settingMainPanel;
@@ -492,16 +421,17 @@ public class Config extends JPanel {
         }
     }
 
-    private void onlineUpdateActionPerformed(ActionEvent e) {
-        // 添加提示框防止用户误触导致配置更新
-        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to update rules?", "Info", JOptionPane.YES_NO_OPTION);
-        if (retCode == JOptionPane.YES_OPTION) {
-            configLoader.initRulesByNet();
-            reloadActionPerformed(null);
-        }
-    }
-
     private void reloadActionPerformed(ActionEvent e) {
         rules.reloadRuleGroup();
+    }
+
+    private void reinitActionPerformed(ActionEvent e) {
+        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to reinitialize rules? This action will overwrite your existing rules.", "Info", JOptionPane.YES_NO_OPTION);
+        if (retCode == JOptionPane.YES_OPTION) {
+            boolean ret = configLoader.initRules();
+            if (ret) {
+                rules.reloadRuleGroup();
+            }
+        }
     }
 }

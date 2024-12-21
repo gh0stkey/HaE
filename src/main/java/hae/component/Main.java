@@ -81,7 +81,6 @@ public class Main extends JPanel {
         ImageIcon originalIcon = new ImageIcon(imageURL);
         Image originalImage = originalIcon.getImage();
         Image scaledImage = originalImage.getScaledInstance(30, 20, Image.SCALE_FAST);
-        ImageIcon scaledIcon = new ImageIcon(scaledImage);
-        return scaledIcon;
+        return new ImageIcon(scaledImage);
     }
 }

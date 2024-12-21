@@ -12,19 +12,21 @@ import hae.instances.editor.ResponseEditor;
 import hae.instances.editor.WebSocketEditor;
 import hae.instances.websocket.WebSocketMessageHandler;
 import hae.utils.ConfigLoader;
+import hae.utils.DataManager;
 
 public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "3.4";
-        api.extension().setName(String.format("HaE (%s) - Highlighter and Extractor", version));
+        String version = "4.0";
+        api.extension().setName("HaE - Highlighter and Extractor");
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
         logging.logToOutput("[ HACK THE WORLD - TO DO IT ]");
         logging.logToOutput("[#] Author: EvilChen && 0chencc && vaycore");
         logging.logToOutput("[#] Github: https://github.com/gh0stkey/HaE");
+        logging.logToOutput("[#] Version: " + version);
 
         // 配置文件加载
         ConfigLoader configLoader = new ConfigLoader(api);
@@ -41,6 +43,10 @@ public class HaE implements BurpExtension {
         api.userInterface().registerHttpRequestEditorProvider(new RequestEditor(api, configLoader));
         api.userInterface().registerHttpResponseEditorProvider(new ResponseEditor(api, configLoader));
         api.userInterface().registerWebSocketMessageEditorProvider(new WebSocketEditor(api, configLoader));
+
+        // 从BurpSuite里加载数据
+        DataManager dataManager = new DataManager(api);
+        dataManager.loadData(messageTableModel);
 
         api.extension().registerUnloadingHandler(new ExtensionUnloadingHandler() {
             @Override

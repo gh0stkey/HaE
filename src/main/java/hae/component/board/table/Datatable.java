@@ -1,9 +1,6 @@
 package hae.component.board.table;
 
 import burp.api.montoya.MontoyaApi;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import hae.component.board.Databoard;
 import hae.component.board.message.MessageTableModel;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
@@ -11,22 +8,17 @@ import hae.utils.UIEnhancer;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Datatable extends JPanel {
@@ -39,15 +31,12 @@ public class Datatable extends JPanel {
     private final TableRowSorter<DefaultTableModel> sorter;
     private final JCheckBox searchMode = new JCheckBox("Reverse search");
     private final String tabName;
-    private final JProgressBar progressBar;
-    private final JPopupMenu aiEmpoweredMenu;
     private final JPanel footerPanel;
 
     public Datatable(MontoyaApi api, ConfigLoader configLoader, String tabName, List<String> dataList) {
         this.api = api;
         this.configLoader = configLoader;
         this.tabName = tabName;
-        this.progressBar = new JProgressBar();
 
         String[] columnNames = {"#", "Information"};
         this.dataTableModel = new DefaultTableModel(columnNames, 0);
@@ -56,15 +45,12 @@ public class Datatable extends JPanel {
         this.sorter = new TableRowSorter<>(dataTableModel);
         this.searchField = new JTextField(10);
         this.secondSearchField = new JTextField(10);
-        this.aiEmpoweredMenu = new JPopupMenu();
         this.footerPanel = new JPanel(new BorderLayout(0, 5));
 
         initComponents(dataList);
     }
 
     private void initComponents(List<String> dataList) {
-        progressBar.setVisible(false);
-
         // 设置ID排序
         sorter.setComparator(0, new Comparator<Integer>() {
             @Override
@@ -142,57 +128,17 @@ public class Datatable extends JPanel {
         JButton settingsButton = new JButton("Settings");
         setMenuShow(settingMenu, settingsButton);
 
-        // AI Empowered按钮
-        JPanel aiEmpoweredPanel = new JPanel(new GridLayout(2, 1));
-        aiEmpoweredPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        JButton empoweredByAlibabaButton = new JButton("Alibaba - QwenLong");
-        empoweredByAlibabaButton.addActionListener(e -> {
-            aiEmpoweredByAlibabaActionPerformed(e, tabName, getTableData(dataTable));
-        });
-        JButton empoweredByMoonshotButton = new JButton("Moonshot - Kimi");
-        empoweredByMoonshotButton.addActionListener(e -> {
-            aiEmpoweredByMoonshotActionPerformed(e, tabName, getTableData(dataTable));
-        });
-        aiEmpoweredPanel.add(empoweredByAlibabaButton);
-        aiEmpoweredPanel.add(empoweredByMoonshotButton);
-        aiEmpoweredMenu.add(aiEmpoweredPanel);
-
-        JButton aiEmpoweredButton = new JButton("AI Empowered");
-        setMenuShow(aiEmpoweredMenu, aiEmpoweredButton);
-        aiEmpoweredMenu.addPopupMenuListener(new PopupMenuListener() {
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                empoweredByAlibabaButton.setEnabled(!configLoader.getAlibabaAIAPIKey().isEmpty());
-                empoweredByMoonshotButton.setEnabled(!configLoader.getMoonshotAIAPIKey().isEmpty());
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-
-            }
-        });
-
         optionsPanel.add(settingsButton);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(searchField);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(secondSearchField);
-        optionsPanel.add(Box.createHorizontalStrut(5));
-        optionsPanel.add(aiEmpoweredButton);
 
         footerPanel.setBorder(BorderFactory.createEmptyBorder(2, 3, 5, 3));
         footerPanel.add(optionsPanel, BorderLayout.CENTER);
-        footerPanel.add(progressBar, BorderLayout.SOUTH);
 
         add(scrollPane, BorderLayout.CENTER);
         add(footerPanel, BorderLayout.SOUTH);
-
-        setProgressBar(false);
     }
 
     private void setMenuShow(JPopupMenu menu, JButton button) {
@@ -205,9 +151,6 @@ public class Datatable extends JPanel {
         });
     }
 
-    private void setProgressBar(boolean status) {
-        Databoard.setProgressBar(status, progressBar, "AI+ ...");
-    }
 
     private void addRowToTable(Object[] data) {
         int rowCount = dataTableModel.getRowCount();
@@ -216,60 +159,6 @@ public class Datatable extends JPanel {
         rowData[0] = id;
         System.arraycopy(data, 0, rowData, 1, data.length);
         dataTableModel.addRow(rowData);
-    }
-
-    private void aiEmpoweredByAlibabaActionPerformed(ActionEvent e, String ruleName, String data) {
-        AIPower aiPower = new AIPower(api, configLoader, "qwen-long", "https://dashscope.aliyuncs.com/compatible-mode/v1", configLoader.getAlibabaAIAPIKey().split("\\|"));
-        aiEmpoweredButtonAction(ruleName, data, aiPower);
-    }
-
-    private void aiEmpoweredByMoonshotActionPerformed(ActionEvent e, String ruleName, String data) {
-        AIPower aiPower = new AIPower(api, configLoader, "moonshot-v1-128k", "https://api.moonshot.cn/v1", configLoader.getMoonshotAIAPIKey().split("\\|"));
-        aiEmpoweredButtonAction(ruleName, data, aiPower);
-    }
-
-    private void aiEmpoweredButtonAction(String ruleName, String data, AIPower aiPower) {
-        progressBar.setVisible(true);
-        aiEmpoweredMenu.setVisible(true);
-        setProgressBar(true);
-
-        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-            @Override
-            protected String doInBackground() throws Exception {
-                return aiPower.chatWithAPI(ruleName, data);
-            }
-
-            @Override
-            protected void done() {
-                setProgressBar(false);
-
-                try {
-                    String chatReturn = get();
-                    if (!chatReturn.isEmpty()) {
-                        Gson gson = new Gson();
-                        Type type = new TypeToken<Map<String, Object>>() {
-                        }.getType();
-                        Map<String, List<String>> map = gson.fromJson(chatReturn, type);
-
-                        dataTableModel.setRowCount(0);
-                        for (String item : map.get("data")) {
-                            if (!item.isEmpty()) {
-                                addRowToTable(new Object[]{item});
-                            }
-                        }
-
-                        JOptionPane.showMessageDialog(Datatable.this, "AI+ has completed the AI empowered work.", "AI+ Info", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        JOptionPane.showMessageDialog(Datatable.this, "AI+ returns null, please check!", "AI+ Info", JOptionPane.WARNING_MESSAGE);
-                    }
-                } catch (Exception ignored) {
-                    JOptionPane.showMessageDialog(Datatable.this, "AI+ returns error, please check!", "AI+ Info", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
-        worker.execute();
-
-        aiEmpoweredMenu.setVisible(false);
     }
 
     private void performSearch() {

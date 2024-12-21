@@ -71,7 +71,7 @@ public class HttpMessagePassiveHandler implements ScanCheck {
                 new SwingWorker<Void, Void>() {
                     @Override
                     protected Void doInBackground() {
-                        messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, "", "");
+                        messageTableModel.add(httpRequestResponse, url, method, status, length, comment, color, true);
                         return null;
                     }
                 }.execute();

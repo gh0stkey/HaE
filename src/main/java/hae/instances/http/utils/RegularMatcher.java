@@ -1,12 +1,15 @@
 package hae.instances.http.utils;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.persistence.PersistedList;
+import burp.api.montoya.persistence.PersistedObject;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import hae.Config;
 import hae.cache.CachePool;
+import hae.utils.DataManager;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
 
@@ -38,7 +41,7 @@ public class RegularMatcher {
                     // 多线程执行，一定程度上减少阻塞现象
                     String matchContent = "";
                     // 遍历获取规则
-                    List<String> result = new ArrayList<>();
+                    List<String> result;
                     Map<String, Object> tmpMap = new HashMap<>();
 
                     boolean loaded = (Boolean) objects[0];
@@ -78,7 +81,7 @@ public class RegularMatcher {
                         }
 
                         try {
-                            result.addAll(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
+                            result = new ArrayList<>(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
                         } catch (Exception e) {
                             api.logging().logToError(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, f_regex));
                             api.logging().logToError(e.getMessage());
@@ -98,7 +101,7 @@ public class RegularMatcher {
                             String nameAndSize = String.format("%s (%s)", name, result.size());
                             finalMap.put(nameAndSize, tmpMap);
 
-                            putDataToGlobalMap(host, name, result);
+                            putDataToGlobalMap(api, host, name, result, true);
                         }
                     }
                 }
@@ -108,7 +111,7 @@ public class RegularMatcher {
         }
     }
 
-    public static void putDataToGlobalMap(String host, String name, List<String> dataList) {
+    public static void putDataToGlobalMap(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
         // 添加到全局变量中，便于Databoard检索
         if (!Objects.equals(host, "") && host != null) {
             Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
@@ -120,6 +123,18 @@ public class RegularMatcher {
                     return new ArrayList<>(combinedSet);
                 });
 
+                if (flag) {
+                    // 数据存储在BurpSuite空间内
+                    DataManager dataManager = new DataManager(api);
+                    PersistedObject persistedObject = PersistedObject.persistedObject();
+                    gRuleMap.forEach((kName, vList) -> {
+                        PersistedList<String> persistedList = PersistedList.persistedStringList();
+                        persistedList.addAll(vList);
+                        persistedObject.setStringList(kName, persistedList);
+                    });
+                    dataManager.putData("data", host, persistedObject);
+                }
+
                 return gRuleMap;
             });
 
@@ -128,7 +143,7 @@ public class RegularMatcher {
 
             String anyHost = (splitHost.length > 2 && !StringProcessor.matchHostIsIp(onlyHost)) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
 
-            if (!Config.globalDataMap.containsKey(anyHost) && anyHost.length() > 0) {
+            if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
                 // 添加通配符Host，实际数据从查询哪里将所有数据提取
                 Config.globalDataMap.put(anyHost, new HashMap<>());
             }

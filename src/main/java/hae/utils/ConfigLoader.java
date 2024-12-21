@@ -1,9 +1,6 @@
 package hae.utils;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.http.RequestOptions;
-import burp.api.montoya.http.message.HttpRequestResponse;
-import burp.api.montoya.http.message.requests.HttpRequest;
 import hae.Config;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -46,7 +43,7 @@ public class ConfigLoader {
 
         File rulesFilePath = new File(this.rulesFilePath);
         if (!(rulesFilePath.exists() && rulesFilePath.isFile())) {
-            initRulesByRes();
+            initRules();
         }
 
         Config.globalRules = getRules();
@@ -137,18 +134,6 @@ public class ConfigLoader {
         return rules;
     }
 
-    public String getAlibabaAIAPIKey() {
-        return getValueFromConfig("AlibabaAIAPIKey", "");
-    }
-
-    public String getMoonshotAIAPIKey() {
-        return getValueFromConfig("MoonshotAIAPIKey", "");
-    }
-
-    public String getAIPrompt() {
-        return getValueFromConfig("AIPrompt", Config.prompt);
-    }
-
     public String getBlockHost() {
         return getValueFromConfig("BlockHost", Config.host);
     }
@@ -189,18 +174,6 @@ public class ConfigLoader {
         }
 
         return defaultValue;
-    }
-
-    public void setAlibabaAIAPIKey(String apiKey) {
-        setValueToConfig("AlibabaAIAPIKey", apiKey);
-    }
-
-    public void setMoonshotAIAPIKey(String apiKey) {
-        setValueToConfig("MoonshotAIAPIKey", apiKey);
-    }
-
-    public void setAIPrompt(String prompt) {
-        setValueToConfig("AIPrompt", prompt);
     }
 
     public void setExcludeSuffix(String excludeSuffix) {
@@ -250,11 +223,12 @@ public class ConfigLoader {
         }
     }
 
-    public void initRulesByRes() {
-        boolean isCopySuccess = copyRulesToFile(this.rulesFilePath);
-        if (!isCopySuccess) {
+    public boolean initRules() {
+        boolean ret = copyRulesToFile(this.rulesFilePath);
+        if (!ret) {
             api.extension().unload();
         }
+        return ret;
     }
 
     private boolean copyRulesToFile(String targetFilePath) {
@@ -276,34 +250,5 @@ public class ConfigLoader {
         }
 
         return false;
-    }
-
-    public void initRulesByNet() {
-        Thread t = new Thread() {
-            public void run() {
-                pullRules();
-            }
-        };
-        t.start();
-        try {
-            t.join(10000);
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void pullRules() {
-        try {
-            String url = "https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml";
-            HttpRequest httpRequest = HttpRequest.httpRequestFromUrl(url);
-            HttpRequestResponse requestResponse = api.http().sendRequest(httpRequest, RequestOptions.requestOptions().withUpstreamTLSVerification());
-            String responseBody = requestResponse.response().bodyToString();
-            if (responseBody.contains("rules")) {
-                FileOutputStream fileOutputStream = new FileOutputStream(rulesFilePath);
-                fileOutputStream.write(responseBody.getBytes());
-                fileOutputStream.close();
-            }
-        } catch (Exception ignored) {
-            api.extension().unload();
-        }
     }
 }

@@ -11,10 +11,8 @@ public class MessageEntry {
     private final String status;
     private final String color;
     private final String method;
-    private final String hash;
-    private final String path;
 
-    MessageEntry(HttpRequestResponse requestResponse, String method, String url, String comment, String length, String color, String status, String hash, String path) {
+    MessageEntry(HttpRequestResponse requestResponse, String method, String url, String comment, String length, String color, String status) {
         this.requestResponse = requestResponse;
         this.method = method;
         this.url = url;
@@ -22,8 +20,6 @@ public class MessageEntry {
         this.length = length;
         this.color = color;
         this.status = status;
-        this.hash = hash;
-        this.path = path;
     }
 
     public String getColor() {
@@ -52,13 +48,5 @@ public class MessageEntry {
 
     public HttpRequestResponse getRequestResponse() {
         return this.requestResponse;
-    }
-
-    public String getHash() {
-        return this.hash;
-    }
-
-    public String getPath() {
-        return this.path;
     }
 }

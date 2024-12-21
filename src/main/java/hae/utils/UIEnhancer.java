@@ -41,6 +41,4 @@ public class UIEnhancer {
         textField.setText(placeholderText);
         textField.putClientProperty("isPlaceholder", true);
     }
-
-
 }

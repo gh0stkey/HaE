@@ -3,9 +3,7 @@ package hae.utils.http;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
-import burp.api.montoya.http.message.requests.HttpTransformation;
 import burp.api.montoya.http.message.responses.HttpResponse;
-import burp.api.montoya.utilities.RandomUtils;
 import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
 
@@ -19,25 +17,6 @@ public class HttpUtils {
     public HttpUtils(MontoyaApi api, ConfigLoader configLoader) {
         this.api = api;
         this.configLoader = configLoader;
-    }
-
-    public HttpRequest generateRequestByMultipartUploadMethod(String url, String name, String filename, String content) {
-        HttpRequest baseRequest = HttpRequest.httpRequestFromUrl(url).withTransformationApplied(HttpTransformation.TOGGLE_METHOD);
-
-        String boundary = api.utilities().randomUtils().randomString(32, RandomUtils.CharacterSet.ASCII_LETTERS);
-
-        String newBody = String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n\r\n%s\r\n", boundary, name, filename, content) +
-                String.format("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n", boundary, "purpose", "file-extract") +
-                "--" + boundary + "--\r\n";
-
-        baseRequest = baseRequest.withUpdatedHeader("Content-Type", "multipart/form-data; boundary=" + boundary).withBody(newBody);
-
-        return baseRequest;
-    }
-
-
-    public HttpRequest generateRequestByDeleteMethod(String url) {
-        return HttpRequest.httpRequestFromUrl(url).withMethod("DELETE");
     }
 
     public boolean verifyHttpRequestResponse(HttpRequestResponse requestResponse, String toolType) {
