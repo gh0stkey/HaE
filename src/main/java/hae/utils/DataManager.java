@@ -19,23 +19,7 @@ public class DataManager {
         this.persistence = api.persistence();
     }
 
-    private void saveIndex(String indexName, String indexValue) {
-        PersistedList<String> indexList = persistence.extensionData().getStringList(indexName);
-
-        if (indexList != null && !indexList.isEmpty()) {
-            persistence.extensionData().deleteStringList(indexName);
-        } else {
-            indexList = PersistedList.persistedStringList();
-        }
-
-        if (!indexList.contains(indexValue)) {
-            indexList.add(indexValue);
-        }
-
-        persistence.extensionData().setStringList(indexName, indexList);
-    }
-
-    public void putData(String dataType, String dataName, PersistedObject persistedObject) {
+    public synchronized void putData(String dataType, String dataName, PersistedObject persistedObject) {
         if (persistence.extensionData().getChildObject(dataName) != null) {
             persistence.extensionData().deleteChildObject(dataName);
         }
@@ -51,7 +35,22 @@ public class DataManager {
         // 2. 从索引获取数据
         loadHaEData(dataIndex);
         loadMessageData(messageIndex, messageTableModel);
+    }
 
+    private void saveIndex(String indexName, String indexValue) {
+        PersistedList<String> indexList = persistence.extensionData().getStringList(indexName);
+
+        if (indexList != null && !indexList.isEmpty()) {
+            persistence.extensionData().deleteStringList(indexName);
+        } else {
+            indexList = PersistedList.persistedStringList();
+        }
+
+        if (!indexList.contains(indexValue)) {
+            indexList.add(indexValue);
+        }
+
+        persistence.extensionData().setStringList(indexName, indexList);
     }
 
     private void loadHaEData(PersistedList<String> dataIndex) {
@@ -69,16 +68,18 @@ public class DataManager {
         if (messageIndex != null && !messageIndex.isEmpty()) {
             messageIndex.parallelStream().forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
-                HttpRequestResponse messageInfo = dataObj.getHttpRequestResponse("messageInfo");
-                String comment = dataObj.getString("comment");
-                String color = dataObj.getString("color");
-                HttpRequest request = messageInfo.request();
-                HttpResponse response = messageInfo.response();
-                String method = request.method();
-                String url = request.url();
-                String status = String.valueOf(response.statusCode());
-                String length = String.valueOf(response.toByteArray().length());
-                messageTableModel.add(messageInfo, url, method, status, length, comment, color, false);
+                if (dataObj != null) {
+                    HttpRequestResponse messageInfo = dataObj.getHttpRequestResponse("messageInfo");
+                    String comment = dataObj.getString("comment");
+                    String color = dataObj.getString("color");
+                    HttpRequest request = messageInfo.request();
+                    HttpResponse response = messageInfo.response();
+                    String method = request.method();
+                    String url = request.url();
+                    String status = String.valueOf(response.statusCode());
+                    String length = String.valueOf(response.toByteArray().length());
+                    messageTableModel.add(messageInfo, url, method, status, length, comment, color, false);
+                }
             });
         }
     }

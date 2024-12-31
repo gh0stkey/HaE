@@ -111,7 +111,7 @@ public class RegularMatcher {
         }
     }
 
-    public static void putDataToGlobalMap(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
+    public synchronized static void putDataToGlobalMap(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
         // 添加到全局变量中，便于Databoard检索
         if (!Objects.equals(host, "") && host != null) {
             Config.globalDataMap.compute(host, (existingHost, existingMap) -> {

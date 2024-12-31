@@ -18,7 +18,7 @@ public class HaE implements BurpExtension {
     @Override
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
-        String version = "4.0";
+        String version = "4.0.1";
         api.extension().setName("HaE - Highlighter and Extractor");
 
         // 加载扩展后输出的项目信息
