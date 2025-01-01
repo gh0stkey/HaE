@@ -29,6 +29,7 @@ public class Config extends JPanel {
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final Rules rules;
+    private final boolean isProfessionalVersion;
 
     private Registration activeHandler;
     private Registration passiveHandler;
@@ -38,9 +39,15 @@ public class Config extends JPanel {
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.rules = rules;
+        
+        // 检查版本并记录日志
+        this.isProfessionalVersion = api.burpSuite().version().name().contains("Professional");
+        api.logging().logToOutput("Current Burp Suite Version: " + api.burpSuite().version().name());
 
         this.activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
-        this.passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
+        if (isProfessionalVersion) {
+            this.passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
+        }
 
         initComponents();
     }
@@ -379,7 +386,7 @@ public class Config extends JPanel {
         configLoader.setMode(selected ? "true" : "false");
 
         if (checkBox.isSelected()) {
-            if (passiveHandler.isRegistered()) {
+            if (isProfessionalVersion && passiveHandler.isRegistered()) {
                 passiveHandler.deregister();
             }
 
@@ -387,7 +394,7 @@ public class Config extends JPanel {
                 activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
             }
         } else {
-            if (!passiveHandler.isRegistered()) {
+            if (isProfessionalVersion && !passiveHandler.isRegistered()) {
                 passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
             }
 
