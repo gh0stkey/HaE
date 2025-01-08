@@ -136,14 +136,18 @@ public class MessageTableModel extends AbstractTableModel {
 
             if (!isDuplicate) {
                 if (flag) {
-                    DataManager dataManager = new DataManager(api);
-                    // 数据存储在BurpSuite空间内
-                    PersistedObject persistedObject = PersistedObject.persistedObject();
-                    persistedObject.setHttpRequestResponse("messageInfo", messageInfo);
-                    persistedObject.setString("comment", comment);
-                    persistedObject.setString("color", color);
-                    String uuidIndex = StringProcessor.getRandomUUID();
-                    dataManager.putData("message", uuidIndex, persistedObject);
+                    try {
+                        DataManager dataManager = new DataManager(api);
+                        // 数据存储在BurpSuite空间内
+                        PersistedObject persistedObject = PersistedObject.persistedObject();
+                        persistedObject.setHttpRequestResponse("messageInfo", messageInfo);
+                        persistedObject.setString("comment", comment);
+                        persistedObject.setString("color", color);
+                        String uuidIndex = StringProcessor.getRandomUUID();
+                        dataManager.putData("message", uuidIndex, persistedObject);
+                    } catch (Exception ignored) {
+
+                    }
                 }
 
                 // 添加进日志

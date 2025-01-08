@@ -125,14 +125,17 @@ public class RegularMatcher {
 
                 if (flag) {
                     // 数据存储在BurpSuite空间内
-                    DataManager dataManager = new DataManager(api);
-                    PersistedObject persistedObject = PersistedObject.persistedObject();
-                    gRuleMap.forEach((kName, vList) -> {
-                        PersistedList<String> persistedList = PersistedList.persistedStringList();
-                        persistedList.addAll(vList);
-                        persistedObject.setStringList(kName, persistedList);
-                    });
-                    dataManager.putData("data", host, persistedObject);
+                    try {
+                        DataManager dataManager = new DataManager(api);
+                        PersistedObject persistedObject = PersistedObject.persistedObject();
+                        gRuleMap.forEach((kName, vList) -> {
+                            PersistedList<String> persistedList = PersistedList.persistedStringList();
+                            persistedList.addAll(vList);
+                            persistedObject.setStringList(kName, persistedList);
+                        });
+                        dataManager.putData("data", host, persistedObject);
+                    } catch (Exception ignored) {
+                    }
                 }
 
                 return gRuleMap;

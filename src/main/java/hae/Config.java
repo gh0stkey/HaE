@@ -61,6 +61,8 @@ public class Config {
             "gray"
     };
 
+    public static Boolean proVersionStatus = true;
+
     public static Map<String, Object[][]> globalRules = new HashMap<>();
 
     public static ConcurrentHashMap<String, Map<String, List<String>>> globalDataMap = new ConcurrentHashMap<>();

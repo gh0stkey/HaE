@@ -57,9 +57,13 @@ public class DataManager {
         if (dataIndex != null && !dataIndex.isEmpty()) {
             dataIndex.parallelStream().forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
-                dataObj.stringListKeys().forEach(dataKey -> {
-                    RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false);
-                });
+                try {
+                    dataObj.stringListKeys().forEach(dataKey -> {
+                        RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false);
+                    });
+                } catch (Exception e) {
+                    api.logging().logToOutput("loadHaEData:" + e.getMessage());
+                }
             });
         }
     }
