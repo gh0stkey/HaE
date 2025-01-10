@@ -51,6 +51,8 @@ public class Datatable extends JPanel {
     }
 
     private void initComponents(List<String> dataList) {
+        dataTable.setRowSorter(sorter);
+        
         // 设置ID排序
         sorter.setComparator(0, new Comparator<Integer>() {
             @Override
@@ -107,7 +109,6 @@ public class Datatable extends JPanel {
         JScrollPane scrollPane = new JScrollPane(dataTable);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-        dataTable.setRowSorter(sorter);
         TableColumn idColumn = dataTable.getColumnModel().getColumn(0);
         idColumn.setPreferredWidth(50);
         idColumn.setMaxWidth(100);
@@ -162,8 +163,8 @@ public class Datatable extends JPanel {
     }
 
     private void performSearch() {
-        RowFilter<Object, Object> firstRowFilter = applyFirstSearchFilter();
-        RowFilter<Object, Object> secondRowFilter = applySecondFilter();
+        RowFilter<Object, Object> firstRowFilter = getObjectObjectRowFilter(searchField);
+        RowFilter<Object, Object> secondRowFilter = getObjectObjectRowFilter(secondSearchField);
         if (searchField.getForeground().equals(Color.BLACK)) {
             sorter.setRowFilter(firstRowFilter);
             if (secondSearchField.getForeground().equals(Color.BLACK)) {
@@ -175,7 +176,7 @@ public class Datatable extends JPanel {
         }
     }
 
-    private RowFilter<Object, Object> applyFirstSearchFilter() {
+    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField) {
         return new RowFilter<Object, Object>() {
             public boolean include(Entry<?, ?> entry) {
                 String searchFieldTextText = searchField.getText();
@@ -187,32 +188,12 @@ public class Datatable extends JPanel {
 
                 String entryValue = ((String) entry.getValue(1)).toLowerCase();
                 searchFieldTextText = searchFieldTextText.toLowerCase();
+                boolean filterReturn = searchFieldTextText.isEmpty();
                 if (pattern != null) {
-                    return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find() != searchMode.isSelected();
-                } else {
-                    return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
-                }
-            }
-        };
-    }
-
-    private RowFilter<Object, Object> applySecondFilter() {
-        return new RowFilter<Object, Object>() {
-            public boolean include(Entry<?, ?> entry) {
-                String searchFieldTextText = secondSearchField.getText();
-                Pattern pattern = null;
-                try {
-                    pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
-                } catch (Exception ignored) {
+                    filterReturn = filterReturn || pattern.matcher(entryValue).find() != searchMode.isSelected();
                 }
 
-                String entryValue = ((String) entry.getValue(1)).toLowerCase();
-                searchFieldTextText = searchFieldTextText.toLowerCase();
-                if (pattern != null) {
-                    return searchFieldTextText.isEmpty() || pattern.matcher(entryValue).find();
-                } else {
-                    return searchFieldTextText.isEmpty() || entryValue.contains(searchFieldTextText);
-                }
+                return filterReturn || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
             }
         };
     }
@@ -246,22 +227,6 @@ public class Datatable extends JPanel {
                 }
             }
         });
-    }
-
-    private String getTableData(JTable table) {
-        StringBuilder selectData = new StringBuilder();
-        int rowCount = table.getRowCount();
-        for (int i = 0; i < rowCount; i++) {
-            selectData.append(table.getValueAt(i, 1).toString()).append("\r\n");
-        }
-
-        if (!selectData.isEmpty()) {
-            selectData.delete(selectData.length() - 2, selectData.length());
-        } else {
-            return "";
-        }
-
-        return selectData.toString();
     }
 
     public String getSelectedDataAtTable(JTable table) {
