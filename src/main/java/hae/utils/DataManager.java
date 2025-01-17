@@ -62,7 +62,7 @@ public class DataManager {
                         RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false);
                     });
                 } catch (Exception e) {
-                    api.logging().logToOutput("loadHaEData:" + e.getMessage());
+                    // api.logging().logToOutput("loadHaEData:" + e.getMessage());
                 }
             });
         }

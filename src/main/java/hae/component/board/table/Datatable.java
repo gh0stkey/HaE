@@ -30,6 +30,7 @@ public class Datatable extends JPanel {
     private final JTextField secondSearchField;
     private final TableRowSorter<DefaultTableModel> sorter;
     private final JCheckBox searchMode = new JCheckBox("Reverse search");
+    private final JCheckBox regexMode = new JCheckBox("Regex mode");
     private final String tabName;
     private final JPanel footerPanel;
 
@@ -52,7 +53,7 @@ public class Datatable extends JPanel {
 
     private void initComponents(List<String> dataList) {
         dataTable.setRowSorter(sorter);
-        
+
         // 设置ID排序
         sorter.setComparator(0, new Comparator<Integer>() {
             @Override
@@ -119,10 +120,12 @@ public class Datatable extends JPanel {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.X_AXIS));
 
         // Settings按钮
-        JPanel settingMenuPanel = new JPanel(new GridLayout(1, 1));
+        JPanel settingMenuPanel = new JPanel(new GridLayout(2, 1));
         settingMenuPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         JPopupMenu settingMenu = new JPopupMenu();
         settingMenuPanel.add(searchMode);
+        settingMenuPanel.add(regexMode);
+        regexMode.setSelected(true);
         searchMode.addItemListener(e -> performSearch());
         settingMenu.add(settingMenuPanel);
 
@@ -163,8 +166,8 @@ public class Datatable extends JPanel {
     }
 
     private void performSearch() {
-        RowFilter<Object, Object> firstRowFilter = getObjectObjectRowFilter(searchField);
-        RowFilter<Object, Object> secondRowFilter = getObjectObjectRowFilter(secondSearchField);
+        RowFilter<Object, Object> firstRowFilter = getObjectObjectRowFilter(searchField, true);
+        RowFilter<Object, Object> secondRowFilter = getObjectObjectRowFilter(secondSearchField, false);
         if (searchField.getForeground().equals(Color.BLACK)) {
             sorter.setRowFilter(firstRowFilter);
             if (secondSearchField.getForeground().equals(Color.BLACK)) {
@@ -176,24 +179,29 @@ public class Datatable extends JPanel {
         }
     }
 
-    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField) {
+    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean firstFlag) {
         return new RowFilter<Object, Object>() {
             public boolean include(Entry<?, ?> entry) {
                 String searchFieldTextText = searchField.getText();
-                Pattern pattern = null;
-                try {
-                    pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
-                } catch (Exception ignored) {
-                }
-
-                String entryValue = ((String) entry.getValue(1)).toLowerCase();
                 searchFieldTextText = searchFieldTextText.toLowerCase();
+                String entryValue = ((String) entry.getValue(1)).toLowerCase();
                 boolean filterReturn = searchFieldTextText.isEmpty();
-                if (pattern != null) {
-                    filterReturn = filterReturn || pattern.matcher(entryValue).find() != searchMode.isSelected();
+                boolean firstFlagReturn = searchMode.isSelected() && firstFlag;
+                if (regexMode.isSelected()) {
+                    Pattern pattern = null;
+                    try {
+                        pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
+                    } catch (Exception ignored) {
+                    }
+
+                    if (pattern != null) {
+                        filterReturn = filterReturn || pattern.matcher(entryValue).find() != firstFlagReturn;
+                    }
+                } else {
+                    filterReturn = filterReturn || entryValue.contains(searchFieldTextText) != firstFlagReturn;
                 }
 
-                return filterReturn || entryValue.contains(searchFieldTextText) != searchMode.isSelected();
+                return filterReturn;
             }
         };
     }
