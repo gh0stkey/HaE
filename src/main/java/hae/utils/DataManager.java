@@ -24,10 +24,11 @@ public class DataManager {
             persistence.extensionData().deleteChildObject(dataName);
         }
         persistence.extensionData().setChildObject(dataName, persistedObject);
+
         saveIndex(dataType, dataName);
     }
 
-    public void loadData(MessageTableModel messageTableModel) {
+    public synchronized void loadData(MessageTableModel messageTableModel) {
         // 1. 获取索引
         PersistedList<String> dataIndex = persistence.extensionData().getStringList("data"); // 数据索引
         PersistedList<String> messageIndex = persistence.extensionData().getStringList("message"); // 消息索引
@@ -42,7 +43,7 @@ public class DataManager {
 
         if (indexList != null && !indexList.isEmpty()) {
             persistence.extensionData().deleteStringList(indexName);
-        } else {
+        } else if (indexList == null) {
             indexList = PersistedList.persistedStringList();
         }
 
@@ -55,14 +56,13 @@ public class DataManager {
 
     private void loadHaEData(PersistedList<String> dataIndex) {
         if (dataIndex != null && !dataIndex.isEmpty()) {
-            dataIndex.parallelStream().forEach(index -> {
+            dataIndex.forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 try {
                     dataObj.stringListKeys().forEach(dataKey -> {
                         RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false);
                     });
-                } catch (Exception e) {
-                    // api.logging().logToOutput("loadHaEData:" + e.getMessage());
+                } catch (Exception ignored) {
                 }
             });
         }
@@ -70,7 +70,7 @@ public class DataManager {
 
     private void loadMessageData(PersistedList<String> messageIndex, MessageTableModel messageTableModel) {
         if (messageIndex != null && !messageIndex.isEmpty()) {
-            messageIndex.parallelStream().forEach(index -> {
+            messageIndex.forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 if (dataObj != null) {
                     HttpRequestResponse messageInfo = dataObj.getHttpRequestResponse("messageInfo");
