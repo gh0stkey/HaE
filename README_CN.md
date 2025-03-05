@@ -4,6 +4,8 @@
 <h5>第一作者： <a href="https://github.com/gh0stkey">EvilChen</a>（中孚信息元亨实验室）<br>第二作者： <a href="https://github.com/0chencc">0chencc</a>（米斯特安全团队）<br>第三作者： <a href="https://github.com/vaycore">vaycore</a>（独立安全研究员）</h5>
 </div>
 
+README 版本: \[[English](README.md) | [简体中文](README_CN.md)\]
+
 ## 项目介绍
 
 **HaE**是一款**网络安全（数据安全）领域**下的框架式项目，采用了**乐高积木式**模块化设计理念，实现对HTTP消息（包含WebSocket）精细化的标记和提取。
