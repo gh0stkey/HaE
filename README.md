@@ -4,6 +4,8 @@
 <h5>First Author:： <a href="https://github.com/gh0stkey">EvilChen</a>（Zhongfu Information Yuanheng Laboratory）<br>Second Author： <a href="https://github.com/0chencc">0chencc</a>（Mystery Security Team）<br>Third Author： <a href="https://github.com/vaycore">vaycore</a>（Independent Security Researcher）</h5>
 </div>
 
+README Version: \[[English](README.md) | [简体中文](README_CN.md)\]
+
 ## Project Introduction
 
 **HaE** is a framework-style project in the field of **cybersecurity (data security)**, adopting a **Lego brick-style** modular design philosophy to achieve fine-grained tagging and extraction of HTTP messages (including WebSocket).
