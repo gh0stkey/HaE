@@ -16,12 +16,12 @@ By utilizing **multi-engine** customized regular expressions, HaE can accurately
 
 GitHub project address: https://github.com/gh0stkey/HaE
 
-GitCode project address: https://gitcode.net/gh0stkey/HaE
+GitCode project address: https://gitcode.com/gh0stkey/HaE
 
 **Awards and Recognitions**:
 
 1. [Selected for the 2022 KCon Arsenal](https://mp.weixin.qq.com/s/JohMsl1WD29LHCHuLf8mVQ)
-2. [Recognized as a GitCode G-Star Project](https://gitcode.net/gh0stkey/HaE)
+2. [Recognized as a GitCode G-Star Project](https://gitcode.com/gh0stkey/HaE)
 
 **Notes and Precautions**:
 
