@@ -80,6 +80,8 @@ We appreciate everyone's support for the project. The following list is sorted b
 | xccc     | 168.00¥ |
 | 柯林斯-民间新秀     | 1000.00¥ |
 | Cuber     | 100.00¥ |
+| 时光难逆     | 50.00¥ |
+| Celvin     | 66.00¥ |
 
 ## Support the Project
 
