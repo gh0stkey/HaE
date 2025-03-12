@@ -26,8 +26,7 @@ GitCode project address: https://gitcode.com/gh0stkey/HaE
 **Notes and Precautions**:
 
 1. Starting with HaE version 3.0, development is done using the `Montoya API`. To use the new version of HaE, you need to upgrade your BurpSuite version (>=2023.12.1).
-2. After HaE version 2.6, the rule fields have been updated, so they are not compatible with rules from versions <=2.6. Users should visit the [Rule Conversion Page](https://gh0st.cn/HaE/ConversionRule.html) to convert their rules.
-3. Custom HaE rules must enclose the expressions to be extracted within parentheses `()`. For example, if you want to match a response message from a **Shiro application**, the normal matching rule would be `rememberMe=delete`, but in HaE's rule format, it needs to be written as `(rememberMe=delete)`.
+2. Custom HaE rules must enclose the expressions to be extracted within parentheses `()`. For example, if you want to match a response message from a **Shiro application**, the normal matching rule would be `rememberMe=delete`, but in HaE's rule format, it needs to be written as `(rememberMe=delete)`.
 
 ### Rule Definitions
 
