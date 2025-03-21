@@ -173,8 +173,6 @@ public class MessageTableModel extends AbstractTableModel {
                 log.add(logEntry);
             }
         }
-        // 批量更新完成后一次性通知表格更新
-        fireTableDataChanged();
     }
 
     public void deleteByHost(String filterText) {
