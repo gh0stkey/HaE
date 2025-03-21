@@ -10,7 +10,7 @@ import burp.api.montoya.ui.UserInterface;
 import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.HttpResponseEditor;
 import hae.Config;
-import hae.cache.CachePool;
+import hae.cache.MessageCache;
 import hae.utils.ConfigLoader;
 import hae.utils.DataManager;
 import hae.utils.string.HashCalculator;
@@ -90,7 +90,7 @@ public class MessageTableModel extends AbstractTableModel {
         messageTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        // 请求/相应文本框
+        // 请求/响应文本框
         JScrollPane scrollPane = new JScrollPane(messageTable);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -98,7 +98,7 @@ public class MessageTableModel extends AbstractTableModel {
         splitPane.setRightComponent(messageTab);
     }
 
-    public void add(HttpRequestResponse messageInfo, String url, String method, String status, String length, String comment, String color, boolean flag) {
+    public synchronized void add(HttpRequestResponse messageInfo, String url, String method, String status, String length, String comment, String color, boolean flag) {
         synchronized (log) {
             boolean isDuplicate = false;
             MessageEntry logEntry = new MessageEntry(messageInfo, method, url, comment, length, color, status);
@@ -155,6 +155,26 @@ public class MessageTableModel extends AbstractTableModel {
             }
         }
 
+    }
+
+    public synchronized void addBatch(List<Object[]> batchData) {
+        synchronized (log) {
+            for (Object[] data : batchData) {
+                HttpRequestResponse messageInfo = (HttpRequestResponse) data[0];
+                String url = (String) data[1];
+                String method = (String) data[2];
+                String status = (String) data[3];
+                String length = (String) data[4];
+                String comment = (String) data[5];
+                String color = (String) data[6];
+
+                // 复用现有的 add 方法逻辑，但跳过重复检查
+                MessageEntry logEntry = new MessageEntry(messageInfo, method, url, comment, length, color, status);
+                log.add(logEntry);
+            }
+        }
+        // 批量更新完成后一次性通知表格更新
+        fireTableDataChanged();
     }
 
     public void deleteByHost(String filterText) {
@@ -317,7 +337,7 @@ public class MessageTableModel extends AbstractTableModel {
 
     private Map<String, Map<String, Object>> getCacheData(byte[] content) {
         String hashIndex = HashCalculator.calculateHash(content);
-        return CachePool.get(hashIndex);
+        return MessageCache.get(hashIndex);
     }
 
     private boolean areMapsEqual(Map<String, Map<String, Object>> map1, Map<String, Map<String, Object>> map2) {
@@ -426,11 +446,11 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     public class MessageTable extends JTable {
-        private MessageEntry messageEntry;
         private final ExecutorService executorService;
-        private int lastSelectedIndex = -1;
         private final HttpRequestEditor requestEditor;
         private final HttpResponseEditor responseEditor;
+        private MessageEntry messageEntry;
+        private int lastSelectedIndex = -1;
 
         public MessageTable(TableModel messageTableModel, HttpRequestEditor requestEditor, HttpResponseEditor responseEditor) {
             super(messageTableModel);

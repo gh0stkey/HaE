@@ -2,6 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
+import hae.cache.DataQueryCache;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
@@ -23,19 +24,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
+    private static Boolean isMatchHost = false;
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
-
+    private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+    private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
     private JSplitPane splitPane;
     private MessageTable messageTable;
-
-    private static Boolean isMatchHost = false;
-    private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-    private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
-
+    private JProgressBar progressBar;
     private SwingWorker<Map<String, List<String>>, Void> handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
 
@@ -47,13 +46,25 @@ public class Databoard extends JPanel {
         initComponents();
     }
 
+    public static void setProgressBar(boolean status, JProgressBar progressBar, String showString) {
+        progressBar.setIndeterminate(status);
+        if (!status) {
+            progressBar.setMaximum(100);
+            progressBar.setString("OK");
+            progressBar.setStringPainted(true);
+            progressBar.setValue(progressBar.getMaximum());
+        } else {
+            progressBar.setString(showString);
+            progressBar.setStringPainted(true);
+        }
+    }
+
     private void initComponents() {
         setLayout(new GridBagLayout());
         ((GridBagLayout) getLayout()).columnWidths = new int[]{25, 0, 0, 0, 20, 0};
-        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0};
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0, 0};
         ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
-        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 1.0E-4};
-
+        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 0.0, 1.0E-4};
         JLabel hostLabel = new JLabel("Host:");
 
         JButton clearButton = new JButton("Clear");
@@ -81,7 +92,7 @@ public class Databoard extends JPanel {
 
         clearButton.addActionListener(this::clearActionPerformed);
 
-
+        progressBar = new JProgressBar();
         splitPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -90,6 +101,7 @@ public class Databoard extends JPanel {
         });
 
         splitPane.setVisible(false);
+        progressBar.setVisible(false);
 
         add(hostLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
@@ -98,8 +110,11 @@ public class Databoard extends JPanel {
         add(actionButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(8, 0, 5, 5), 0, 0));
 
-        add(splitPane, new GridBagConstraints(1, 1, 3, 2, 0.0, 1.0,
+        add(splitPane, new GridBagConstraints(1, 1, 3, 1, 0.0, 1.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(0, 5, 0, 5), 0, 0));
+        add(progressBar, new GridBagConstraints(1, 2, 3, 1, 1.0, 0.0,
+                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                 new Insets(0, 5, 0, 5), 0, 0));
         hostComboBox.setMaximumRowCount(5);
         add(hostComboBox, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
@@ -118,6 +133,10 @@ public class Databoard extends JPanel {
         columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.1));
         columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
         columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
+    }
+
+    private void setProgressBar(boolean status) {
+        setProgressBar(status, progressBar, "Loading ...");
     }
 
     private void setAutoMatch() {
@@ -155,6 +174,8 @@ public class Databoard extends JPanel {
             String selectedHost = hostComboBox.getSelectedItem().toString();
 
             if (getHostByList().contains(selectedHost)) {
+                progressBar.setVisible(true);
+                setProgressBar(true);
                 hostTextField.setText(selectedHost);
 
                 if (handleComboBoxWorker != null && !handleComboBoxWorker.isDone()) {
@@ -193,6 +214,8 @@ public class Databoard extends JPanel {
 
                                     hostComboBox.setPopupVisible(false);
                                     applyHostFilter(selectedHost);
+
+                                    setProgressBar(false);
                                 }
                             } catch (Exception ignored) {
                             }
@@ -230,6 +253,12 @@ public class Databoard extends JPanel {
     }
 
     private Map<String, List<String>> getSelectedMapByHost(String selectedHost) {
+        // 先尝试从缓存获取结果
+        Map<String, List<String>> cachedResult = DataQueryCache.getHostQueryResult(selectedHost);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
         ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
         Map<String, List<String>> selectedDataMap;
 
@@ -253,6 +282,11 @@ public class Databoard extends JPanel {
             });
         } else {
             selectedDataMap = dataMap.get(selectedHost);
+        }
+
+        // 将结果存入缓存
+        if (selectedDataMap != null) {
+            DataQueryCache.putHostQueryResult(selectedHost, selectedDataMap);
         }
 
         return selectedDataMap;
@@ -314,19 +348,31 @@ public class Databoard extends JPanel {
     }
 
     private List<String> getHostByList() {
-        if (!Config.globalDataMap.keySet().isEmpty()) {
-            return new ArrayList<>(Config.globalDataMap.keySet());
+        // 先尝试从缓存获取结果
+        List<String> cachedResult = DataQueryCache.getHostFilterResult("all_hosts");
+        if (cachedResult != null) {
+            return cachedResult;
         }
-        return new ArrayList<>();
+
+        List<String> result = new ArrayList<>();
+        if (!Config.globalDataMap.isEmpty()) {
+            result = new ArrayList<>(Config.globalDataMap.keySet());
+            // 将结果存入缓存
+            DataQueryCache.putHostFilterResult("all_hosts", result);
+        }
+        return result;
     }
 
     private void clearActionPerformed(ActionEvent e) {
+        // 清除缓存
+        DataQueryCache.clearCache();
         int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear data?", "Info",
                 JOptionPane.YES_NO_OPTION);
         String host = hostTextField.getText();
         if (retCode == JOptionPane.YES_OPTION && !host.isEmpty()) {
             dataTabbedPane.removeAll();
             splitPane.setVisible(false);
+            progressBar.setVisible(false);
 
             Config.globalDataMap.keySet().parallelStream().forEach(key -> {
                 if (StringProcessor.matchesHostPattern(key, host) || host.equals("*")) {
@@ -353,8 +399,8 @@ public class Databoard extends JPanel {
 
             keysToRemove.forEach(Config.globalDataMap::remove);
 
-            if (Config.globalDataMap.keySet().size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.equals("*"))) {
-                Config.globalDataMap.keySet().remove("*");
+            if (Config.globalDataMap.size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.equals("*"))) {
+                Config.globalDataMap.remove("*");
             }
 
             messageTableModel.deleteByHost(host);

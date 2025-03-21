@@ -41,10 +41,9 @@ public class ResponseEditor implements HttpResponseEditorProvider {
         private final HttpUtils httpUtils;
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
+        private final JTabbedPane jTabbedPane = new JTabbedPane();
         private HttpRequestResponse requestResponse;
         private List<Map<String, String>> dataList;
-
-        private final JTabbedPane jTabbedPane = new JTabbedPane();
 
         public Editor(MontoyaApi api, ConfigLoader configLoader, EditorCreationContext creationContext) {
             this.api = api;

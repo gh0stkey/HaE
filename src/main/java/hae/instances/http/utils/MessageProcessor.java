@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 public class MessageProcessor {
     private final MontoyaApi api;
     private final RegularMatcher regularMatcher;

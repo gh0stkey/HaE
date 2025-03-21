@@ -31,6 +31,28 @@ public class RequestEditor implements HttpRequestEditorProvider {
         this.configLoader = configLoader;
     }
 
+    public static boolean isListHasData(List<Map<String, String>> dataList) {
+        if (dataList != null && !dataList.isEmpty()) {
+            Map<String, String> dataMap = dataList.get(0);
+            return dataMap != null && !dataMap.isEmpty();
+        }
+        return false;
+    }
+
+    public static void generateTabbedPaneFromResultMap(MontoyaApi api, ConfigLoader configLoader, JTabbedPane tabbedPane, List<Map<String, String>> result) {
+        tabbedPane.removeAll();
+        if (result != null && !result.isEmpty()) {
+            Map<String, String> dataMap = result.get(0);
+            if (dataMap != null && !dataMap.isEmpty()) {
+                dataMap.keySet().forEach(i -> {
+                    String[] extractData = dataMap.get(i).split(Config.boundary);
+                    Datatable dataPanel = new Datatable(api, configLoader, i, Arrays.asList(extractData));
+                    tabbedPane.addTab(i, dataPanel);
+                });
+            }
+        }
+    }
+
     @Override
     public ExtensionProvidedHttpRequestEditor provideHttpRequestEditor(EditorCreationContext editorCreationContext) {
         return new Editor(api, configLoader, editorCreationContext);
@@ -42,10 +64,9 @@ public class RequestEditor implements HttpRequestEditorProvider {
         private final HttpUtils httpUtils;
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
+        private final JTabbedPane jTabbedPane = new JTabbedPane();
         private HttpRequestResponse requestResponse;
         private List<Map<String, String>> dataList;
-
-        private final JTabbedPane jTabbedPane = new JTabbedPane();
 
         public Editor(MontoyaApi api, ConfigLoader configLoader, EditorCreationContext creationContext) {
             this.api = api;
@@ -116,28 +137,6 @@ public class RequestEditor implements HttpRequestEditorProvider {
         @Override
         public boolean isModified() {
             return false;
-        }
-    }
-
-    public static boolean isListHasData(List<Map<String, String>> dataList) {
-        if (dataList != null && !dataList.isEmpty()) {
-            Map<String, String> dataMap = dataList.get(0);
-            return dataMap != null && !dataMap.isEmpty();
-        }
-        return false;
-    }
-
-    public static void generateTabbedPaneFromResultMap(MontoyaApi api, ConfigLoader configLoader, JTabbedPane tabbedPane, List<Map<String, String>> result) {
-        tabbedPane.removeAll();
-        if (result != null && !result.isEmpty()) {
-            Map<String, String> dataMap = result.get(0);
-            if (dataMap != null && !dataMap.isEmpty()) {
-                dataMap.keySet().forEach(i -> {
-                    String[] extractData = dataMap.get(i).split(Config.boundary);
-                    Datatable dataPanel = new Datatable(api, configLoader, i, Arrays.asList(extractData));
-                    tabbedPane.addTab(i, dataPanel);
-                });
-            }
         }
     }
 }

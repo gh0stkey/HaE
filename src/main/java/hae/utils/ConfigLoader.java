@@ -49,6 +49,11 @@ public class ConfigLoader {
         Config.globalRules = getRules();
     }
 
+    private static boolean isValidConfigPath(String configPath) {
+        File configPathFile = new File(configPath);
+        return configPathFile.exists() && configPathFile.isDirectory();
+    }
+
     private String determineConfigPath() {
         // 优先级1：用户根目录
         String userConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
@@ -65,11 +70,6 @@ public class ConfigLoader {
         }
 
         return userConfigPath;
-    }
-
-    private static boolean isValidConfigPath(String configPath) {
-        File configPathFile = new File(configPath);
-        return configPathFile.exists() && configPathFile.isDirectory();
     }
 
     public void initConfig() {
@@ -102,8 +102,6 @@ public class ConfigLoader {
             Representer representer = new Representer(dop);
             Map<String, Object> rulesMap = new Yaml(representer, dop).load(inputStream);
 
-            String[] fieldKeys = {"loaded", "name", "f_regex", "s_regex", "format", "color", "scope", "engine", "sensitive"};
-
             Object rulesObj = rulesMap.get("rules");
             if (rulesObj instanceof List) {
                 List<Map<String, Object>> groupData = (List<Map<String, Object>>) rulesObj;
@@ -114,9 +112,9 @@ public class ConfigLoader {
                     if (ruleObj instanceof List) {
                         List<Map<String, Object>> ruleData = (List<Map<String, Object>>) ruleObj;
                         for (Map<String, Object> ruleFields : ruleData) {
-                            Object[] valuesArray = new Object[fieldKeys.length];
-                            for (int i = 0; i < fieldKeys.length; i++) {
-                                valuesArray[i] = ruleFields.get(fieldKeys[i]);
+                            Object[] valuesArray = new Object[Config.ruleFields.length];
+                            for (int i = 0; i < Config.ruleFields.length; i++) {
+                                valuesArray[i] = ruleFields.get(Config.ruleFields[i].toLowerCase().replace("-", "_"));
                             }
                             data.add(valuesArray);
                         }
@@ -138,24 +136,48 @@ public class ConfigLoader {
         return getValueFromConfig("BlockHost", Config.host);
     }
 
+    public void setBlockHost(String blockHost) {
+        setValueToConfig("BlockHost", blockHost);
+    }
+
     public String getExcludeSuffix() {
         return getValueFromConfig("ExcludeSuffix", Config.suffix);
+    }
+
+    public void setExcludeSuffix(String excludeSuffix) {
+        setValueToConfig("ExcludeSuffix", excludeSuffix);
     }
 
     public String getExcludeStatus() {
         return getValueFromConfig("ExcludeStatus", Config.status);
     }
 
+    public void setExcludeStatus(String status) {
+        setValueToConfig("ExcludeStatus", status);
+    }
+
     public String getLimitSize() {
         return getValueFromConfig("LimitSize", Config.size);
+    }
+
+    public void setLimitSize(String size) {
+        setValueToConfig("LimitSize", size);
     }
 
     public String getScope() {
         return getValueFromConfig("HaEScope", Config.scopeOptions);
     }
 
+    public void setScope(String scope) {
+        setValueToConfig("HaEScope", scope);
+    }
+
     public boolean getMode() {
         return getValueFromConfig("HaEModeStatus", Config.modeStatus).equals("true");
+    }
+
+    public void setMode(String mode) {
+        setValueToConfig("HaEModeStatus", mode);
     }
 
     private String getValueFromConfig(String name, String defaultValue) {
@@ -174,30 +196,6 @@ public class ConfigLoader {
         }
 
         return defaultValue;
-    }
-
-    public void setExcludeSuffix(String excludeSuffix) {
-        setValueToConfig("ExcludeSuffix", excludeSuffix);
-    }
-
-    public void setBlockHost(String blockHost) {
-        setValueToConfig("BlockHost", blockHost);
-    }
-
-    public void setExcludeStatus(String status) {
-        setValueToConfig("ExcludeStatus", status);
-    }
-
-    public void setLimitSize(String size) {
-        setValueToConfig("LimitSize", size);
-    }
-
-    public void setScope(String scope) {
-        setValueToConfig("HaEScope", scope);
-    }
-
-    public void setMode(String mode) {
-        setValueToConfig("HaEModeStatus", mode);
     }
 
     private void setValueToConfig(String name, String value) {

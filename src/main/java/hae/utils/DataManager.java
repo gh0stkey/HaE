@@ -10,6 +10,12 @@ import burp.api.montoya.persistence.Persistence;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.http.utils.RegularMatcher;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class DataManager {
     private final MontoyaApi api;
     private final Persistence persistence;
@@ -69,22 +75,81 @@ public class DataManager {
     }
 
     private void loadMessageData(PersistedList<String> messageIndex, MessageTableModel messageTableModel) {
-        if (messageIndex != null && !messageIndex.isEmpty()) {
-            messageIndex.forEach(index -> {
+        if (messageIndex == null || messageIndex.isEmpty()) {
+            return;
+        }
+
+        List<String> indexList = new ArrayList<>();
+        for (Object item : messageIndex) {
+            try {
+                if (item != null) {
+                    indexList.add(item.toString());
+                }
+            } catch (Exception e) {
+                api.logging().logToError("转换索引时出错: " + e.getMessage());
+            }
+        }
+
+        final int batchSize = 2000; // 增加批处理大小
+        final int threadCount = Math.max(8, Runtime.getRuntime().availableProcessors() * 2); // 增加线程数
+        int totalSize = indexList.size();
+
+        // 使用更高效的线程池
+        ExecutorService executorService = Executors.newWorkStealingPool(threadCount);
+        List<Future<List<Object[]>>> futures = new ArrayList<>();
+
+        // 分批并行处理数据
+        for (int i = 0; i < totalSize; i += batchSize) {
+            int endIndex = Math.min(i + batchSize, totalSize);
+            List<String> batch = indexList.subList(i, endIndex);
+
+            Future<List<Object[]>> future = executorService.submit(() -> processBatchParallel(batch));
+            futures.add(future);
+        }
+
+        // 批量添加数据到模型
+        try {
+            for (Future<List<Object[]>> future : futures) {
+                List<Object[]> batchData = future.get();
+                messageTableModel.addBatch(batchData);
+            }
+        } catch (Exception e) {
+            api.logging().logToError("批量添加数据时出错: " + e.getMessage());
+        } finally {
+            executorService.shutdown();
+        }
+    }
+
+    private List<Object[]> processBatchParallel(List<String> batch) {
+        List<Object[]> batchData = new ArrayList<>();
+        for (String index : batch) {
+            try {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 if (dataObj != null) {
                     HttpRequestResponse messageInfo = dataObj.getHttpRequestResponse("messageInfo");
-                    String comment = dataObj.getString("comment");
-                    String color = dataObj.getString("color");
-                    HttpRequest request = messageInfo.request();
-                    HttpResponse response = messageInfo.response();
-                    String method = request.method();
-                    String url = request.url();
-                    String status = String.valueOf(response.statusCode());
-                    String length = String.valueOf(response.toByteArray().length());
-                    messageTableModel.add(messageInfo, url, method, status, length, comment, color, false);
+                    if (messageInfo != null) {
+                        batchData.add(prepareMessageData(messageInfo, dataObj));
+                    }
                 }
-            });
+            } catch (Exception e) {
+                api.logging().logToError("处理消息数据时出错: " + e.getMessage() + ", index: " + index);
+            }
         }
+        return batchData;
+    }
+
+    private Object[] prepareMessageData(HttpRequestResponse messageInfo, PersistedObject dataObj) {
+        HttpRequest request = messageInfo.request();
+        HttpResponse response = messageInfo.response();
+        return new Object[]{
+                messageInfo,
+                request.url(),
+                request.method(),
+                String.valueOf(response.statusCode()),
+                String.valueOf(response.toByteArray().length()),
+                dataObj.getString("comment"),
+                dataObj.getString("color"),
+                false
+        };
     }
 }

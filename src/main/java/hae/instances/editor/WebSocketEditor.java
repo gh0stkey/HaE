@@ -36,10 +36,9 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
         private final ConfigLoader configLoader;
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
+        private final JTabbedPane jTabbedPane = new JTabbedPane();
         private ByteArray message;
         private List<Map<String, String>> dataList;
-
-        private final JTabbedPane jTabbedPane = new JTabbedPane();
 
         public Editor(MontoyaApi api, ConfigLoader configLoader, EditorCreationContext creationContext) {
             this.api = api;

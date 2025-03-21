@@ -8,7 +8,7 @@ import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import hae.Config;
-import hae.cache.CachePool;
+import hae.cache.MessageCache;
 import hae.utils.DataManager;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
@@ -27,10 +27,57 @@ public class RegularMatcher {
 
     }
 
+    public synchronized static void putDataToGlobalMap(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
+        // 添加到全局变量中，便于Databoard检索
+        if (!Objects.equals(host, "") && host != null) {
+            Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
+                Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
+
+                gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
+                    Set<String> combinedSet = new LinkedHashSet<>(existingList);
+                    combinedSet.addAll(newList);
+                    return new ArrayList<>(combinedSet);
+                });
+
+                if (flag) {
+                    // 数据存储在BurpSuite空间内
+                    try {
+                        DataManager dataManager = new DataManager(api);
+                        PersistedObject persistedObject = PersistedObject.persistedObject();
+                        gRuleMap.forEach((kName, vList) -> {
+                            PersistedList<String> persistedList = PersistedList.persistedStringList();
+                            persistedList.addAll(vList);
+                            persistedObject.setStringList(kName, persistedList);
+                        });
+                        dataManager.putData("data", host, persistedObject);
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                return gRuleMap;
+            });
+
+            String[] splitHost = host.split("\\.");
+            String onlyHost = host.split(":")[0];
+
+            String anyHost = (splitHost.length > 2 && !StringProcessor.matchHostIsIp(onlyHost)) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
+
+            if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
+                // 添加通配符Host，实际数据从查询哪里将所有数据提取
+                Config.globalDataMap.put(anyHost, new HashMap<>());
+            }
+
+            if (!Config.globalDataMap.containsKey("*")) {
+                // 添加通配符全匹配，同上
+                Config.globalDataMap.put("*", new HashMap<>());
+            }
+        }
+    }
+
     public Map<String, Map<String, Object>> match(String host, String type, String message, String header, String body) {
         // 先从缓存池里判断是否有已经匹配好的结果
         String messageIndex = HashCalculator.calculateHash(message.getBytes());
-        Map<String, Map<String, Object>> map = CachePool.get(messageIndex);
+        Map<String, Map<String, Object>> map = MessageCache.get(messageIndex);
         if (map != null) {
             return map;
         } else {
@@ -106,55 +153,8 @@ public class RegularMatcher {
                     }
                 }
             });
-            CachePool.put(messageIndex, finalMap);
+            MessageCache.put(messageIndex, finalMap);
             return finalMap;
-        }
-    }
-
-    public synchronized static void putDataToGlobalMap(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
-        // 添加到全局变量中，便于Databoard检索
-        if (!Objects.equals(host, "") && host != null) {
-            Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
-                Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
-
-                gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
-                    Set<String> combinedSet = new LinkedHashSet<>(existingList);
-                    combinedSet.addAll(newList);
-                    return new ArrayList<>(combinedSet);
-                });
-
-                if (flag) {
-                    // 数据存储在BurpSuite空间内
-                    try {
-                        DataManager dataManager = new DataManager(api);
-                        PersistedObject persistedObject = PersistedObject.persistedObject();
-                        gRuleMap.forEach((kName, vList) -> {
-                            PersistedList<String> persistedList = PersistedList.persistedStringList();
-                            persistedList.addAll(vList);
-                            persistedObject.setStringList(kName, persistedList);
-                        });
-                        dataManager.putData("data", host, persistedObject);
-                    } catch (Exception ignored) {
-                    }
-                }
-
-                return gRuleMap;
-            });
-
-            String[] splitHost = host.split("\\.");
-            String onlyHost = host.split(":")[0];
-
-            String anyHost = (splitHost.length > 2 && !StringProcessor.matchHostIsIp(onlyHost)) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
-
-            if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
-                // 添加通配符Host，实际数据从查询哪里将所有数据提取
-                Config.globalDataMap.put(anyHost, new HashMap<>());
-            }
-
-            if (!Config.globalDataMap.containsKey("*")) {
-                // 添加通配符全匹配，同上
-                Config.globalDataMap.put("*", new HashMap<>());
-            }
         }
     }
 

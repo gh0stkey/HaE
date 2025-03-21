@@ -11,12 +11,41 @@ import java.awt.event.*;
 
 public class Rules extends JTabbedPane {
     private final MontoyaApi api;
-    private ConfigLoader configLoader;
     private final RuleProcessor ruleProcessor;
     private final JTextField ruleGroupNameTextField;
-
+    private ConfigLoader configLoader;
     private Component tabComponent;
     private int selectedIndex;
+    private final Action cancelActionPerformed = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (selectedIndex >= 0) {
+                setTabComponentAt(selectedIndex, tabComponent);
+
+                ruleGroupNameTextField.setVisible(false);
+                ruleGroupNameTextField.setPreferredSize(null);
+                selectedIndex = -1;
+                tabComponent = null;
+
+                requestFocusInWindow();
+            }
+        }
+    };
+    private final Action renameTitleActionPerformed = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String title = ruleGroupNameTextField.getText();
+            if (!title.isEmpty() && selectedIndex >= 0) {
+                String oldName = getTitleAt(selectedIndex);
+                setTitleAt(selectedIndex, title);
+
+                if (!oldName.equals(title)) {
+                    ruleProcessor.renameRuleGroup(oldName, title);
+                }
+            }
+            cancelActionPerformed.actionPerformed(null);
+        }
+    };
 
     public Rules(MontoyaApi api, ConfigLoader configLoader) {
         this.api = api;
@@ -49,43 +78,48 @@ public class Rules extends JTabbedPane {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                int index = getSelectedIndex();
-                Rectangle r = getBoundsAt(index);
-                if (r.contains(e.getPoint()) && index >= 0) {
-                    switch (e.getButton()) {
-                        case MouseEvent.BUTTON1:
-                            if (e.getClickCount() == 2) {
-                                selectedIndex = index;
-                                tabComponent = getTabComponentAt(selectedIndex);
-                                String ruleGroupName = getTitleAt(selectedIndex);
+                int index = indexAtLocation(e.getX(), e.getY());
+                if (index < 0) {
+                    return;
+                }
 
-                                if (!"...".equals(ruleGroupName)) {
-                                    setTabComponentAt(selectedIndex, ruleGroupNameTextField);
-                                    ruleGroupNameTextField.setVisible(true);
-                                    ruleGroupNameTextField.setText(ruleGroupName);
-                                    ruleGroupNameTextField.selectAll();
-                                    ruleGroupNameTextField.requestFocusInWindow();
-                                    ruleGroupNameTextField.setMinimumSize(ruleGroupNameTextField.getPreferredSize());
-                                }
-                            } else if (e.getClickCount() == 1) {
-                                if ("...".equals(getTitleAt(getSelectedIndex()))) {
-                                    String title = ruleProcessor.newRule();
-                                    Rule newRule = new Rule(api, configLoader, Config.ruleTemplate, tabbedPane);
-                                    insertTab(title, null, newRule, null, getTabCount() - 1);
-                                    setSelectedIndex(getTabCount() - 2);
-                                } else {
-                                    renameTitleActionPerformed.actionPerformed(null);
-                                }
+                switch (e.getButton()) {
+                    case MouseEvent.BUTTON1:
+                        if (e.getClickCount() == 2) {
+                            selectedIndex = index;
+                            tabComponent = getTabComponentAt(selectedIndex);
+                            String ruleGroupName = getTitleAt(selectedIndex);
+
+                            if (!"...".equals(ruleGroupName)) {
+                                setTabComponentAt(selectedIndex, ruleGroupNameTextField);
+                                ruleGroupNameTextField.setVisible(true);
+                                ruleGroupNameTextField.setText(ruleGroupName);
+                                ruleGroupNameTextField.selectAll();
+                                ruleGroupNameTextField.requestFocusInWindow();
+                                ruleGroupNameTextField.setMinimumSize(ruleGroupNameTextField.getPreferredSize());
                             }
-                            break;
-                        case MouseEvent.BUTTON3:
-                            if (!"...".equals(getTitleAt(getSelectedIndex()))) {
-                                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                        } else if (e.getClickCount() == 1) {
+                            String title = getTitleAt(index);
+                            if ("...".equals(title)) {
+                                // 阻止默认的选中行为
+                                e.consume();
+                                // 直接创建新标签
+                                String newTitle = ruleProcessor.newRule();
+                                Rule newRule = new Rule(api, configLoader, Config.ruleTemplate, Rules.this);
+                                insertTab(newTitle, null, newRule, null, getTabCount() - 1);
+                                setSelectedIndex(getTabCount() - 2);
+                            } else {
+                                renameTitleActionPerformed.actionPerformed(null);
                             }
-                            break;
-                        default:
-                            break;
-                    }
+                        }
+                        break;
+                    case MouseEvent.BUTTON3:
+                        if (!"...".equals(getTitleAt(index))) {
+                            popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
         });
@@ -119,38 +153,6 @@ public class Rules extends JTabbedPane {
             }
         }
     }
-
-    private final Action renameTitleActionPerformed = new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String title = ruleGroupNameTextField.getText();
-            if (!title.isEmpty() && selectedIndex >= 0) {
-                String oldName = getTitleAt(selectedIndex);
-                setTitleAt(selectedIndex, title);
-
-                if (!oldName.equals(title)) {
-                    ruleProcessor.renameRuleGroup(oldName, title);
-                }
-            }
-            cancelActionPerformed.actionPerformed(null);
-        }
-    };
-
-    private final Action cancelActionPerformed = new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (selectedIndex >= 0) {
-                setTabComponentAt(selectedIndex, tabComponent);
-
-                ruleGroupNameTextField.setVisible(false);
-                ruleGroupNameTextField.setPreferredSize(null);
-                selectedIndex = -1;
-                tabComponent = null;
-
-                requestFocusInWindow();
-            }
-        }
-    };
 }
 
 
