@@ -2,7 +2,6 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
-import hae.cache.DataQueryCache;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
@@ -44,19 +43,6 @@ public class Databoard extends JPanel {
         this.messageTableModel = messageTableModel;
 
         initComponents();
-    }
-
-    public static void setProgressBar(boolean status, JProgressBar progressBar, String showString) {
-        progressBar.setIndeterminate(status);
-        if (!status) {
-            progressBar.setMaximum(100);
-            progressBar.setString("OK");
-            progressBar.setStringPainted(true);
-            progressBar.setValue(progressBar.getMaximum());
-        } else {
-            progressBar.setString(showString);
-            progressBar.setStringPainted(true);
-        }
     }
 
     private void initComponents() {
@@ -136,7 +122,16 @@ public class Databoard extends JPanel {
     }
 
     private void setProgressBar(boolean status) {
-        setProgressBar(status, progressBar, "Loading ...");
+        progressBar.setIndeterminate(status);
+        if (!status) {
+            progressBar.setMaximum(100);
+            progressBar.setString("OK");
+            progressBar.setStringPainted(true);
+            progressBar.setValue(progressBar.getMaximum());
+        } else {
+            progressBar.setString("Loading...");
+            progressBar.setStringPainted(true);
+        }
     }
 
     private void setAutoMatch() {
@@ -182,7 +177,7 @@ public class Databoard extends JPanel {
                     handleComboBoxWorker.cancel(true);
                 }
 
-                handleComboBoxWorker = new SwingWorker<Map<String, List<String>>, Void>() {
+                handleComboBoxWorker = new SwingWorker<>() {
                     @Override
                     protected Map<String, List<String>> doInBackground() {
                         return getSelectedMapByHost(selectedHost);
@@ -253,12 +248,6 @@ public class Databoard extends JPanel {
     }
 
     private Map<String, List<String>> getSelectedMapByHost(String selectedHost) {
-        // 先尝试从缓存获取结果
-        Map<String, List<String>> cachedResult = DataQueryCache.getHostQueryResult(selectedHost);
-        if (cachedResult != null) {
-            return cachedResult;
-        }
-
         ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
         Map<String, List<String>> selectedDataMap;
 
@@ -282,11 +271,6 @@ public class Databoard extends JPanel {
             });
         } else {
             selectedDataMap = dataMap.get(selectedHost);
-        }
-
-        // 将结果存入缓存
-        if (selectedDataMap != null) {
-            DataQueryCache.putHostQueryResult(selectedHost, selectedDataMap);
         }
 
         return selectedDataMap;
@@ -323,10 +307,10 @@ public class Databoard extends JPanel {
             applyHostFilterWorker.cancel(true);
         }
 
-        applyHostFilterWorker = new SwingWorker<Void, Void>() {
+        applyHostFilterWorker = new SwingWorker<>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                RowFilter<Object, Object> rowFilter = new RowFilter<Object, Object>() {
+            protected Void doInBackground() {
+                RowFilter<Object, Object> rowFilter = new RowFilter<>() {
                     public boolean include(Entry<?, ?> entry) {
                         if (cleanedText.equals("*")) {
                             return true;
@@ -348,24 +332,15 @@ public class Databoard extends JPanel {
     }
 
     private List<String> getHostByList() {
-        // 先尝试从缓存获取结果
-        List<String> cachedResult = DataQueryCache.getHostFilterResult("all_hosts");
-        if (cachedResult != null) {
-            return cachedResult;
-        }
-
         List<String> result = new ArrayList<>();
         if (!Config.globalDataMap.isEmpty()) {
             result = new ArrayList<>(Config.globalDataMap.keySet());
-            // 将结果存入缓存
-            DataQueryCache.putHostFilterResult("all_hosts", result);
         }
+
         return result;
     }
 
     private void clearActionPerformed(ActionEvent e) {
-        // 清除缓存
-        DataQueryCache.clearCache();
         int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear data?", "Info",
                 JOptionPane.YES_NO_OPTION);
         String host = hostTextField.getText();

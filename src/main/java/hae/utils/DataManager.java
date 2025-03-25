@@ -10,11 +10,10 @@ import burp.api.montoya.persistence.Persistence;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.http.utils.RegularMatcher;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class DataManager {
     private final MontoyaApi api;
@@ -65,9 +64,7 @@ public class DataManager {
             dataIndex.forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 try {
-                    dataObj.stringListKeys().forEach(dataKey -> {
-                        RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false);
-                    });
+                    dataObj.stringListKeys().forEach(dataKey -> RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
                 } catch (Exception ignored) {
                 }
             });
@@ -79,69 +76,54 @@ public class DataManager {
             return;
         }
 
-        List<String> indexList = new ArrayList<>();
-        for (Object item : messageIndex) {
-            try {
-                if (item != null) {
-                    indexList.add(item.toString());
-                }
-            } catch (Exception e) {
-                api.logging().logToError("转换索引时出错: " + e.getMessage());
-            }
+        // 直接转换为List，简化处理
+        List<String> indexList = messageIndex.stream()
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .toList();
+
+        if (indexList.isEmpty()) {
+            return;
         }
 
-        final int batchSize = 2000; // 增加批处理大小
-        final int threadCount = Math.max(8, Runtime.getRuntime().availableProcessors() * 2); // 增加线程数
-        int totalSize = indexList.size();
-
-        // 使用更高效的线程池
+        final int batchSize = 2000;
+        final int threadCount = Math.max(8, Runtime.getRuntime().availableProcessors() * 2);
         ExecutorService executorService = Executors.newWorkStealingPool(threadCount);
-        List<Future<List<Object[]>>> futures = new ArrayList<>();
 
-        // 分批并行处理数据
-        for (int i = 0; i < totalSize; i += batchSize) {
-            int endIndex = Math.min(i + batchSize, totalSize);
-            List<String> batch = indexList.subList(i, endIndex);
-
-            Future<List<Object[]>> future = executorService.submit(() -> processBatchParallel(batch));
-            futures.add(future);
-        }
-
-        // 批量添加数据到模型
         try {
-            for (Future<List<Object[]>> future : futures) {
-                List<Object[]> batchData = future.get();
-                messageTableModel.addBatch(batchData);
+            // 分批处理
+            for (int i = 0; i < indexList.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, indexList.size());
+                List<String> batch = indexList.subList(i, endIndex);
+
+                processBatch(batch, messageTableModel);
             }
-        } catch (Exception e) {
-            api.logging().logToError("批量添加数据时出错: " + e.getMessage());
         } finally {
             executorService.shutdown();
         }
     }
 
-    private List<Object[]> processBatchParallel(List<String> batch) {
-        List<Object[]> batchData = new ArrayList<>();
-        for (String index : batch) {
+    private void processBatch(List<String> batch, MessageTableModel messageTableModel) {
+        batch.forEach(index -> {
             try {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 if (dataObj != null) {
                     HttpRequestResponse messageInfo = dataObj.getHttpRequestResponse("messageInfo");
                     if (messageInfo != null) {
-                        batchData.add(prepareMessageData(messageInfo, dataObj));
+                        addMessageToModel(messageInfo, dataObj, messageTableModel);
                     }
                 }
             } catch (Exception e) {
                 api.logging().logToError("处理消息数据时出错: " + e.getMessage() + ", index: " + index);
             }
-        }
-        return batchData;
+        });
     }
 
-    private Object[] prepareMessageData(HttpRequestResponse messageInfo, PersistedObject dataObj) {
+    private void addMessageToModel(HttpRequestResponse messageInfo, PersistedObject dataObj, MessageTableModel messageTableModel) {
         HttpRequest request = messageInfo.request();
         HttpResponse response = messageInfo.response();
-        return new Object[]{
+
+        messageTableModel.add(
                 messageInfo,
                 request.url(),
                 request.method(),
@@ -150,6 +132,6 @@ public class DataManager {
                 dataObj.getString("comment"),
                 dataObj.getString("color"),
                 false
-        };
+        );
     }
 }

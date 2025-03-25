@@ -97,7 +97,7 @@ public class Rule extends JPanel {
         Display ruleDisplay = new Display();
         ruleDisplay.formatTextField.setText("{0}");
 
-        int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Add Rule", JOptionPane.OK_OPTION);
+        int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Add Rule", JOptionPane.YES_NO_OPTION);
         if (showState == YES_OPTION) {
             Vector<Object> ruleData = new Vector<>();
             ruleData.add(false);
@@ -132,7 +132,7 @@ public class Rule extends JPanel {
 
             ruleDisplay.formatTextField.setEnabled(ruleDisplay.engineComboBox.getSelectedItem().toString().equals("nfa"));
 
-            int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Edit Rule", JOptionPane.OK_OPTION);
+            int showState = JOptionPane.showConfirmDialog(this, ruleDisplay, "Edit Rule", JOptionPane.YES_NO_OPTION);
             if (showState == 0) {
                 int select = ruleTable.convertRowIndexToModel(ruleTable.getSelectedRow());
                 model.setValueAt(ruleDisplay.ruleNameTextField.getText(), select, 1);

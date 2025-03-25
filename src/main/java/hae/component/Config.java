@@ -14,7 +14,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -174,12 +173,10 @@ public class Config extends JPanel {
     }
 
     private TableModelListener craeteSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
-        return new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                String selected = (String) setTypeComboBox.getSelectedItem();
-                String values = getFirstColumnDataAsString(model);
-
+        return e -> {
+            String selected = (String) setTypeComboBox.getSelectedItem();
+            String values = getFirstColumnDataAsString(model);
+            if (selected != null) {
                 if (selected.equals("Exclude suffix")) {
                     if (!values.equals(configLoader.getExcludeSuffix()) && !values.isEmpty()) {
                         configLoader.setExcludeSuffix(values);
@@ -197,18 +194,15 @@ public class Config extends JPanel {
                         configLoader.setExcludeStatus(values);
                     }
                 }
-
             }
         };
     }
 
     private ActionListener createSettingActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
-        return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selected = (String) setTypeComboBox.getSelectedItem();
-                model.setRowCount(0);
-
+        return e -> {
+            String selected = (String) setTypeComboBox.getSelectedItem();
+            model.setRowCount(0);
+            if (selected != null) {
                 if (selected.equals("Exclude suffix")) {
                     addDataToTable(configLoader.getExcludeSuffix().replaceAll("\\|", "\r\n"), model);
                 }
@@ -286,13 +280,13 @@ public class Config extends JPanel {
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
 
-        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField, setTypeComboBox.getSelectedItem().toString()));
+        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField));
 
         addTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addActionPerformed(null, model, addTextField, setTypeComboBox.getSelectedItem().toString());
+                    addActionPerformed(null, model, addTextField);
                 }
             }
         });
@@ -413,7 +407,7 @@ public class Config extends JPanel {
         configLoader.setScope(String.join("|", HaEScope));
     }
 
-    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField, String comboBoxSelected) {
+    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {
         String addTextFieldText = addTextField.getText();
         if (addTextField.getForeground().equals(Color.BLACK)) {
             addDataToTable(addTextFieldText, model);

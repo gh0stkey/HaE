@@ -59,8 +59,6 @@ public class Rules extends JTabbedPane {
     private void initComponents() {
         reloadRuleGroup();
 
-        JTabbedPane tabbedPane = this;
-
         JMenuItem deleteMenuItem = new JMenuItem("Delete");
         JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.add(deleteMenuItem);

@@ -55,12 +55,7 @@ public class Datatable extends JPanel {
         dataTable.setRowSorter(sorter);
 
         // 设置ID排序
-        sorter.setComparator(0, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer s1, Integer s2) {
-                return s1.compareTo(s2);
-            }
-        });
+        sorter.setComparator(0, (Comparator<Integer>) Integer::compareTo);
 
         for (String item : dataList) {
             if (!item.isEmpty()) {
@@ -180,7 +175,7 @@ public class Datatable extends JPanel {
     }
 
     private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean firstFlag) {
-        return new RowFilter<Object, Object>() {
+        return new RowFilter<>() {
             public boolean include(Entry<?, ?> entry) {
                 String searchFieldTextText = searchField.getText();
                 searchFieldTextText = searchFieldTextText.toLowerCase();

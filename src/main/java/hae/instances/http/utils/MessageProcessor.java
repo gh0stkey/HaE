@@ -77,10 +77,10 @@ public class MessageProcessor {
                 List<String> commentList = resultList.get(1);
                 if (!colorList.isEmpty() && !commentList.isEmpty()) {
                     String color = retrieveFinalColor(retrieveColorIndices(colorList));
-                    Map<String, String> colorMap = new HashMap<String, String>() {{
+                    Map<String, String> colorMap = new HashMap<>() {{
                         put("color", color);
                     }};
-                    Map<String, String> commentMap = new HashMap<String, String>() {{
+                    Map<String, String> commentMap = new HashMap<>() {{
                         put("comment", String.join(", ", commentList));
                     }};
                     highlightList.add(colorMap);
