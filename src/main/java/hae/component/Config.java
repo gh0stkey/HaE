@@ -218,7 +218,6 @@ public class Config extends JPanel {
         };
     }
 
-
     private JPanel createConfigTablePanel(String[] mode) {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.weightx = 1.0;

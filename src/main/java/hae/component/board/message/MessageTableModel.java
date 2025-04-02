@@ -242,17 +242,40 @@ public class MessageTableModel extends AbstractTableModel {
 
     public void applyHostFilter(String filterText) {
         filteredLog.clear();
+        fireTableDataChanged();
 
-        log.forEach(entry -> {
+        int batchSize = 500;
+
+        // 分批处理数据
+        List<MessageEntry> batch = new ArrayList<>(batchSize);
+        int count = 0;
+
+        for (MessageEntry entry : log) {
             String host = StringProcessor.getHostByUrl(entry.getUrl());
-            if (!host.isEmpty()) {
-                if (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*")) {
-                    filteredLog.add(entry);
+            if (!host.isEmpty() && (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*"))) {
+                batch.add(entry);
+                count++;
+
+                // 当批次达到指定大小时，更新UI
+                if (count % batchSize == 0) {
+                    final List<MessageEntry> currentBatch = new ArrayList<>(batch);
+                    SwingUtilities.invokeLater(() -> {
+                        filteredLog.addAll(currentBatch);
+                        fireTableDataChanged();
+                    });
+                    batch.clear();
                 }
             }
-        });
+        }
 
-        fireTableDataChanged();
+        // 处理最后一批
+        if (!batch.isEmpty()) {
+            final List<MessageEntry> finalBatch = new ArrayList<>(batch);
+            SwingUtilities.invokeLater(() -> {
+                filteredLog.addAll(finalBatch);
+                fireTableDataChanged();
+            });
+        }
     }
 
     public void applyMessageFilter(String tableName, String filterText) {

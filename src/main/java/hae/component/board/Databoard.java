@@ -2,6 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
+import hae.cache.MessageCache;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
@@ -53,12 +54,14 @@ public class Databoard extends JPanel {
         ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 0.0, 1.0E-4};
         JLabel hostLabel = new JLabel("Host:");
 
-        JButton clearButton = new JButton("Clear");
+        JButton clearDataButton = new JButton("Clear data");
+        JButton clearCacheButton = new JButton("Clear cache");
         JButton actionButton = new JButton("Action");
-        JPanel menuPanel = new JPanel(new GridLayout(1, 1, 0, 5));
+        JPanel menuPanel = new JPanel(new GridLayout(2, 1, 0, 5));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         JPopupMenu menu = new JPopupMenu();
-        menuPanel.add(clearButton);
+        menuPanel.add(clearDataButton);
+        menuPanel.add(clearCacheButton);
         menu.add(menuPanel);
 
         hostTextField = new JTextField();
@@ -76,7 +79,8 @@ public class Databoard extends JPanel {
             menu.show(actionButton, x, y);
         });
 
-        clearButton.addActionListener(this::clearActionPerformed);
+        clearDataButton.addActionListener(this::clearDataActionPerformed);
+        clearCacheButton.addActionListener(this::clearCacheActionPerformed);
 
         progressBar = new JProgressBar();
         splitPane.addComponentListener(new ComponentAdapter() {
@@ -340,7 +344,11 @@ public class Databoard extends JPanel {
         return result;
     }
 
-    private void clearActionPerformed(ActionEvent e) {
+    private void clearCacheActionPerformed(ActionEvent e) {
+        MessageCache.clear();
+    }
+
+    private void clearDataActionPerformed(ActionEvent e) {
         int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear data?", "Info",
                 JOptionPane.YES_NO_OPTION);
         String host = hostTextField.getText();

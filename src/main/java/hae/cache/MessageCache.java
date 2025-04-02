@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MessageCache {
     private static final int MAX_SIZE = 100000;
-    private static final int EXPIRE_DURATION = 12;
+    private static final int EXPIRE_DURATION = 4;
 
     private static final Cache<String, Map<String, Map<String, Object>>> cache =
             Caffeine.newBuilder()

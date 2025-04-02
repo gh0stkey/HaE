@@ -65,22 +65,24 @@ We appreciate everyone's support for the project. The following list is sorted b
 
 | ID       | Amount |
 | -------- | -------- |
-| 毁三观大人      | 200.00¥  |
-| ttt      | 50.00¥ |
-| C_soon5  | 66.66¥ |
-| 1wtbb    | 25.00¥ |
-| Deep     | 66.66¥ |
-| NaTsUk0  | 50.00¥ |
-| Kite     | 48.00¥ |
-| 红色键盘 | 99.99¥ |
-| 曾哥     | 188.88¥ |
-| NOP Team     | 200.00¥ |
-| vaycore     | 188.88¥ |
-| xccc     | 168.00¥ |
-| 柯林斯-民间新秀     | 1000.00¥ |
-| Cuber     | 100.00¥ |
-| 时光难逆     | 50.00¥ |
-| Celvin     | 66.00¥ |
+| 毁三观大人      | 200.00 CNY  |
+| ttt      | 50.00 CNY |
+| C_soon5  | 66.66 CNY |
+| 1wtbb    | 25.00 CNY |
+| Deep     | 66.66 CNY |
+| NaTsUk0  | 50.00 CNY |
+| Kite     | 48.00 CNY |
+| 红色键盘 | 99.99 CNY |
+| 曾哥     | 188.88 CNY |
+| NOP Team     | 200.00 CNY |
+| vaycore     | 188.88 CNY |
+| xccc     | 168.00 CNY |
+| 柯林斯-民间新秀     | 1000.00 CNY |
+| Cuber     | 100.00 CNY |
+| 时光难逆     | 50.00 CNY |
+| Celvin     | 66.00 CNY |
+| 呱呱     | 18.80 CNY |
+| 红炉点雪     | 50.00 CNY |
 
 ## Support the Project
 

@@ -33,6 +33,7 @@ public class Datatable extends JPanel {
     private final JCheckBox regexMode = new JCheckBox("Regex mode");
     private final String tabName;
     private final JPanel footerPanel;
+    private SwingWorker<Void, Void> doubleClickWorker;
 
     public Datatable(MontoyaApi api, ConfigLoader configLoader, String tabName, List<String> dataList) {
         this.api = api;
@@ -201,6 +202,26 @@ public class Datatable extends JPanel {
         };
     }
 
+    private void handleDoubleClick(int selectedRow, MessageTableModel messagePanel) {
+        if (doubleClickWorker != null && !doubleClickWorker.isDone()) {
+            doubleClickWorker.cancel(true);
+        }
+
+        doubleClickWorker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                String rowData = dataTable.getValueAt(selectedRow, 1).toString();
+                SwingUtilities.invokeLater(() -> {
+                    if (!isCancelled()) {
+                        messagePanel.applyMessageFilter(tabName, rowData);
+                    }
+                });
+                return null;
+            }
+        };
+        doubleClickWorker.execute();
+    }
+
     public void setTableListener(MessageTableModel messagePanel) {
         // 表格复制功能
         dataTable.setTransferHandler(new TransferHandler() {
@@ -224,8 +245,7 @@ public class Datatable extends JPanel {
                 if (e.getClickCount() == 2) {
                     int selectedRow = dataTable.getSelectedRow();
                     if (selectedRow != -1) {
-                        String rowData = dataTable.getValueAt(selectedRow, 1).toString();
-                        messagePanel.applyMessageFilter(tabName, rowData);
+                        handleDoubleClick(selectedRow, messagePanel);
                     }
                 }
             }
