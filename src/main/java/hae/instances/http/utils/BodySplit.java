@@ -1,6 +1,5 @@
 package hae.instances.http.utils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,32 +15,39 @@ import java.util.List;
 
 public class BodySplit {
     public static List<String> splitSmart(String text, int maxBytes) {
-        List<String> segments = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int currentBytes = 0;
+        List<String> result = new ArrayList<>();
+        StringBuilder currentPart = new StringBuilder();
+        StringBuilder tempPart = new StringBuilder();
 
+        // 遍历整个输入字符串
         for (int i = 0; i < text.length(); i++) {
-            char ch = text.charAt(i);
-            current.append(ch);
+            char c = text.charAt(i);
+            tempPart.append(c);
 
-            int charBytes = String.valueOf(ch).getBytes(StandardCharsets.UTF_8).length;
-            currentBytes += charBytes;
-
-            // 判断是否是分号
-            if (ch == ';') {
-                if (currentBytes >= maxBytes) {
-                    segments.add(current.toString());
-                    current.setLength(0);
-                    currentBytes = 0;
+            // 如果遇到分号 ';'，判断是否拼接到达最小长度
+            if (c == ';') {
+                // 将tempPart拼接到currentPart中
+                if (currentPart.length() + tempPart.length() >= maxBytes) {
+                    currentPart.append(tempPart);
+                    result.add(currentPart.toString());
+                    currentPart.setLength(0);  // 清空currentPart准备下一个部分
+                } else {
+                    currentPart.append(tempPart.toString());
                 }
+                tempPart.setLength(0);  // 清空tempPart，准备下一个部分
             }
         }
 
-        // 加入最后一段
-        if (!current.isEmpty()) {
-            segments.add(current.toString());
+        // 如果还有未处理的部分，添加到结果中
+        if (!tempPart.isEmpty()) {
+            currentPart.append(tempPart);
         }
 
-        return segments;
+        // 最后将剩余部分添加到结果中
+        if (!currentPart.isEmpty()) {
+            result.add(currentPart.toString());
+        }
+
+        return result;
     }
 }
