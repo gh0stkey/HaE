@@ -16,6 +16,8 @@ public class Config {
 
     public static String boundary = "\n\t\n";
 
+    public static int bodySplitLen = 500;
+
     public static String[] scope = new String[]{
             "any",
             "any header",

@@ -76,7 +76,17 @@ public class RegularMatcher {
 
     public Map<String, Map<String, Object>> match(String host, String type, String message, String header, String body) {
         // 先从缓存池里判断是否有已经匹配好的结果
+        // 相应头中的时间戳会变化，所以只根据，body判断缓存
+        // 请求头中数据较少，暂不处理，过滤很快
         String messageIndex = HashCalculator.calculateHash(message.getBytes());
+        List<String> bodyList;
+        if (Objects.equals(type, "response")) {
+            messageIndex = HashCalculator.calculateHash(body.getBytes());
+            bodyList = BodySplit.splitSmart(body, Config.bodySplitLen);
+        } else {
+            bodyList = new ArrayList<>();
+        }
+
         Map<String, Map<String, Object>> map = MessageCache.get(messageIndex);
         if (map != null) {
             return map;
@@ -128,7 +138,31 @@ public class RegularMatcher {
                         }
 
                         try {
-                            result = new ArrayList<>(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
+                            if (Objects.equals(type, "response")) {
+                                List<String> resultResponse = new ArrayList<>();
+                                switch (scope) {
+                                    // 匹配头
+                                    case "response header", "any header" ->
+                                            resultResponse.addAll(matchByRegex(f_regex, s_regex, header, format, engine, sensitive));
+                                    // 匹配体
+                                    case "response body", "any body" -> {
+                                        for (String body_x : bodyList) {
+                                            resultResponse.addAll(matchByRegex(f_regex, s_regex, body_x, format, engine, sensitive));
+                                        }
+                                    }
+                                    // 匹配所有
+                                    case "response", "any" -> {
+                                        for (String body_x : bodyList) {
+                                            resultResponse.addAll(matchByRegex(f_regex, s_regex, body_x, format, engine, sensitive));
+                                        }
+                                        resultResponse.addAll(matchByRegex(f_regex, s_regex, header, format, engine, sensitive));
+                                    }
+                                }
+                                result = resultResponse;
+                            } else {
+                                result = new ArrayList<>(matchByRegex(f_regex, s_regex, matchContent, format, engine, sensitive));
+                            }
+
                         } catch (Exception e) {
                             api.logging().logToError(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, f_regex));
                             api.logging().logToError(e.getMessage());
