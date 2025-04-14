@@ -80,7 +80,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 柯林斯-民间新秀     | 1000.00 CNY |
 | Cuber     | 100.00 CNY |
 | 时光难逆     | 50.00 CNY |
-| Celvin     | 66.00 CNY |
+| Celvin     | 132.00 CNY |
 | 呱呱     | 18.80 CNY |
 | 红炉点雪     | 50.00 CNY |
 | 王傑     | 100.00 CNY |
