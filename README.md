@@ -86,6 +86,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 王傑     | 100.00 CNY |
 | 联系不到我请拨打我手机号码     | 200.00 CNY |
 | Shu2e     | 50.00 CNY |
+| 亦     | 50.00 CNY |
 
 ## Support the Project
 
