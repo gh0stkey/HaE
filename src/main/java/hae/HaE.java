@@ -3,7 +3,7 @@ package hae;
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.logging.Logging;
-import hae.cache.MessageCache;
+import hae.cache.DataCache;
 import hae.component.Main;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.editor.RequestEditor;
@@ -19,7 +19,7 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "4.1.2";
+        String version = "4.2";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
@@ -40,7 +40,7 @@ public class HaE implements BurpExtension {
         api.userInterface().registerSuiteTab("HaE", new Main(api, configLoader, messageTableModel));
 
         // 注册WebSocket处理器
-        api.proxy().registerWebSocketCreationHandler(proxyWebSocketCreation -> proxyWebSocketCreation.proxyWebSocket().registerProxyMessageHandler(new WebSocketMessageHandler(api)));
+        api.proxy().registerWebSocketCreationHandler(proxyWebSocketCreation -> proxyWebSocketCreation.proxyWebSocket().registerProxyMessageHandler(new WebSocketMessageHandler(api, configLoader)));
 
         // 注册消息编辑框（用于展示数据）
         api.userInterface().registerHttpRequestEditorProvider(new RequestEditor(api, configLoader));
@@ -51,18 +51,17 @@ public class HaE implements BurpExtension {
         DataManager dataManager = new DataManager(api);
         dataManager.loadData(messageTableModel);
 
-
         api.extension().registerUnloadingHandler(() -> {
             // 卸载清空数据
             Config.globalDataMap.clear();
-            MessageCache.clear();
+            DataCache.clear();
         });
     }
 
     private Boolean getBurpSuiteProStatus(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
         boolean burpSuiteProStatus = false;
         try {
-            burpSuiteProStatus = api.burpSuite().version().name().contains("Professional");
+            burpSuiteProStatus = api.burpSuite().version().edition().displayName().equals("Professional");
         } catch (Exception e) {
             try {
                 api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel)).deregister();

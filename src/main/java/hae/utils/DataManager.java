@@ -64,7 +64,7 @@ public class DataManager {
             dataIndex.forEach(index -> {
                 PersistedObject dataObj = persistence.extensionData().getChildObject(index);
                 try {
-                    dataObj.stringListKeys().forEach(dataKey -> RegularMatcher.putDataToGlobalMap(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
+                    dataObj.stringListKeys().forEach(dataKey -> RegularMatcher.updateGlobalMatchCache(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
                 } catch (Exception ignored) {
                 }
             });
@@ -114,7 +114,7 @@ public class DataManager {
                     }
                 }
             } catch (Exception e) {
-                api.logging().logToError("处理消息数据时出错: " + e.getMessage() + ", index: " + index);
+                api.logging().logToError("processBatch: " + e.getMessage());
             }
         });
     }

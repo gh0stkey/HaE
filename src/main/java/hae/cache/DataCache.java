@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class MessageCache {
+public class DataCache {
     private static final int MAX_SIZE = 100000;
     private static final int EXPIRE_DURATION = 4;
 

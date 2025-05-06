@@ -44,7 +44,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
             this.api = api;
             this.configLoader = configLoader;
             this.creationContext = creationContext;
-            this.messageProcessor = new MessageProcessor(api);
+            this.messageProcessor = new MessageProcessor(api, configLoader);
         }
 
         @Override

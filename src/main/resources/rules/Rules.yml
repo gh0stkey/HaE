@@ -55,6 +55,15 @@ rules:
         scope: response body
         engine: dfa
         sensitive: false
+      - name: Vite DevMode
+        loaded: true
+        f_regex: (/@vite/client)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
   - group: Maybe Vulnerability
     rule:
       - name: Java Deserialization
@@ -102,6 +111,24 @@ rules:
         scope: request
         engine: dfa
         sensitive: false
+      - name: Passwd File
+        loaded: true
+        f_regex: (/root:/bin/bash)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
+      - name: Win.ini File
+        loaded: true
+        f_regex: (for 16-bit app)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
   - group: Basic Information
     rule:
       - name: Email
@@ -244,7 +271,7 @@ rules:
     rule:
       - name: Linkfinder
         loaded: true
-        f_regex: (?:"|')((?:(?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|(?:(?:(?:/|\.\./|\./)?[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,}\.[a-zA-Z]{1,4})|(?:(?:/|\.\./|\./)?[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,}/[^"'><,;|()]{1,}(?:\.[a-zA-Z]{1,4}|action)?)))(?:[\?|#][^"|']{0,})?(?:"|')
+        f_regex: (?:"|')(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|')
         s_regex: ''
         format: '{0}'
         color: gray
@@ -271,7 +298,7 @@ rules:
         sensitive: false
       - name: URL Schemes
         loaded: true
-        f_regex: (\b(?![\w]{0,10}?https?://)(([-A-Za-z0-9]{1,20})://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]))
+        f_regex: (\b(?![\w]{0,10}?https?://)(([A-Za-z0-9-\.]{1,20})://([-\w+&@#/%?=~_|!:,.;]*[-\w+&@#/%=~_|])?))
         s_regex: ''
         format: '{0}'
         color: yellow

@@ -2,7 +2,7 @@ package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
-import hae.cache.MessageCache;
+import hae.cache.DataCache;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
@@ -345,7 +345,11 @@ public class Databoard extends JPanel {
     }
 
     private void clearCacheActionPerformed(ActionEvent e) {
-        MessageCache.clear();
+        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear cache?", "Info",
+                JOptionPane.YES_NO_OPTION);
+        if (retCode == JOptionPane.YES_OPTION) {
+            DataCache.clear();
+        }
     }
 
     private void clearDataActionPerformed(ActionEvent e) {

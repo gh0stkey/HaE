@@ -5,6 +5,7 @@ import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import hae.Config;
+import hae.utils.ConfigLoader;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -14,18 +15,16 @@ public class MessageProcessor {
     private final MontoyaApi api;
     private final RegularMatcher regularMatcher;
 
-    private String finalColor = "";
-
-    public MessageProcessor(MontoyaApi api) {
+    public MessageProcessor(MontoyaApi api, ConfigLoader configLoader) {
         this.api = api;
-        this.regularMatcher = new RegularMatcher(api);
+        this.regularMatcher = new RegularMatcher(api, configLoader);
     }
 
     public List<Map<String, String>> processMessage(String host, String message, boolean flag) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
-            obj = regularMatcher.match(host, "any", message, message, message);
+            obj = regularMatcher.performRegexMatching(host, "any", message, message, message);
         } catch (Exception ignored) {
         }
 
@@ -40,9 +39,9 @@ public class MessageProcessor {
             String body = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
             String header = httpResponse.headers().stream()
                     .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\n"));
+                    .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.match(host, "response", response, header, body);
+            obj = regularMatcher.performRegexMatching(host, "response", response, header, body);
         } catch (Exception ignored) {
         }
 
@@ -57,9 +56,9 @@ public class MessageProcessor {
             String body = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
             String header = httpRequest.headers().stream()
                     .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\n"));
+                    .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.match(host, "request", request, header, body);
+            obj = regularMatcher.performRegexMatching(host, "request", request, header, body);
         } catch (Exception ignored) {
         }
 
@@ -137,41 +136,38 @@ public class MessageProcessor {
         return indices;
     }
 
-    private void upgradeColors(List<Integer> colorList) {
-        int colorSize = colorList.size();
-        String[] colorArray = Config.color;
-        colorList.sort(Comparator.comparingInt(Integer::intValue));
-        int i = 0;
-        List<Integer> stack = new ArrayList<>();
-        while (i < colorSize) {
-            if (stack.isEmpty()) {
-                stack.add(colorList.get(i));
-            } else {
-                if (!Objects.equals(colorList.get(i), stack.stream().reduce((first, second) -> second).orElse(99999999))) {
-                    stack.add(colorList.get(i));
-                } else {
-                    stack.set(stack.size() - 1, stack.get(stack.size() - 1) - 1);
-                }
-            }
-            i++;
+    private String upgradeColors(List<Integer> colorList) {
+        if (colorList == null || colorList.isEmpty()) {
+            return Config.color[0];
         }
-        // 利用HashSet删除重复元素
-        HashSet tmpList = new HashSet(stack);
-        if (stack.size() == tmpList.size()) {
-            stack.sort(Comparator.comparingInt(Integer::intValue));
-            if (stack.get(0) < 0) {
-                finalColor = colorArray[0];
-            } else {
-                finalColor = colorArray[stack.get(0)];
+
+        // 创建副本避免修改原始数据
+        List<Integer> indices = new ArrayList<>(colorList);
+        indices.sort(Comparator.comparingInt(Integer::intValue));
+
+        // 处理颜色升级
+        for (int i = 1; i < indices.size(); i++) {
+            if (indices.get(i).equals(indices.get(i - 1))) {
+                // 如果发现重复的颜色索引，将当前索引降级
+                indices.set(i - 1, indices.get(i - 1) - 1);
             }
-        } else {
-            upgradeColors(stack);
         }
+
+        // 获取最终的颜色索引
+        int finalIndex = indices.stream()
+                .min(Integer::compareTo)
+                .orElse(0);
+
+        // 处理负数索引情况
+        if (finalIndex < 0) {
+            return Config.color[0];
+        }
+
+        return Config.color[finalIndex];
     }
 
     public String retrieveFinalColor(List<Integer> colorList) {
-        upgradeColors(colorList);
-        return finalColor;
+        return upgradeColors(colorList);
     }
 
 }

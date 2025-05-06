@@ -2,6 +2,7 @@ package hae.utils.rule;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
+import hae.cache.DataCache;
 import hae.utils.ConfigLoader;
 import hae.utils.rule.model.Group;
 import hae.utils.rule.model.Info;
@@ -27,6 +28,8 @@ public class RuleProcessor {
     }
 
     public void rulesFormatAndSave() {
+        DataCache.clear();
+
         DumperOptions dop = new DumperOptions();
         dop.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Representer representer = new Representer(dop);

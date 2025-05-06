@@ -73,7 +73,7 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status"};
+        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Dynamic Header"};
         JPanel settingPanel = createConfigTablePanel(settingMode);
 
         JPanel northPanel = new JPanel(new BorderLayout());
@@ -194,6 +194,12 @@ public class Config extends JPanel {
                         configLoader.setExcludeStatus(values);
                     }
                 }
+
+                if (selected.equals("Dynamic Header")) {
+                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
+                        configLoader.setDynamicHeader(values);
+                    }
+                }
             }
         };
     }
@@ -213,6 +219,10 @@ public class Config extends JPanel {
 
                 if (selected.equals("Exclude status")) {
                     addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
+                }
+
+                if (selected.equals("Dynamic Header")) {
+                    addDataToTable(configLoader.getDynamicHeader().replaceAll("\\|", "\r\n"), model);
                 }
             }
         };

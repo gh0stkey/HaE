@@ -292,13 +292,13 @@ public class MessageTableModel extends AbstractTableModel {
             String requestBody = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
             String requestHeaders = httpRequest.headers().stream()
                     .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\n"));
+                    .collect(Collectors.joining("\r\n"));
 
             String responseString = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
             String responseBody = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
             String responseHeaders = httpResponse.headers().stream()
                     .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\n"));
+                    .collect(Collectors.joining("\r\n"));
 
             Config.globalRules.keySet().forEach(i -> {
                 for (Object[] objects : Config.globalRules.get(i)) {

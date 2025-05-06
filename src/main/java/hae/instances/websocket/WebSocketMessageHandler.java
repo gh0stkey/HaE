@@ -4,6 +4,7 @@ import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.core.HighlightColor;
 import burp.api.montoya.proxy.websocket.*;
 import hae.instances.http.utils.MessageProcessor;
+import hae.utils.ConfigLoader;
 
 import java.util.List;
 import java.util.Map;
@@ -12,9 +13,9 @@ public class WebSocketMessageHandler implements ProxyMessageHandler {
     private final MontoyaApi api;
     private final MessageProcessor messageProcessor;
 
-    public WebSocketMessageHandler(MontoyaApi api) {
+    public WebSocketMessageHandler(MontoyaApi api, ConfigLoader configLoader) {
         this.api = api;
-        this.messageProcessor = new MessageProcessor(api);
+        this.messageProcessor = new MessageProcessor(api, configLoader);
     }
 
     @Override

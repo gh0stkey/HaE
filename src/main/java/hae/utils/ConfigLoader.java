@@ -3,7 +3,9 @@ package hae.utils;
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
@@ -21,10 +23,7 @@ public class ConfigLoader {
 
     public ConfigLoader(MontoyaApi api) {
         this.api = api;
-        DumperOptions dop = new DumperOptions();
-        dop.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        Representer representer = new Representer(dop);
-        this.yaml = new Yaml(representer, dop);
+        this.yaml = createSecureYaml();
 
         String configPath = determineConfigPath();
         this.configFilePath = String.format("%s/%s", configPath, "Config.yml");
@@ -54,6 +53,25 @@ public class ConfigLoader {
         return configPathFile.exists() && configPathFile.isDirectory();
     }
 
+    private Yaml createSecureYaml() {
+        // 配置 LoaderOptions 进行安全限制
+        LoaderOptions loaderOptions = new LoaderOptions();
+        // 禁用注释处理
+        loaderOptions.setProcessComments(false);
+        // 禁止递归键
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        // 配置 DumperOptions 控制输出格式
+        DumperOptions dop = new DumperOptions();
+        dop.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+
+        // 创建 Representer
+        Representer representer = new Representer(dop);
+
+        // 使用 SafeConstructor创建安全的 YAML 实例
+        return new Yaml(new SafeConstructor(loaderOptions), representer, dop);
+    }
+
     private String determineConfigPath() {
         // 优先级1：用户根目录
         String userConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
@@ -79,6 +97,8 @@ public class ConfigLoader {
         r.put("ExcludeStatus", getExcludeStatus());
         r.put("LimitSize", getLimitSize());
         r.put("HaEScope", getScope());
+        r.put("DynamicHeader", getDynamicHeader());
+
         try {
             Writer ws = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8);
             yaml.dump(r, ws);
@@ -97,10 +117,7 @@ public class ConfigLoader {
 
         try {
             InputStream inputStream = Files.newInputStream(Paths.get(getRulesFilePath()));
-            DumperOptions dop = new DumperOptions();
-            dop.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            Representer representer = new Representer(dop);
-            Map<String, Object> rulesMap = new Yaml(representer, dop).load(inputStream);
+            Map<String, Object> rulesMap = yaml.load(inputStream);
 
             Object rulesObj = rulesMap.get("rules");
             if (rulesObj instanceof List) {
@@ -154,6 +171,14 @@ public class ConfigLoader {
 
     public void setExcludeStatus(String status) {
         setValueToConfig("ExcludeStatus", status);
+    }
+
+    public String getDynamicHeader() {
+        return getValueFromConfig("DynamicHeader", Config.header);
+    }
+
+    public void setDynamicHeader(String header) {
+        setValueToConfig("DynamicHeader", header);
     }
 
     public String getLimitSize() {

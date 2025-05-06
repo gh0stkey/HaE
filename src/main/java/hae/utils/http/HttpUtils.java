@@ -25,16 +25,29 @@ public class HttpUtils {
         boolean retStatus = false;
         try {
             String host = StringProcessor.getHostByUrl(request.url());
-            String[] hostList = configLoader.getBlockHost().split("\\|");
-            boolean isBlockHost = isBlockHost(hostList, host);
 
-            List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
-            boolean isExcludeSuffix = suffixList.contains(request.fileExtension().toLowerCase());
+            boolean isBlockHost = false;
+            String blockHost = configLoader.getBlockHost();
+            if (!blockHost.isBlank()) {
+                String[] hostList = configLoader.getBlockHost().split("\\|");
+                isBlockHost = isBlockHost(hostList, host);
+            }
+
+            boolean isExcludeSuffix = false;
+            String suffix = configLoader.getExcludeSuffix();
+            if (!suffix.isBlank()) {
+                List<String> suffixList = Arrays.asList(configLoader.getExcludeSuffix().split("\\|"));
+                isExcludeSuffix = suffixList.contains(request.fileExtension().toLowerCase());
+            }
 
             boolean isToolScope = !configLoader.getScope().contains(toolType);
 
-            List<String> statusList = Arrays.asList(configLoader.getExcludeStatus().split("\\|"));
-            boolean isExcludeStatus = statusList.contains(String.valueOf(response.statusCode()));
+            boolean isExcludeStatus = false;
+            String status = configLoader.getExcludeStatus();
+            if (!status.isBlank()) {
+                List<String> statusList = Arrays.asList(configLoader.getExcludeStatus().split("\\|"));
+                isExcludeStatus = statusList.contains(String.valueOf(response.statusCode()));
+            }
 
             retStatus = isExcludeSuffix || isBlockHost || isToolScope || isExcludeStatus;
         } catch (Exception ignored) {

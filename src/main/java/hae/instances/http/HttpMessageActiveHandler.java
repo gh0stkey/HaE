@@ -35,7 +35,7 @@ public class HttpMessageActiveHandler implements HttpHandler {
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
-        this.messageProcessor = new MessageProcessor(api);
+        this.messageProcessor = new MessageProcessor(api, configLoader);
     }
 
     @Override

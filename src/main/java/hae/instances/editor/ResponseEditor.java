@@ -50,7 +50,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
             this.configLoader = configLoader;
             this.httpUtils = new HttpUtils(api, configLoader);
             this.creationContext = creationContext;
-            this.messageProcessor = new MessageProcessor(api);
+            this.messageProcessor = new MessageProcessor(api, configLoader);
         }
 
         @Override

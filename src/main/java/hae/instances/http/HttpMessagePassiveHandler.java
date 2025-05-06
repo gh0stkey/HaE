@@ -37,7 +37,7 @@ public class HttpMessagePassiveHandler implements ScanCheck {
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
-        this.messageProcessor = new MessageProcessor(api);
+        this.messageProcessor = new MessageProcessor(api, configLoader);
     }
 
     @Override

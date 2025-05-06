@@ -73,7 +73,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
             this.configLoader = configLoader;
             this.httpUtils = new HttpUtils(api, configLoader);
             this.creationContext = creationContext;
-            this.messageProcessor = new MessageProcessor(api);
+            this.messageProcessor = new MessageProcessor(api, configLoader);
         }
 
         @Override
