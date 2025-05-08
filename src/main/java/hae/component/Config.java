@@ -32,6 +32,8 @@ public class Config extends JPanel {
     private Registration activeHandler;
     private Registration passiveHandler;
 
+    private boolean isLoadingData = false;
+
     public Config(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel, Rules rules) {
         this.api = api;
         this.configLoader = configLoader;
@@ -174,29 +176,35 @@ public class Config extends JPanel {
 
     private TableModelListener craeteSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
         return e -> {
+            // 如果是程序正在加载数据，不处理事件
+            if (isLoadingData) {
+                return;
+            }
+
             String selected = (String) setTypeComboBox.getSelectedItem();
             String values = getFirstColumnDataAsString(model);
+
             if (selected != null) {
                 if (selected.equals("Exclude suffix")) {
-                    if (!values.equals(configLoader.getExcludeSuffix()) && !values.isEmpty()) {
+                    if (!values.equals(configLoader.getExcludeSuffix())) {
                         configLoader.setExcludeSuffix(values);
                     }
                 }
 
                 if (selected.equals("Block host")) {
-                    if (!values.equals(configLoader.getBlockHost()) && !values.isEmpty()) {
+                    if (!values.equals(configLoader.getBlockHost())) {
                         configLoader.setBlockHost(values);
                     }
                 }
 
                 if (selected.equals("Exclude status")) {
-                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
+                    if (!values.equals(configLoader.getExcludeStatus())) {
                         configLoader.setExcludeStatus(values);
                     }
                 }
 
                 if (selected.equals("Dynamic Header")) {
-                    if (!values.equals(configLoader.getExcludeStatus()) && !values.isEmpty()) {
+                    if (!values.equals(configLoader.getExcludeStatus())) {
                         configLoader.setDynamicHeader(values);
                     }
                 }
@@ -207,7 +215,11 @@ public class Config extends JPanel {
     private ActionListener createSettingActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
         return e -> {
             String selected = (String) setTypeComboBox.getSelectedItem();
+
+            // 设置标志，表示正在加载数据
+            isLoadingData = true;
             model.setRowCount(0);
+
             if (selected != null) {
                 if (selected.equals("Exclude suffix")) {
                     addDataToTable(configLoader.getExcludeSuffix().replaceAll("\\|", "\r\n"), model);
@@ -225,6 +237,9 @@ public class Config extends JPanel {
                     addDataToTable(configLoader.getDynamicHeader().replaceAll("\\|", "\r\n"), model);
                 }
             }
+
+            // 重置标志
+            isLoadingData = false;
         };
     }
 
