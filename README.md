@@ -28,6 +28,20 @@ GitCode project address: https://gitcode.com/gh0stkey/HaE
 1. Starting with HaE version 3.0, development is done using the `Montoya API`. To use the new version of HaE, you need to upgrade your BurpSuite version (>=2023.12.1).
 2. Custom HaE rules must enclose the expressions to be extracted within parentheses `()`. For example, if you want to match a response message from a **Shiro application**, the normal matching rule would be `rememberMe=delete`, but in HaE's rule format, it needs to be written as `(rememberMe=delete)`.
 
+## Usage
+
+**Plugin Installation**: `Extender - Extensions - Add - Select File - Next`
+
+When you load `HaE` for the first time, it will load the offline rule database from the Jar package. If you need to update the rules, click `Reinit` to reinitialize. The address of the built-in rule database can be found on GitHub:  
+`https://github.com/gh0stkey/HaE/blob/master/src/main/resources/rules/Rules.yml`
+
+The configuration file (`Config.yml`) and rule file (`Rules.yml`) are stored in a fixed directory:
+
+1. For Linux/Mac users: `~/.config/HaE/`
+2. For Windows users: `%USERPROFILE%/.config/HaE/`
+
+Alternatively, you can also place the configuration files in the `/.config/HaE/` directory under the same folder as the `HaE Jar package`, **for easier offline portability**.
+
 ### Rule Definitions
 
 Currently, HaE rules consist of 8 fields, with detailed meanings as follows:
