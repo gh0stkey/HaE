@@ -88,7 +88,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | Kite     | 48.00 CNY |
 | 红色键盘 | 99.99 CNY |
 | 曾哥     | 188.88 CNY |
-| 祝祝     | 200.00 CNY |
+| 祝祝     | 488.00 CNY |
 | NOP Team     | 200.00 CNY |
 | vaycore     | 188.88 CNY |
 | xccc     | 168.00 CNY |
@@ -108,6 +108,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | Edwater     | 18.88 CNY | 
 | 云中鹤     | 18.88 CNY |
 | Twit     | 18.88 CNY |
+| cshu     | 18.88 元 |
 
 ## Support the Project
 
