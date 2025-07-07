@@ -91,16 +91,22 @@ We appreciate everyone's support for the project. The following list is sorted b
 | NOP Team     | 200.00 CNY |
 | vaycore     | 188.88 CNY |
 | xccc     | 168.00 CNY |
-| 柯林斯-民间新秀     | 1000.00 CNY |
+| 柯林斯-民间新秀     | 2188.8 CNY |
 | Cuber     | 100.00 CNY |
 | 时光难逆     | 50.00 CNY |
-| Celvin     | 132.00 CNY |
+| Celvin     | 150.88 CNY |
 | 呱呱     | 18.80 CNY |
 | 红炉点雪     | 50.00 CNY |
 | 王傑     | 100.00 CNY |
 | 联系不到我请拨打我手机号码     | 200.00 CNY |
-| Shu2e     | 50.00 CNY |
+| Shu2e     | 59.90 CNY |
 | 亦     | 50.00 CNY |
+| nopasswd     | 10.00 CNY |
+| caytez     | 77.77 CNY |
+| Sn0w33     | 18.88 CNY |
+| Edwater     | 18.88 CNY | 
+| 云中鹤     | 18.88 CNY |
+| Twit     | 18.88 CNY |
 
 ## Support the Project
 
