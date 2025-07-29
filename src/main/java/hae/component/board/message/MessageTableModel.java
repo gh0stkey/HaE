@@ -55,7 +55,6 @@ public class MessageTableModel extends AbstractTableModel {
         messageTable.setDefaultRenderer(Object.class, new MessageRenderer(filteredLog, messageTable));
         messageTable.setAutoCreateRowSorter(true);
 
-        // Length字段根据大小进行排序
         TableRowSorter<DefaultTableModel> sorter = getDefaultTableModelTableRowSorter();
         messageTable.setRowSorter(sorter);
         messageTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -71,6 +70,8 @@ public class MessageTableModel extends AbstractTableModel {
 
     private TableRowSorter<DefaultTableModel> getDefaultTableModelTableRowSorter() {
         TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) messageTable.getRowSorter();
+
+        // Length字段根据大小进行排序
         sorter.setComparator(4, (Comparator<String>) (s1, s2) -> {
             Integer age1 = Integer.parseInt(s1);
             Integer age2 = Integer.parseInt(s2);
@@ -101,6 +102,14 @@ public class MessageTableModel extends AbstractTableModel {
     public synchronized void add(HttpRequestResponse messageInfo, String url, String method, String status, String length, String comment, String color, boolean flag) {
         synchronized (log) {
             if (messageInfo == null) {
+                return;
+            }
+
+            if (comment == null || comment.trim().isEmpty()) {
+                return;
+            }
+
+            if (color == null || color.trim().isEmpty()) {
                 return;
             }
 
@@ -241,131 +250,163 @@ public class MessageTableModel extends AbstractTableModel {
     }
 
     public void applyHostFilter(String filterText) {
-        filteredLog.clear();
-        fireTableDataChanged();
+        // 预分配合适的容量，避免频繁扩容
+        final List<MessageEntry> newFilteredLog = new ArrayList<>(log.size() / 2);
+        
+        // 预处理过滤条件，优化性能
+        final boolean isWildcardFilter = "*".equals(filterText) || filterText.contains("*");
+        final String normalizedFilter = filterText.toLowerCase().trim();
+        
+        // 创建log的安全副本
+        final List<MessageEntry> logSnapshot;
+        synchronized (log) {
+            logSnapshot = new ArrayList<>(log);
+        }
 
-        int batchSize = 500;
-
-        // 分批处理数据
-        List<MessageEntry> batch = new ArrayList<>(batchSize);
-        int count = 0;
-
-        for (MessageEntry entry : log) {
-            String host = StringProcessor.getHostByUrl(entry.getUrl());
-            if (!host.isEmpty() && (StringProcessor.matchesHostPattern(host, filterText) || filterText.contains("*"))) {
-                batch.add(entry);
-                count++;
-
-                // 当批次达到指定大小时，更新UI
-                if (count % batchSize == 0) {
-                    final List<MessageEntry> currentBatch = new ArrayList<>(batch);
-                    SwingUtilities.invokeLater(() -> {
-                        filteredLog.addAll(currentBatch);
-                        fireTableDataChanged();
-                    });
-                    batch.clear();
+        // 使用并行流高效过滤，但保持有序
+        logSnapshot.parallelStream()
+            .filter(entry -> {
+                // 快速通配符检查
+                if (isWildcardFilter && "*".equals(filterText)) {
+                    return true;
                 }
-            }
-        }
+                
+                try {
+                    String host = StringProcessor.getHostByUrl(entry.getUrl());
+                    if (host.isEmpty()) {
+                        return false;
+                    }
+                    
+                    // 优化后的匹配逻辑
+                    return StringProcessor.matchesHostPattern(host, filterText) || 
+                           (isWildcardFilter && host.toLowerCase().contains(normalizedFilter.replace("*", "")));
+                } catch (Exception e) {
+                    return false;
+                }
+            })
+            .forEachOrdered(newFilteredLog::add);
 
-        // 处理最后一批
-        if (!batch.isEmpty()) {
-            final List<MessageEntry> finalBatch = new ArrayList<>(batch);
-            SwingUtilities.invokeLater(() -> {
-                filteredLog.addAll(finalBatch);
-                fireTableDataChanged();
-            });
-        }
+        // 一次性更新UI，避免频繁刷新
+        SwingUtilities.invokeLater(() -> {
+            synchronized (filteredLog) {
+                filteredLog.clear();
+                filteredLog.addAll(newFilteredLog);
+            }
+            fireTableDataChanged();
+        });
     }
 
     public void applyMessageFilter(String tableName, String filterText) {
-        filteredLog.clear();
-        for (MessageEntry entry : log) {
+        List<MessageEntry> newFilteredLog = new ArrayList<>();
+
+        // 创建log的安全副本以避免ConcurrentModificationException
+        List<MessageEntry> logSnapshot;
+        synchronized (log) {
+            logSnapshot = new ArrayList<>(log);
+        }
+
+        for (MessageEntry entry : logSnapshot) {
             // 标志变量，表示是否满足过滤条件
             AtomicBoolean isMatched = new AtomicBoolean(false);
 
-            HttpRequestResponse requestResponse = entry.getRequestResponse();
-            HttpRequest httpRequest = requestResponse.request();
-            HttpResponse httpResponse = requestResponse.response();
+            try {
+                HttpRequestResponse requestResponse = entry.getRequestResponse();
+                HttpRequest httpRequest = requestResponse.request();
+                HttpResponse httpResponse = requestResponse.response();
 
-            String requestString = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
-            String requestBody = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
-            String requestHeaders = httpRequest.headers().stream()
-                    .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\r\n"));
+                String requestString = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
+                String requestBody = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
+                String requestHeaders = httpRequest.headers().stream()
+                        .map(HttpHeader::toString)
+                        .collect(Collectors.joining("\r\n"));
 
-            String responseString = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
-            String responseBody = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
-            String responseHeaders = httpResponse.headers().stream()
-                    .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\r\n"));
+                String responseString = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
+                String responseBody = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
+                String responseHeaders = httpResponse.headers().stream()
+                        .map(HttpHeader::toString)
+                        .collect(Collectors.joining("\r\n"));
 
-            Config.globalRules.keySet().forEach(i -> {
-                for (Object[] objects : Config.globalRules.get(i)) {
-                    String name = objects[1].toString();
-                    String format = objects[4].toString();
-                    String scope = objects[6].toString();
+                Config.globalRules.keySet().forEach(i -> {
+                    for (Object[] objects : Config.globalRules.get(i)) {
+                        String name = objects[1].toString();
+                        String format = objects[4].toString();
+                        String scope = objects[6].toString();
 
-                    // 从注释中查看是否包含当前规则名，包含的再进行查询，有效减少无意义的检索时间
-                    if (entry.getComment().contains(name)) {
-                        if (name.equals(tableName)) {
-                            // 标志变量，表示当前规则是否匹配
-                            boolean isMatch = false;
+                        // 从注释中查看是否包含当前规则名，包含的再进行查询，有效减少无意义的检索时间
+                        if (entry.getComment().contains(name)) {
+                            if (name.equals(tableName)) {
+                                // 标志变量，表示当前规则是否匹配
+                                boolean isMatch = false;
 
-                            switch (scope) {
-                                case "any":
-                                    isMatch = matchingString(format, filterText, requestString) || matchingString(format, filterText, responseString);
-                                    break;
-                                case "request":
-                                    isMatch = matchingString(format, filterText, requestString);
-                                    break;
-                                case "response":
-                                    isMatch = matchingString(format, filterText, responseString);
-                                    break;
-                                case "any header":
-                                    isMatch = matchingString(format, filterText, requestHeaders) || matchingString(format, filterText, responseHeaders);
-                                    break;
-                                case "request header":
-                                    isMatch = matchingString(format, filterText, requestHeaders);
-                                    break;
-                                case "response header":
-                                    isMatch = matchingString(format, filterText, responseHeaders);
-                                    break;
-                                case "any body":
-                                    isMatch = matchingString(format, filterText, requestBody) || matchingString(format, filterText, responseBody);
-                                    break;
-                                case "request body":
-                                    isMatch = matchingString(format, filterText, requestBody);
-                                    break;
-                                case "response body":
-                                    isMatch = matchingString(format, filterText, responseBody);
-                                    break;
-                                case "request line":
-                                    String requestLine = requestString.split("\\r?\\n", 2)[0];
-                                    isMatch = matchingString(format, filterText, requestLine);
-                                    break;
-                                case "response line":
-                                    String responseLine = responseString.split("\\r?\\n", 2)[0];
-                                    isMatch = matchingString(format, filterText, responseLine);
-                                    break;
-                                default:
-                                    break;
+                                switch (scope) {
+                                    case "any":
+                                        isMatch = matchingString(format, filterText, requestString) || matchingString(format, filterText, responseString);
+                                        break;
+                                    case "request":
+                                        isMatch = matchingString(format, filterText, requestString);
+                                        break;
+                                    case "response":
+                                        isMatch = matchingString(format, filterText, responseString);
+                                        break;
+                                    case "any header":
+                                        isMatch = matchingString(format, filterText, requestHeaders) || matchingString(format, filterText, responseHeaders);
+                                        break;
+                                    case "request header":
+                                        isMatch = matchingString(format, filterText, requestHeaders);
+                                        break;
+                                    case "response header":
+                                        isMatch = matchingString(format, filterText, responseHeaders);
+                                        break;
+                                    case "any body":
+                                        isMatch = matchingString(format, filterText, requestBody) || matchingString(format, filterText, responseBody);
+                                        break;
+                                    case "request body":
+                                        isMatch = matchingString(format, filterText, requestBody);
+                                        break;
+                                    case "response body":
+                                        isMatch = matchingString(format, filterText, responseBody);
+                                        break;
+                                    case "request line":
+                                        String requestLine = requestString.split("\\r?\\n", 2)[0];
+                                        isMatch = matchingString(format, filterText, requestLine);
+                                        break;
+                                    case "response line":
+                                        String responseLine = responseString.split("\\r?\\n", 2)[0];
+                                        isMatch = matchingString(format, filterText, responseLine);
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                                isMatched.set(isMatch);
+                                break;
                             }
-
-                            isMatched.set(isMatch);
-                            break;
                         }
                     }
-                }
-            });
+                });
 
-            if (isMatched.get()) {
-                filteredLog.add(entry);
+                // 由于每个用户规则不同，如果进行项目文件共享则需要考虑全部匹配一下
+                if (!isMatched.get()) {
+                    isMatched.set(matchingString("{0}", filterText, requestString) || matchingString("{0}", filterText, responseString));
+                }
+
+                if (isMatched.get()) {
+                    newFilteredLog.add(entry);
+                }
+            } catch (Exception ignored) {
+
             }
         }
 
-        fireTableDataChanged();
-        messageTable.lastSelectedIndex = -1;
+        // 在EDT线程中更新UI
+        SwingUtilities.invokeLater(() -> {
+            synchronized (filteredLog) {
+                filteredLog.clear();
+                filteredLog.addAll(newFilteredLog);
+            }
+            fireTableDataChanged();
+            messageTable.lastSelectedIndex = -1;
+        });
     }
 
     private boolean matchingString(String format, String filterText, String target) {
@@ -398,7 +439,9 @@ public class MessageTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return filteredLog.size();
+        synchronized (filteredLog) {
+            return filteredLog.size();
+        }
     }
 
     @Override
@@ -408,27 +451,31 @@ public class MessageTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (!filteredLog.isEmpty()) {
+        synchronized (filteredLog) {
+            if (rowIndex < 0 || rowIndex >= filteredLog.size()) {
+                return "";
+            }
+
             try {
                 MessageEntry messageEntry = filteredLog.get(rowIndex);
-
-                if (messageEntry != null) {
-                    return switch (columnIndex) {
-                        case 0 -> messageEntry.getMethod();
-                        case 1 -> messageEntry.getUrl();
-                        case 2 -> messageEntry.getComment();
-                        case 3 -> messageEntry.getStatus();
-                        case 4 -> messageEntry.getLength();
-                        case 5 -> messageEntry.getColor();
-                        default -> "";
-                    };
+                if (messageEntry == null) {
+                    return "";
                 }
+
+                return switch (columnIndex) {
+                    case 0 -> messageEntry.getMethod();
+                    case 1 -> messageEntry.getUrl();
+                    case 2 -> messageEntry.getComment();
+                    case 3 -> messageEntry.getStatus();
+                    case 4 -> messageEntry.getLength();
+                    case 5 -> messageEntry.getColor();
+                    default -> "";
+                };
             } catch (Exception e) {
                 api.logging().logToError("getValueAt: " + e.getMessage());
+                return "";
             }
         }
-
-        return "";
     }
 
     @Override

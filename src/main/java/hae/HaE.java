@@ -2,6 +2,7 @@ package hae;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.core.BurpSuiteEdition;
 import burp.api.montoya.logging.Logging;
 import hae.cache.DataCache;
 import hae.component.Main;
@@ -9,7 +10,6 @@ import hae.component.board.message.MessageTableModel;
 import hae.instances.editor.RequestEditor;
 import hae.instances.editor.ResponseEditor;
 import hae.instances.editor.WebSocketEditor;
-import hae.instances.http.HttpMessagePassiveHandler;
 import hae.instances.websocket.WebSocketMessageHandler;
 import hae.utils.ConfigLoader;
 import hae.utils.DataManager;
@@ -19,7 +19,7 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "4.2.1";
+        String version = "4.3";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
@@ -34,7 +34,7 @@ public class HaE implements BurpExtension {
         MessageTableModel messageTableModel = new MessageTableModel(api, configLoader);
 
         // 设置BurpSuite专业版状态
-        Config.proVersionStatus = getBurpSuiteProStatus(api, configLoader, messageTableModel);
+        Config.proVersionStatus = getBurpSuiteProStatus(api);
 
         // 注册Tab页（用于查询数据）
         api.userInterface().registerSuiteTab("HaE", new Main(api, configLoader, messageTableModel));
@@ -58,16 +58,12 @@ public class HaE implements BurpExtension {
         });
     }
 
-    private Boolean getBurpSuiteProStatus(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
+    private Boolean getBurpSuiteProStatus(MontoyaApi api) {
         boolean burpSuiteProStatus = false;
+
         try {
-            burpSuiteProStatus = api.burpSuite().version().edition().displayName().equals("Professional");
-        } catch (Exception e) {
-            try {
-                api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel)).deregister();
-                burpSuiteProStatus = true;
-            } catch (Exception ignored) {
-            }
+            burpSuiteProStatus = api.burpSuite().version().edition() == BurpSuiteEdition.PROFESSIONAL;
+        } catch (Exception ignored) {
         }
 
         return burpSuiteProStatus;

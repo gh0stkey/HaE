@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public class RegularMatcher {
     private static final Map<String, Pattern> nfaPatternCache = new ConcurrentHashMap<>();
     private static final Map<String, RunAutomaton> dfaAutomatonCache = new ConcurrentHashMap<>();
+    private static final Pattern formatIndexPattern = Pattern.compile("\\{(\\d+)}");
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
 
@@ -217,8 +218,8 @@ public class RegularMatcher {
             while (matcher.find()) {
                 String matchContent = matcher.group(1);
                 if (!matchContent.isEmpty()) {
-                    matcher = createPatternMatcher(s_regex, matchContent, sensitive);
-                    matches.addAll(formatMatchResults(matcher, format));
+                    Matcher secondMatcher = createPatternMatcher(s_regex, matchContent, sensitive);
+                    matches.addAll(formatMatchResults(secondMatcher, format));
                 }
             }
         }
@@ -242,9 +243,20 @@ public class RegularMatcher {
     }
 
     private List<String> formatMatchResults(Matcher matcher, String format) {
-        List<Integer> indexList = parseIndexesFromString(format);
         List<String> stringList = new ArrayList<>();
+        
+        // 当format为{0}时，直接返回第一个捕获组，避免格式化开销
+        if ("{0}".equals(format)) {
+            while (matcher.find()) {
+                if (matcher.groupCount() > 0 && !matcher.group(1).isEmpty()) {
+                    stringList.add(matcher.group(1));
+                }
+            }
+            return stringList;
+        }
 
+        // 需要复杂格式化的情况
+        List<Integer> indexList = parseIndexesFromString(format);
         while (matcher.find()) {
             if (!matcher.group(1).isEmpty()) {
                 Object[] params = indexList.stream().map(i -> {
@@ -295,8 +307,7 @@ public class RegularMatcher {
 
     private LinkedList<Integer> parseIndexesFromString(String input) {
         LinkedList<Integer> indexes = new LinkedList<>();
-        Pattern pattern = Pattern.compile("\\{(\\d+)}");
-        Matcher matcher = pattern.matcher(input);
+        Matcher matcher = formatIndexPattern.matcher(input);
 
         while (matcher.find()) {
             String index = matcher.group(1);
@@ -318,8 +329,7 @@ public class RegularMatcher {
     }
 
     private String normalizeFormatIndexes(String format) {
-        Pattern pattern = Pattern.compile("\\{(\\d+)}");
-        Matcher matcher = pattern.matcher(format);
+        Matcher matcher = formatIndexPattern.matcher(format);
         int count = 0;
         while (matcher.find()) {
             String newStr = String.format("{%s}", count);

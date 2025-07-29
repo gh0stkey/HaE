@@ -35,7 +35,7 @@ public class Databoard extends JPanel {
     private JSplitPane splitPane;
     private MessageTable messageTable;
     private JProgressBar progressBar;
-    private SwingWorker<Map<String, List<String>>, Void> handleComboBoxWorker;
+    private SwingWorker<Map<String, List<String>>, Integer> handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
@@ -125,16 +125,16 @@ public class Databoard extends JPanel {
         columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
     }
 
-    private void setProgressBar(boolean status) {
-        progressBar.setIndeterminate(status);
-        if (!status) {
-            progressBar.setMaximum(100);
-            progressBar.setString("OK");
-            progressBar.setStringPainted(true);
+    private void setProgressBar(boolean status, String message, int progress) {
+        progressBar.setIndeterminate(status && progress <= 0);
+        progressBar.setString(message);
+        progressBar.setStringPainted(true);
+        progressBar.setMaximum(100);
+
+        if (progress > 0) {
+            progressBar.setValue(progress);
+        } else if (!status) {
             progressBar.setValue(progressBar.getMaximum());
-        } else {
-            progressBar.setString("Loading...");
-            progressBar.setStringPainted(true);
         }
     }
 
@@ -173,54 +173,15 @@ public class Databoard extends JPanel {
             String selectedHost = hostComboBox.getSelectedItem().toString();
 
             if (getHostByList().contains(selectedHost)) {
-                progressBar.setVisible(true);
-                setProgressBar(true);
                 hostTextField.setText(selectedHost);
+                hostComboBox.setPopupVisible(false);
 
                 if (handleComboBoxWorker != null && !handleComboBoxWorker.isDone()) {
+                    progressBar.setVisible(false);
                     handleComboBoxWorker.cancel(true);
                 }
 
-                handleComboBoxWorker = new SwingWorker<>() {
-                    @Override
-                    protected Map<String, List<String>> doInBackground() {
-                        return getSelectedMapByHost(selectedHost);
-                    }
-
-                    @Override
-                    protected void done() {
-                        if (!isCancelled()) {
-                            try {
-                                Map<String, List<String>> selectedDataMap = get();
-                                if (!selectedDataMap.isEmpty()) {
-                                    dataTabbedPane.removeAll();
-
-                                    for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
-                                        String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                                        Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
-                                        datatablePanel.setTableListener(messageTableModel);
-                                        dataTabbedPane.addTab(tabTitle, datatablePanel);
-                                    }
-
-                                    JSplitPane messageSplitPane = messageTableModel.getSplitPane();
-                                    splitPane.setLeftComponent(dataTabbedPane);
-                                    splitPane.setRightComponent(messageSplitPane);
-                                    messageTable = messageTableModel.getMessageTable();
-                                    resizePanel();
-
-                                    splitPane.setVisible(true);
-                                    hostTextField.setText(selectedHost);
-
-                                    hostComboBox.setPopupVisible(false);
-                                    applyHostFilter(selectedHost);
-
-                                    setProgressBar(false);
-                                }
-                            } catch (Exception ignored) {
-                            }
-                        }
-                    }
-                };
+                handleComboBoxWorker = new DataLoadingWorker(selectedHost);
 
                 handleComboBoxWorker.execute();
             }
@@ -251,33 +212,57 @@ public class Databoard extends JPanel {
         isMatchHost = false;
     }
 
-    private Map<String, List<String>> getSelectedMapByHost(String selectedHost) {
+    private Map<String, List<String>> getSelectedMapByHost(String selectedHost, DataLoadingWorker worker) {
         ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
         Map<String, List<String>> selectedDataMap;
 
         if (selectedHost.contains("*")) {
             selectedDataMap = new HashMap<>();
-            dataMap.keySet().forEach(key -> {
+            List<String> matchingKeys = new ArrayList<>();
+
+            // 第一步：找出所有匹配的键（预处理）
+            for (String key : dataMap.keySet()) {
                 if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
-                    Map<String, List<String>> ruleMap = dataMap.get(key);
+                    matchingKeys.add(key);
+                }
+            }
+
+            // 第二步：分批处理数据
+            int totalKeys = matchingKeys.size();
+            for (int i = 0; i < totalKeys; i++) {
+                String key = matchingKeys.get(i);
+                Map<String, List<String>> ruleMap = dataMap.get(key);
+
+                if (ruleMap != null) {
                     for (String ruleKey : ruleMap.keySet()) {
                         List<String> dataList = ruleMap.get(ruleKey);
                         if (selectedDataMap.containsKey(ruleKey)) {
                             List<String> mergedList = new ArrayList<>(selectedDataMap.get(ruleKey));
                             mergedList.addAll(dataList);
+                            // 使用HashSet去重
                             HashSet<String> uniqueSet = new HashSet<>(mergedList);
                             selectedDataMap.put(ruleKey, new ArrayList<>(uniqueSet));
                         } else {
-                            selectedDataMap.put(ruleKey, dataList);
+                            selectedDataMap.put(ruleKey, new ArrayList<>(dataList));
                         }
                     }
                 }
-            });
+
+                // 报告进度
+                if (worker != null && i % 5 == 0) {
+                    int progress = (int) ((i + 1) * 90.0 / totalKeys);
+                    worker.publishProgress(progress);
+                }
+            }
         } else {
             selectedDataMap = dataMap.get(selectedHost);
+            // 对于非通配符匹配，直接返回结果
+            if (worker != null) {
+                worker.publishProgress(90);
+            }
         }
 
-        return selectedDataMap;
+        return selectedDataMap != null ? selectedDataMap : new HashMap<>();
     }
 
     private void filterComboBoxList() {
@@ -393,6 +378,69 @@ public class Databoard extends JPanel {
             messageTableModel.deleteByHost(host);
 
             hostTextField.setText("");
+        }
+    }
+
+    // 定义为内部类
+    private class DataLoadingWorker extends SwingWorker<Map<String, List<String>>, Integer> {
+        private final String selectedHost;
+
+        public DataLoadingWorker(String selectedHost) {
+            this.selectedHost = selectedHost;
+            progressBar.setVisible(true);
+        }
+
+        @Override
+        protected Map<String, List<String>> doInBackground() throws Exception {
+            return getSelectedMapByHost(selectedHost, this);
+        }
+
+        @Override
+        protected void process(List<Integer> chunks) {
+            if (!chunks.isEmpty()) {
+                int progress = chunks.get(chunks.size() - 1);
+                setProgressBar(true, "Loading... " + progress + "%", progress);
+            }
+        }
+
+        @Override
+        protected void done() {
+            if (!isCancelled()) {
+                try {
+                    Map<String, List<String>> selectedDataMap = get();
+                    if (selectedDataMap != null && !selectedDataMap.isEmpty()) {
+                        dataTabbedPane.removeAll();
+
+                        for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
+                            String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
+                            Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
+                            datatablePanel.setTableListener(messageTableModel);
+                            dataTabbedPane.addTab(tabTitle, datatablePanel);
+                        }
+
+                        JSplitPane messageSplitPane = messageTableModel.getSplitPane();
+                        splitPane.setLeftComponent(dataTabbedPane);
+                        splitPane.setRightComponent(messageSplitPane);
+                        messageTable = messageTableModel.getMessageTable();
+                        resizePanel();
+
+                        splitPane.setVisible(true);
+
+                        applyHostFilter(selectedHost);
+                        setProgressBar(false, "OK", 100);
+                    } else {
+                        setProgressBar(false, "Error", 0);
+                    }
+                } catch (Exception e) {
+                    api.logging().logToOutput("DataLoadingWorker: " + e.getMessage());
+                    setProgressBar(false, "Error", 0);
+                }
+            }
+        }
+
+        // 提供一个公共方法来发布进度
+        public void publishProgress(int progress) {
+            publish(progress);
         }
     }
 }

@@ -57,7 +57,7 @@ rules:
         sensitive: false
       - name: Vite DevMode
         loaded: true
-        f_regex: (/@vite/client)
+        f_regex: (/\@vite/client)
         s_regex: ''
         format: '{0}'
         color: red
@@ -133,8 +133,8 @@ rules:
     rule:
       - name: Email
         loaded: true
-        f_regex: (([a-z0-9]+[_|\.])*[a-z0-9]+@([a-z0-9]+[-|_|\.])*[a-z0-9]+\.((?!js|css|jpg|jpeg|png|ico)[a-z]{2,5}))
-        s_regex: ''
+        f_regex: (\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,5}\b)
+        s_regex: ^((?!.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff|ico?)$).*@.*\..*)$
         format: '{0}'
         color: yellow
         scope: response
@@ -198,9 +198,9 @@ rules:
         sensitive: true
       - name: Password Field
         loaded: true
-        f_regex: (((|\\)(|'|")(|[\.\w]{1,10})([p](ass|wd|asswd|assword))(|[\.\w]{1,10})(|\\)(|'|")(
-          |)(:|[=]{1,3}|![=]{1,2}|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
-          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,10})([p](ass|wd|asswd|assword))(|[\.\w]{1,10})(|\\)(|'|")))
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})([p](ass|wd|asswd|assword))(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)(|'|")([^'"]+?)(|\\)(|'|")(|,|\)))|((|\\)(|'|")([^'"]+?)(|\\)(|'|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})([p](ass|wd|asswd|assword))(|[\.\w]{1,32})(|\\)(|'|")))
         s_regex: ''
         format: '{0}'
         color: yellow
@@ -209,9 +209,9 @@ rules:
         sensitive: false
       - name: Username Field
         loaded: true
-        f_regex: (((|\\)(|'|")(|[\.\w]{1,10})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,10})(|\\)(|'|")(
-          |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
-          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,10})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,10})(|\\)(|'|")))
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)(|'|")([^'"]+?)(|\\)(|'|")(|,|\)))|((|\\)(|'|")([^'"]+?)(|\\)(|'|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,32})(|\\)(|'|")))
         s_regex: ''
         format: '{0}'
         color: green
@@ -247,9 +247,9 @@ rules:
         sensitive: false
       - name: Sensitive Field
         loaded: true
-        f_regex: (((\[)?('|")?([\.\w]{0,10})(key|secret|token|config|auth|access|admin|ticket)([\.\w]{0,10})('|")?(\])?(
-          |)(:|=|!=|[\)]{0,1}\.val\()( |)('|")([^'"]+?)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
-          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,10})(key|secret|token|config|auth|access|admin|ticket)(|[\.\w]{1,10})(|\\)(|'|")))
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(key|secret|token|config|auth|access|admin|ticket)(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)(|'|")([^'"]+?)(|\\)(|'|")(|,|\)))|((|\\)(|'|")([^'"]+?)(|\\)(|'|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(key|secret|token|config|auth|access|admin|ticket)(|[\.\w]{1,32})(|\\)(|'|")))
         s_regex: ''
         format: '{0}'
         color: yellow
@@ -258,10 +258,19 @@ rules:
         sensitive: false
       - name: Mobile Number Field
         loaded: true
-        f_regex: '(((|\\)(|''|")(|[\w]{1,10})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,10})(|\\)(|''|")(
-      |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)(''|")([^''"]+?)(|\\)(''|")(|,|\)))|((|\\)(''|")([^''"]+?)(|\\)(''|")(|\\)(|''|")(
-      |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,10})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,10})(|\\)(|''|"))) '
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|=|!=|[\)]{0,1}\.val\()( |)(|\\)(|'|")([^'"]+?)(|\\)(|'|")(|,|\)))|((|\\)(|'|")([^'"]+?)(|\\)(|'|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,32})(|\\)(|'|")))
         s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Userinfo In Link
+        loaded: true
+        f_regex: (?:"|'|\`)(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|'|\`)
+        s_regex: ((([p](ass|wd|asswd|assword))|(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator)))))=[\.\w]{1,32})
         format: '{0}'
         color: green
         scope: response body
@@ -271,7 +280,7 @@ rules:
     rule:
       - name: Linkfinder
         loaded: true
-        f_regex: (?:"|')(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|')
+        f_regex: (?:"|'|\`)(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|'|\`)
         s_regex: ''
         format: '{0}'
         color: gray
@@ -334,10 +343,19 @@ rules:
         sensitive: false
       - name: 302 Location
         loaded: true
-        f_regex: 'Location: (.*?)\n'
+        f_regex: 'Location: (.*?)\r\n'
         s_regex: ''
         format: '{0}'
         color: gray
         scope: response header
         engine: nfa
         sensitive: false
+      - name: OSKeys
+        loaded: false
+        f_regex: <Key>(.*?)</Key>
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: response body
+        engine: nfa
+        sensitive: true

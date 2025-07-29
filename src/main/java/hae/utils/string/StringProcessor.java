@@ -1,14 +1,6 @@
 package hae.utils.string;
 
-import burp.api.montoya.core.ByteArray;
-import burp.api.montoya.http.HttpService;
-import burp.api.montoya.http.message.HttpRequestResponse;
-import burp.api.montoya.http.message.requests.HttpRequest;
-import burp.api.montoya.http.message.responses.HttpResponse;
-
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -62,19 +54,6 @@ public class StringProcessor {
                         StringProcessor.matchFromEnd(host, hostPattern) :
                         StringProcessor.matchFromEnd(hostname, hostPattern));
         return matchesDirectly || matchesPattern;
-    }
-
-    public static HttpRequestResponse createHttpRequestResponse(String url, byte[] request, byte[] response) {
-        HttpService httpService = HttpService.httpService(url);
-        HttpRequest httpRequest = HttpRequest.httpRequest(httpService, ByteArray.byteArray(request));
-        HttpResponse httpResponse = HttpResponse.httpResponse(ByteArray.byteArray(response));
-        return HttpRequestResponse.httpRequestResponse(httpRequest, httpResponse);
-    }
-
-    public static String getCurrentTime() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-        LocalDateTime now = LocalDateTime.now();
-        return now.format(formatter);
     }
 
     public static String getRandomUUID() {

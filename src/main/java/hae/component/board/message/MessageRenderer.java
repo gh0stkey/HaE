@@ -33,15 +33,32 @@ public class MessageRenderer extends DefaultTableCellRenderer {
                                                    boolean hasFocus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        MessageEntry messageEntry = log.get(table.convertRowIndexToModel(row)); // 使用convertRowIndexToModel方法转换行索引
+        // 添加边界检查以防止IndexOutOfBoundsException
+        int modelRow = table.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= log.size()) {
+            // 如果索引无效，返回默认渲染组件（使用默认背景色）
+            component.setBackground(Color.WHITE);
+            component.setForeground(Color.BLACK);
+            return component;
+        }
+        
+        MessageEntry messageEntry = log.get(modelRow);
 
         // 设置颜色
         String colorByLog = messageEntry.getColor();
         Color color = colorMap.get(colorByLog);
 
+        // 如果颜色映射中没有找到对应颜色，使用默认白色
+        if (color == null) {
+            color = Color.WHITE;
+        }
+
         if (isSelected) {
             // 通过更改RGB颜色来达成阴影效果
-            component.setBackground(new Color(color.getRed() - 0x20, color.getGreen() - 0x20, color.getBlue() - 0x20));
+            int red = Math.max(0, color.getRed() - 0x20);
+            int green = Math.max(0, color.getGreen() - 0x20);
+            int blue = Math.max(0, color.getBlue() - 0x20);
+            component.setBackground(new Color(red, green, blue));
         } else {
             // 否则使用原始颜色
             component.setBackground(color);
