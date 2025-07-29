@@ -105,10 +105,10 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 是果实菌啊     | 38.88 CNY |
 | caytez     | 77.77 CNY |
 | Sn0w33     | 18.88 CNY |
-| Edwater     | 18.88 CNY | 
+| Edwater     | 18.88 CNY |
 | 云中鹤     | 18.88 CNY |
 | Twit     | 18.88 CNY |
-| cshu     | 18.88 元 |
+| cshu     | 18.88 CNY |
 
 ## Support the Project
 
