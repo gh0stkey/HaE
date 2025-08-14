@@ -109,6 +109,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 云中鹤     | 18.88 CNY |
 | Twit     | 18.88 CNY |
 | cshu     | 18.88 CNY |
+| Fzz2     | 50.00 CNY |
 
 ## Support the Project
 
