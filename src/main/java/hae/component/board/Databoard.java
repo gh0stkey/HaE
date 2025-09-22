@@ -18,8 +18,9 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
+import java.text.Collator;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -415,7 +416,7 @@ public class Databoard extends JPanel {
                             String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
                             Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
                             datatablePanel.setTableListener(messageTableModel);
-                            dataTabbedPane.addTab(tabTitle, datatablePanel);
+                            insertTabSorted(dataTabbedPane, tabTitle, datatablePanel);
                         }
 
                         JSplitPane messageSplitPane = messageTableModel.getSplitPane();
@@ -436,6 +437,26 @@ public class Databoard extends JPanel {
                     setProgressBar(false, "Error", 0);
                 }
             }
+        }
+
+        public static void insertTabSorted(JTabbedPane tabbedPane, String title, Component component) {
+            int insertIndex = 0;
+            int tabCount = tabbedPane.getTabCount();
+
+            // 使用 Collator 实现更友好的语言排序（支持中文、特殊字符等）
+            Collator collator = Collator.getInstance(Locale.getDefault());
+            collator.setStrength(Collator.PRIMARY); // 忽略大小写和重音
+
+            for (int i = 0; i < tabCount; i++) {
+                String existingTitle = tabbedPane.getTitleAt(i);
+                if (collator.compare(existingTitle, title) > 0) {
+                    insertIndex = i;
+                    break;
+                }
+                insertIndex = i + 1;
+            }
+
+            tabbedPane.insertTab(title, null, component, null, insertIndex);
         }
 
         // 提供一个公共方法来发布进度

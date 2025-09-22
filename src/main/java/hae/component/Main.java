@@ -5,6 +5,7 @@ import hae.component.board.Databoard;
 import hae.component.board.message.MessageTableModel;
 import hae.component.rule.Rules;
 import hae.utils.ConfigLoader;
+import hae.utils.UIEnhancer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +37,7 @@ public class Main extends JPanel {
 
         // 新增Logo
         JTabbedPane HaETabbedPane = new JTabbedPane();
-        boolean isDarkBg = isDarkBg(HaETabbedPane);
+        boolean isDarkBg = UIEnhancer.isDarkColor(HaETabbedPane.getBackground());
         HaETabbedPane.addTab("", getImageIcon(isDarkBg), mainTabbedPane);
         // 中文Slogan：赋能白帽，高效作战
         HaETabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations. ", null);
@@ -44,7 +45,7 @@ public class Main extends JPanel {
         HaETabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent e) {
-                boolean isDarkBg = isDarkBg(HaETabbedPane);
+                boolean isDarkBg = UIEnhancer.isDarkColor(HaETabbedPane.getBackground());
                 HaETabbedPane.setIconAt(0, getImageIcon(isDarkBg));
             }
         });
@@ -58,16 +59,6 @@ public class Main extends JPanel {
         mainTabbedPane.addTab("Rules", rules);
         mainTabbedPane.addTab("Databoard", new Databoard(api, configLoader, messageTableModel));
         mainTabbedPane.addTab("Config", new Config(api, configLoader, messageTableModel, rules));
-    }
-
-    private boolean isDarkBg(JTabbedPane HaETabbedPane) {
-        Color bg = HaETabbedPane.getBackground();
-        int r = bg.getRed();
-        int g = bg.getGreen();
-        int b = bg.getBlue();
-        int avg = (r + g + b) / 3;
-
-        return avg < 128;
     }
 
     private ImageIcon getImageIcon(boolean isDark) {

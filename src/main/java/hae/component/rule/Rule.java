@@ -181,8 +181,7 @@ public class Rule extends JPanel {
                 panel.setOpaque(true);
 
                 // 复制原始组件的样式
-                if (originalComponent instanceof JComponent) {
-                    JComponent origComp = (JComponent) originalComponent;
+                if (originalComponent instanceof JComponent origComp) {
                     panel.setBackground(origComp.getBackground());
                     panel.setBorder(origComp.getBorder());
                 }

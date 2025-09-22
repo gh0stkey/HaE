@@ -7,38 +7,75 @@ import java.awt.event.FocusListener;
 
 public class UIEnhancer {
     public static void setTextFieldPlaceholder(JTextField textField, String placeholderText) {
-        // 使用客户端属性来存储占位符文本和占位符状态
+        // 存储占位符文本
         textField.putClientProperty("placeholderText", placeholderText);
         textField.putClientProperty("isPlaceholder", true);
 
-        // 设置占位符文本和颜色
-        setPlaceholderText(textField);
+        updatePlaceholderText(textField);
+
+        textField.addPropertyChangeListener("background", evt -> {
+            updateForeground(textField);
+        });
 
         textField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // 当获得焦点且文本是占位符时，清除文本并更改颜色
-                if ((boolean) textField.getClientProperty("isPlaceholder")) {
-                    textField.setText("");
-                    textField.setForeground(Color.BLACK);
+                if (Boolean.TRUE.equals(textField.getClientProperty("isPlaceholder"))) {
                     textField.putClientProperty("isPlaceholder", false);
+                    updateForeground(textField);
+
+                    textField.setText("");
                 }
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                // 当失去焦点且文本为空时，设置占位符文本和颜色
                 if (textField.getText().isEmpty()) {
-                    setPlaceholderText(textField);
+                    updatePlaceholderText(textField);
+                }
+            }
+        });
+
+        textField.addPropertyChangeListener("text", evt -> {
+            if (Boolean.TRUE.equals(textField.getClientProperty("isPlaceholder"))) {
+                if (!textField.getText().isEmpty()) {
+                    textField.putClientProperty("isPlaceholder", false);
+                    updateForeground(textField);
+                }
+            } else {
+                if (textField.getText().isEmpty()) {
+                    updatePlaceholderText(textField);
                 }
             }
         });
     }
 
-    private static void setPlaceholderText(JTextField textField) {
+    private static void updatePlaceholderText(JTextField textField) {
         String placeholderText = (String) textField.getClientProperty("placeholderText");
-        textField.setForeground(Color.GRAY);
-        textField.setText(placeholderText);
         textField.putClientProperty("isPlaceholder", true);
+        textField.setText(placeholderText);
+        textField.setForeground(Color.GRAY);
+    }
+
+    private static void updateForeground(JTextField textField) {
+        Color bg = textField.getBackground();
+        Color fg = isDarkColor(bg) ? Color.WHITE : Color.BLACK;
+
+        if (!Boolean.TRUE.equals(textField.getClientProperty("isPlaceholder"))) {
+            textField.setForeground(fg);
+            textField.putClientProperty("isPlaceholder", false);
+        }
+    }
+
+    public static boolean isDarkColor(Color color) {
+        double brightness = 0.299 * color.getRed()
+                + 0.587 * color.getGreen()
+                + 0.114 * color.getBlue();
+        return brightness < 128;
+    }
+
+    public static boolean hasUserInput(JTextField field) {
+        Object prop = field.getClientProperty("isPlaceholder");
+        return prop instanceof Boolean && !((Boolean) prop);
     }
 }

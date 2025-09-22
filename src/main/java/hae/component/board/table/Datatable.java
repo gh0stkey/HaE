@@ -162,17 +162,17 @@ public class Datatable extends JPanel {
     }
 
     private void performSearch() {
-        RowFilter<Object, Object> firstRowFilter = getObjectObjectRowFilter(searchField, true);
-        RowFilter<Object, Object> secondRowFilter = getObjectObjectRowFilter(secondSearchField, false);
-        if (searchField.getForeground().equals(Color.BLACK)) {
-            sorter.setRowFilter(firstRowFilter);
-            if (secondSearchField.getForeground().equals(Color.BLACK)) {
-                List<RowFilter<Object, Object>> filters = new ArrayList<>();
-                filters.add(firstRowFilter);
-                filters.add(secondRowFilter);
-                sorter.setRowFilter(RowFilter.andFilter(filters));
-            }
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        if (UIEnhancer.hasUserInput(searchField)) {
+            filters.add(getObjectObjectRowFilter(searchField, true));
         }
+
+        if (UIEnhancer.hasUserInput(secondSearchField)) {
+            filters.add(getObjectObjectRowFilter(secondSearchField, false));
+        }
+
+        sorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
     }
 
     private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean firstFlag) {

@@ -60,7 +60,8 @@ public class Config {
             "blue",
             "pink",
             "magenta",
-            "gray"
+            "gray",
+            "none"
     };
 
     public static Boolean proVersionStatus = true;

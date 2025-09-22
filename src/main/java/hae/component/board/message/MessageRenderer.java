@@ -25,6 +25,7 @@ public class MessageRenderer extends DefaultTableCellRenderer {
         this.colorMap.put("pink", new Color(0xFF, 0xC8, 0xC8));
         this.colorMap.put("magenta", new Color(0xFF, 0x64, 0xFF));
         this.colorMap.put("gray", new Color(0xB4, 0xB4, 0xB4));
+        this.colorMap.put("none", new Color(0, 0, 0, 0));
         this.table = table;
     }
 
@@ -41,7 +42,7 @@ public class MessageRenderer extends DefaultTableCellRenderer {
             component.setForeground(Color.BLACK);
             return component;
         }
-        
+
         MessageEntry messageEntry = log.get(modelRow);
 
         // 设置颜色
@@ -54,13 +55,8 @@ public class MessageRenderer extends DefaultTableCellRenderer {
         }
 
         if (isSelected) {
-            // 通过更改RGB颜色来达成阴影效果
-            int red = Math.max(0, color.getRed() - 0x20);
-            int green = Math.max(0, color.getGreen() - 0x20);
-            int blue = Math.max(0, color.getBlue() - 0x20);
-            component.setBackground(new Color(red, green, blue));
+            component.setBackground(UIManager.getColor("Table.selectionBackground"));
         } else {
-            // 否则使用原始颜色
             component.setBackground(color);
         }
 
