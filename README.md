@@ -92,7 +92,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | NOP Team     | 200.00 CNY |
 | vaycore     | 188.88 CNY |
 | xccc     | 168.00 CNY |
-| 柯林斯-民间新秀     | 3238.8 CNY |
+| 柯林斯-民间新秀     | 3288.8 CNY |
 | Cuber     | 100.00 CNY |
 | 时光难逆     | 50.00 CNY |
 | Celvin     | 150.88 CNY |
