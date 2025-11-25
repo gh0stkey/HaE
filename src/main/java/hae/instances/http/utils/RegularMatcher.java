@@ -89,7 +89,7 @@ public class RegularMatcher {
             message = message.replace(header, modifiedHeader);
         }
 
-        String messageIndex = HashCalculator.calculateHash(message.getBytes());
+        String messageIndex = HashCalculator.calculateHash((host + "|" + message).getBytes());
 
         // 从数据缓存中读取
         Map<String, Map<String, Object>> dataCacheMap = DataCache.get(messageIndex);
@@ -244,7 +244,7 @@ public class RegularMatcher {
 
     private List<String> formatMatchResults(Matcher matcher, String format) {
         List<String> stringList = new ArrayList<>();
-        
+
         // 当format为{0}时，直接返回第一个捕获组，避免格式化开销
         if ("{0}".equals(format)) {
             while (matcher.find()) {

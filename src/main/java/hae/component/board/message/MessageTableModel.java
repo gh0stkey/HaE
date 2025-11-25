@@ -252,11 +252,11 @@ public class MessageTableModel extends AbstractTableModel {
     public void applyHostFilter(String filterText) {
         // 预分配合适的容量，避免频繁扩容
         final List<MessageEntry> newFilteredLog = new ArrayList<>(log.size() / 2);
-        
+
         // 预处理过滤条件，优化性能
         final boolean isWildcardFilter = "*".equals(filterText) || filterText.contains("*");
         final String normalizedFilter = filterText.toLowerCase().trim();
-        
+
         // 创建log的安全副本
         final List<MessageEntry> logSnapshot;
         synchronized (log) {
@@ -265,26 +265,26 @@ public class MessageTableModel extends AbstractTableModel {
 
         // 使用并行流高效过滤，但保持有序
         logSnapshot.parallelStream()
-            .filter(entry -> {
-                // 快速通配符检查
-                if (isWildcardFilter && "*".equals(filterText)) {
-                    return true;
-                }
-                
-                try {
-                    String host = StringProcessor.getHostByUrl(entry.getUrl());
-                    if (host.isEmpty()) {
+                .filter(entry -> {
+                    // 快速通配符检查
+                    if (isWildcardFilter && "*".equals(filterText)) {
+                        return true;
+                    }
+
+                    try {
+                        String host = StringProcessor.getHostByUrl(entry.getUrl());
+                        if (host.isEmpty()) {
+                            return false;
+                        }
+
+                        // 优化后的匹配逻辑
+                        return StringProcessor.matchesHostPattern(host, filterText) ||
+                                (isWildcardFilter && host.toLowerCase().contains(normalizedFilter.replace("*", "")));
+                    } catch (Exception e) {
                         return false;
                     }
-                    
-                    // 优化后的匹配逻辑
-                    return StringProcessor.matchesHostPattern(host, filterText) || 
-                           (isWildcardFilter && host.toLowerCase().contains(normalizedFilter.replace("*", "")));
-                } catch (Exception e) {
-                    return false;
-                }
-            })
-            .forEachOrdered(newFilteredLog::add);
+                })
+                .forEachOrdered(newFilteredLog::add);
 
         // 一次性更新UI，避免频繁刷新
         SwingUtilities.invokeLater(() -> {
@@ -399,6 +399,30 @@ public class MessageTableModel extends AbstractTableModel {
         }
 
         // 在EDT线程中更新UI
+        SwingUtilities.invokeLater(() -> {
+            synchronized (filteredLog) {
+                filteredLog.clear();
+                filteredLog.addAll(newFilteredLog);
+            }
+            fireTableDataChanged();
+            messageTable.lastSelectedIndex = -1;
+        });
+    }
+
+    public void applyCommentFilter(String tableName) {
+        List<MessageEntry> newFilteredLog = new ArrayList<>();
+
+        List<MessageEntry> logSnapshot;
+        synchronized (log) {
+            logSnapshot = new ArrayList<>(log);
+        }
+
+        for (MessageEntry entry : logSnapshot) {
+            if (entry.getComment().contains(tableName)) {
+                newFilteredLog.add(entry);
+            }
+        }
+
         SwingUtilities.invokeLater(() -> {
             synchronized (filteredLog) {
                 filteredLog.clear();

@@ -102,23 +102,53 @@ public class StringProcessor {
         return host.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
     }
 
-    private static Map<String, Integer> getStringIntegerMap(String comment) {
+    public static Map<String, Integer> getStringIntegerMap(String comment) {
         Map<String, Integer> itemCounts = new HashMap<>();
+
+        if (comment == null || comment.trim().isEmpty()) {
+            return itemCounts;
+        }
+
         String[] items = comment.split(", ");
 
         for (String item : items) {
-            if (item.contains("(") && item.contains(")")) {
-                int openParenIndex = item.lastIndexOf("(");
-                int closeParenIndex = item.lastIndexOf(")");
-                String itemName = item.substring(0, openParenIndex).trim();
-                int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
-                itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+            item = item.trim();
+
+            int openParenIndex = item.lastIndexOf("(");
+            int closeParenIndex = item.lastIndexOf(")");
+
+            if (openParenIndex != -1 && closeParenIndex != -1 && openParenIndex < closeParenIndex) {
+                String itemName = extractItemName(item);
+                try {
+                    int count = Integer.parseInt(item.substring(openParenIndex + 1, closeParenIndex).trim());
+                    itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0) + count);
+                } catch (NumberFormatException e) {
+                    itemCounts.put(itemName, itemCounts.getOrDefault(itemName, 0));
+                }
             } else {
-                itemCounts.put(item, 0);
+                String itemName = extractItemName(item);
+                itemCounts.put(itemName, 0);
             }
         }
 
         return itemCounts;
+    }
+
+    public static String extractItemName(String item) {
+        if (item == null || item.trim().isEmpty()) {
+            return "";
+        }
+
+        item = item.trim();
+
+        int openParenIndex = item.lastIndexOf("(");
+        int closeParenIndex = item.lastIndexOf(")");
+
+        if (openParenIndex != -1 && closeParenIndex != -1 && openParenIndex < closeParenIndex) {
+            return item.substring(0, openParenIndex).trim();
+        }
+
+        return item;
     }
 }
 

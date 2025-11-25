@@ -73,6 +73,15 @@ public class Databoard extends JPanel {
         dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
         dataTabbedPane.setPreferredSize(new Dimension(500, 0));
         dataTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        dataTabbedPane.addChangeListener(e -> {
+            int selectedIndex = dataTabbedPane.getSelectedIndex();
+            String selectedTitle = "";
+            if (selectedIndex != -1) {
+                selectedTitle = dataTabbedPane.getTitleAt(selectedIndex);
+            }
+
+            messageTableModel.applyCommentFilter(StringProcessor.extractItemName(selectedTitle));
+        });
 
         actionButton.addActionListener(e -> {
             int x = 0;
@@ -426,7 +435,7 @@ public class Databoard extends JPanel {
                         resizePanel();
 
                         splitPane.setVisible(true);
-
+                        dataTabbedPane.setSelectedIndex(0);
                         applyHostFilter(selectedHost);
                         setProgressBar(false, "OK", 100);
                     } else {
