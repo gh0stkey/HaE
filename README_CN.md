@@ -26,7 +26,7 @@ GitCode项目地址：https://gitcode.com/gh0stkey/HaE
 
 ## 赞赏榜单
 
-[赞赏榜单](AppreciationList.md)
+正是因为赞助名单中成员的强力支持，HaE才得以达到今天的成就：[赞赏榜单](APPRECIATION_LIST.md)
 
 ## 支持项目
 

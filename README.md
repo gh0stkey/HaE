@@ -21,7 +21,7 @@ GitCode project address: https://gitcode.com/gh0stkey/HaE
 
 ## Appreciation List
 
-[Appreciation List](AppreciationList.md)
+It is precisely because of the strong support from the members of the sponsor list that HaE has been able to reach today: [Appreciation List](APPRECIATION_LIST.md)
 
 ## Support the Project
 
