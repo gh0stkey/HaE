@@ -19,11 +19,6 @@ GitCode项目地址：https://gitcode.com/gh0stkey/HaE
 1. [入选2022年KCon兵器谱](https://mp.weixin.qq.com/s/JohMsl1WD29LHCHuLf8mVQ)
 2. [入选GitCode G-Star项目](https://gitcode.com/gh0stkey/HaE)
 
-**注意事项**:
-
-1. HaE 3.0版本开始采用`Montoya API`进行开发，使用新版HaE需要升级你的BurpSuite版本（>=2023.12.1）。
-2. 自定义HaE规则必须用左右括号`()`将所需提取的表达式内容包含，例如你要匹配一个**Shiro应用**的响应报文，正常匹配规则为`rememberMe=delete`，在HaE的规则中就需要变成`(rememberMe=delete)`。
-
 ## 赞赏榜单
 
 正是因为赞助名单中成员的强力支持，HaE才得以达到今天的成就：[赞赏榜单](APPRECIATION_LIST.md)
