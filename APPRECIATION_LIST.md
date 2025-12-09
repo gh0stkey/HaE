@@ -1,6 +1,8 @@
+我们感谢大家对项目的支持。以下列表按照感谢的时间排序，并无特定顺序。如有遗漏，请联系项目作者添加。
+
 We appreciate everyone's support for the project. The following list is sorted based on the time of appreciation and is not in any particular order. If there are any omissions, please contact the project author for additions.
 
-| ID                         | Amount     |
+| 编号（ID）                         | 金额（Amount）     |
 | -------------------------- | ---------- |
 | 毁三观大人                 | 200.00 CNY |
 | ttt                        | 50.00 CNY  |
