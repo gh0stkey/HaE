@@ -1,0 +1,361 @@
+rules:
+  - group: Fingerprint
+    rule:
+      - name: Shiro
+        loaded: true
+        f_regex: (=deleteMe|rememberMe=)
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: any header
+        engine: dfa
+        sensitive: true
+      - name: JSON Web Token
+        loaded: true
+        f_regex: (eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9._-]{10,}|eyJ[A-Za-z0-9_\/+-]{10,}\.[A-Za-z0-9._\/+-]{10,})
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: any
+        engine: nfa
+        sensitive: true
+      - name: Swagger UI
+        loaded: true
+        f_regex: ((swagger-ui.html)|(\"swagger\":)|(Swagger UI)|(swaggerUi)|(swaggerVersion))
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: Ueditor
+        loaded: true
+        f_regex: (ueditor\.(config|all)\.js)
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: Druid
+        loaded: true
+        f_regex: (Druid Stat Index)
+        s_regex: ''
+        format: '{0}'
+        color: orange
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: PDF.js Viewer
+        loaded: true
+        f_regex: (pdf.worker)
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: Vite DevMode
+        loaded: true
+        f_regex: (/\@vite/client)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
+  - group: Maybe Vulnerability
+    rule:
+      - name: Java Deserialization
+        loaded: true
+        f_regex: (javax\.faces\.ViewState)
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: Debug Logic Parameters
+        loaded: true
+        f_regex: ((access=)|(adm=)|(admin=)|(alter=)|(cfg=)|(clone=)|(config=)|(create=)|(dbg=)|(debug=)|(delete=)|(disable=)|(edit=)|(enable=)|(exec=)|(execute=)|(grant=)|(load=)|(make=)|(modify=)|(rename=)|(reset=)|(root=)|(shell=)|(test=)|(toggl=))
+        s_regex: ''
+        format: '{0}'
+        color: cyan
+        scope: request
+        engine: dfa
+        sensitive: false
+      - name: URL As A Value
+        loaded: true
+        f_regex: (=(https?)(://|%3a%2f%2f))
+        s_regex: ''
+        format: '{0}'
+        color: cyan
+        scope: any
+        engine: nfa
+        sensitive: false
+      - name: Upload Form
+        loaded: true
+        f_regex: (type\=\"file\")
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: DoS Paramters
+        loaded: true
+        f_regex: ((size=)|(page=)|(num=)|(limit=)|(start=)|(end=)|(count=))
+        s_regex: ''
+        format: '{0}'
+        color: cyan
+        scope: request
+        engine: dfa
+        sensitive: false
+      - name: Passwd File
+        loaded: true
+        f_regex: (/root:/bin/bash)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
+      - name: Win.ini File
+        loaded: true
+        f_regex: (for 16-bit app)
+        s_regex: ''
+        format: '{0}'
+        color: red
+        scope: response body
+        engine: dfa
+        sensitive: true
+  - group: Basic Information
+    rule:
+      - name: Email
+        loaded: true
+        f_regex: (\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,5}\b)
+        s_regex: ^((?!.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff|ico?)$).*@.*\..*)$
+        format: '{0}'
+        color: yellow
+        scope: response
+        engine: nfa
+        sensitive: false
+      - name: Chinese IDCard
+        loaded: true
+        f_regex: '[^0-9]((\d{8}(0\d|10|11|12)([0-2]\d|30|31)\d{3}$)|(\d{6}(18|19|20)\d{2}(0[1-9]|10|11|12)([0-2]\d|30|31)\d{3}(\d|X|x)))[^0-9]'
+        s_regex: ''
+        format: '{0}'
+        color: orange
+        scope: response body
+        engine: nfa
+        sensitive: true
+      - name: Chinese Mobile Number
+        loaded: true
+        f_regex: '[^\w]((?:(?:\+|0{0,2})86)?1(?:(?:3[\d])|(?:4[5-79])|(?:5[0-35-9])|(?:6[5-7])|(?:7[0-8])|(?:8[\d])|(?:9[189]))\d{8})[^\w]'
+        s_regex: ''
+        format: '{0}'
+        color: orange
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Internal IP Address
+        loaded: true
+        f_regex: '[^0-9]((127\.0\.0\.1)|(10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(172\.((1[6-9])|(2\d)|(3[01]))\.\d{1,3}\.\d{1,3})|(192\.168\.\d{1,3}\.\d{1,3}))'
+        s_regex: ''
+        format: '{0}'
+        color: cyan
+        scope: response
+        engine: nfa
+        sensitive: true
+      - name: MAC Address
+        loaded: true
+        f_regex: (^([a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5})|[^a-zA-Z0-9]([a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5}))
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response
+        engine: nfa
+        sensitive: true
+  - group: Sensitive Information
+    rule:
+      - name: Cloud Key
+        loaded: true
+        f_regex: (((access)(|-|_)(key)(|-|_)(id|secret))|(LTAI[a-z0-9]{12,20}))
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: any
+        engine: nfa
+        sensitive: false
+      - name: Windows File/Dir Path
+        loaded: true
+        f_regex: '[^\w]([a-zA-Z]:\\\\?(?:[^<>:/\\|?*]+\\\\?)*)([^<>:/\\|?*]+(?:\.[^<>:/\\|?*]+)?)'
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response
+        engine: nfa
+        sensitive: true
+      - name: Password Field
+        loaded: true
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})([p](ass|wd|asswd|assword))(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2}|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})([p](ass|wd|asswd|assword))(|[\.\w]{1,32})(|\\)(|'|")))
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Username Field
+        loaded: true
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2}|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator))))(|[\.\w]{1,32})(|\\)(|'|")))
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: WeCom Key
+        loaded: true
+        f_regex: ((corp)(id|secret))
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: JDBC Connection
+        loaded: true
+        f_regex: (jdbc:[a-z:]+://[a-z0-9\.\-_:;=/@?,&]+)
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: any
+        engine: nfa
+        sensitive: false
+      - name: Authorization Header
+        loaded: true
+        f_regex: ((basic [a-z0-9=:_\+\/-]{5,100})|(bearer [a-z0-9_.=:_\+\/-]{5,100}))
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Sensitive Field
+        loaded: true
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(key|secret|token|config|auth|access|admin|ticket)(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2}|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(key|secret|token|config|auth|access|admin|ticket)(|[\.\w]{1,32})(|\\)(|'|")))
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response
+        engine: nfa
+        sensitive: false
+      - name: Mobile Number Field
+        loaded: true
+        f_regex: (((|\\)(|'|")(|[\.\w]{1,32})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,32})(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2}|[\)]{0,1}\.val\()( |)(|\\)('|")([^'"]+?)(|\\)('|")(|,|\)))|((|\\)('|")([^'"]+?)(|\\)('|")(|\\)(|'|")(
+          |)(:|[=]{1,3}|![=]{1,2})( |)(|[\.\w]{1,32})(mobile|phone|sjh|shoujihao|concat)(|[\.\w]{1,32})(|\\)(|'|")))
+        s_regex: ''
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Userinfo In Link
+        loaded: true
+        f_regex: (?:"|'|\`)(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|'|\`)
+        s_regex: ((([p](ass|wd|asswd|assword))|(([u](ser|name|sername))|(account)|((((create|update)((d|r)|(by|on|at)))|(creator)))))=[\.\w]{1,32})
+        format: '{0}'
+        color: green
+        scope: response body
+        engine: nfa
+        sensitive: false
+  - group: Other
+    rule:
+      - name: Linkfinder
+        loaded: true
+        f_regex: (?:"|'|\`)(((?:[a-zA-Z]{1,10}://|//)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']{0,})|((?:/|\.\./|\./)[^"'><,;|*()(%%$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-/]{1,}/[a-zA-Z0-9_\-/]{3,}(?:[\?|#][^"|']{0,}|))|([a-zA-Z0-9_\-]{1,}\.(?:\w)(?:[\?|#][^"|']{0,}|)))(?:"|'|\`)
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: response body
+        engine: nfa
+        sensitive: true
+      - name: Source Map
+        loaded: true
+        f_regex: (\.js\.map)
+        s_regex: ''
+        format: '{0}'
+        color: pink
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: Create Script
+        loaded: true
+        f_regex: (\{[^{}]*\}\s*\[[^\s]*\]\s*\+\s*"[^\s]*\.js")
+        s_regex: '"?([\w].*?)"?:"(.*?)"'
+        format: '{0}.{1}'
+        color: green
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: URL Schemes
+        loaded: true
+        f_regex: (\b(?![\w]{0,10}?https?://)(([A-Za-z0-9-\.]{1,20})://([-\w+&@#/%?=~_|!:,.;]*[-\w+&@#/%=~_|])?))
+        s_regex: ''
+        format: '{0}'
+        color: yellow
+        scope: response body
+        engine: nfa
+        sensitive: false
+      - name: Router Push
+        loaded: true
+        f_regex: (\$router\.push)
+        s_regex: ''
+        format: '{0}'
+        color: magenta
+        scope: response body
+        engine: dfa
+        sensitive: false
+      - name: All URL
+        loaded: true
+        f_regex: (https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;\u4E00-\u9FFF]+[-A-Za-z0-9+&@#/%=~_|])
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: response body
+        engine: nfa
+        sensitive: true
+      - name: Request URI
+        loaded: false
+        f_regex: ' ((?!.*\.js(\?.*)?$)(.*?[^.js$])) '
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: request line
+        engine: nfa
+        sensitive: false
+      - name: 302 Location
+        loaded: true
+        f_regex: 'Location: (.*?)\r\n'
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: response header
+        engine: nfa
+        sensitive: false
+      - name: OSKeys
+        loaded: false
+        f_regex: <Key>(.*?)</Key>
+        s_regex: ''
+        format: '{0}'
+        color: gray
+        scope: response body
+        engine: nfa
+        sensitive: true

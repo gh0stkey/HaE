@@ -1,7 +1,7 @@
 <div align="center">
-<img src="images/logo.png" style="width: 20%" />
+<img src="resource/image/logo.png" style="width: 20%" />
 <h4><a href="https://github.com/gh0stkey/HaE">Empower ethical hacker for efficient operations.</a></h4>
-<h5>Network version: <a href="https://github.com/gh0stkey/HaE/tree/network">HaE/tree/network</a><br>File version: <a href="https://github.com/gh0stkey/HaE/tree/file">HaE/tree/file</a>
+<h5>Network version: <a href="https://github.com/gh0stkey/HaE/tree/main/src/HaENet">main/src/HaENet</a><br>File version: <a href="https://github.com/gh0stkey/HaE/tree/main/src/HaEFile">main/src/HaEFile</a>
 </div>
 
 README Version: \[[English](README.md) | [简体中文](README_CN.md)\]
@@ -28,7 +28,7 @@ It is precisely because of the strong support from the members of the sponsor li
 If you find HaE useful, you can show your appreciation by donating to the author, giving them the motivation to continue updating and improving it!
 
 <div align=center>
-<img src="images/reward.jpeg" style="width: 30%" />
+<img src="resource/image/reward.jpeg" style="width: 30%" />
 </div>
 
 ## 404StarLink 2.0 - Galaxy

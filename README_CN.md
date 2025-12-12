@@ -1,7 +1,7 @@
 <div align="center">
-<img src="images/logo.png" style="width: 20%" />
+<img src="resource/image/logo.png" style="width: 20%" />
 <h4><a href="https://github.com/gh0stkey/HaE">赋能白帽，高效作战！</a></h4>
-<h5>网络版： <a href="https://github.com/gh0stkey/HaE/tree/network">HaE/tree/network</a><br>文件版： <a href="https://github.com/gh0stkey/HaE/tree/file">HaE/tree/file</a>
+<h5>网络版： <a href="https://github.com/gh0stkey/HaE/tree/main/src/HaENet">main/src/HaENet</a><br>文件版： <a href="https://github.com/gh0stkey/HaE/tree/main/src/HaEFile">main/src/HaEFile</a>
 </div>
 
 README 版本: \[[English](README.md) | [简体中文](README_CN.md)\]
@@ -28,7 +28,7 @@ GitCode项目地址：https://gitcode.com/gh0stkey/HaE
 如果你觉得HaE好用，可以打赏一下作者，给作者持续更新下去的动力！
 
 <div align=center>
-<img src="images/reward.jpeg" style="width: 30%" />
+<img src="resource/image/reward.jpeg" style="width: 30%" />
 </div>
 
 ## 404StarLink 2.0 - Galaxy
