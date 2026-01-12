@@ -43,12 +43,13 @@ public class MessageTableModel extends AbstractTableModel {
         this.api = api;
         this.configLoader = configLoader;
 
-        JTabbedPane messageTab = new JTabbedPane();
         UserInterface userInterface = api.userInterface();
         HttpRequestEditor requestViewer = userInterface.createHttpRequestEditor(READ_ONLY);
         HttpResponseEditor responseViewer = userInterface.createHttpResponseEditor(READ_ONLY);
-        messageTab.addTab("Request", requestViewer.uiComponent());
-        messageTab.addTab("Response", responseViewer.uiComponent());
+        JSplitPane messagePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        messagePane.setLeftComponent(requestViewer.uiComponent());
+        messagePane.setRightComponent(responseViewer.uiComponent());
+        messagePane.setResizeWeight(0.5);
 
         // 请求条目表格
         messageTable = new MessageTable(MessageTableModel.this, requestViewer, responseViewer);
@@ -57,15 +58,15 @@ public class MessageTableModel extends AbstractTableModel {
 
         TableRowSorter<DefaultTableModel> sorter = getDefaultTableModelTableRowSorter();
         messageTable.setRowSorter(sorter);
-        messageTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        messageTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         // 请求/响应文本框
         JScrollPane scrollPane = new JScrollPane(messageTable);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         splitPane.setLeftComponent(scrollPane);
-        splitPane.setRightComponent(messageTab);
+        splitPane.setRightComponent(messagePane);
     }
 
     private TableRowSorter<DefaultTableModel> getDefaultTableModelTableRowSorter() {
@@ -167,7 +168,7 @@ public class MessageTableModel extends AbstractTableModel {
             boolean metadataMatch = areCommentsEqual(newComment, existingComment) &&
                     newColor.equals(existingColor);
 
-            return (basicMatch || contentMatch) && metadataMatch;
+            return basicMatch && contentMatch && metadataMatch;
         } catch (Exception e) {
             return false;
         }

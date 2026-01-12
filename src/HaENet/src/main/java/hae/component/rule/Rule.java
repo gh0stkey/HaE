@@ -143,18 +143,15 @@ public class Rule extends JPanel {
         // 设置表头渲染器
         ruleTable.getTableHeader().setDefaultRenderer(new HeaderCheckBoxRenderer(ruleTable.getTableHeader().getDefaultRenderer()));
 
-        // 添加表头鼠标点击事件
+        // 使用mousePressed代替mouseClicked，响应更快且不会被排序器干扰
         ruleTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 1) {
-                    JTableHeader header = (JTableHeader) e.getSource();
-                    JTable table = header.getTable();
-                    int columnIndex = header.columnAtPoint(e.getPoint());
+            public void mousePressed(MouseEvent e) {
+                JTableHeader header = (JTableHeader) e.getSource();
+                int columnIndex = header.columnAtPoint(e.getPoint());
 
-                    if (columnIndex == 0) { // 点击的是Loaded列表头
-                        toggleAllRules(table);
-                    }
+                if (columnIndex == 0) { // 点击的是Loaded列表头
+                    toggleAllRules(header.getTable());
                 }
             }
         });
@@ -220,18 +217,19 @@ public class Rule extends JPanel {
 
         boolean newState = !allEnabled;
 
-        // 更新所有行的状态
+        // 直接修改底层数据，避免多次触发listener
+        Vector<Vector> dataVector = model.getDataVector();
         for (int i = 0; i < rowCount; i++) {
-            model.setValueAt(newState, i, 0);
+            dataVector.get(i).set(0, newState);
             // 通知规则处理器更新规则状态
-            ruleProcessor.changeRule(model.getDataVector().get(i), i, getCurrentTabTitle());
+            ruleProcessor.changeRule(dataVector.get(i), i, getCurrentTabTitle());
         }
+
+        // 一次性通知表格数据已更新
+        model.fireTableDataChanged();
 
         // 更新表头复选框状态
         updateHeaderCheckBoxState(model);
-
-        // 刷新表格和表头
-        ruleTable.repaint();
         ruleTable.getTableHeader().repaint();
     }
 
