@@ -2,6 +2,7 @@ package hae.component.rule;
 
 import burp.api.montoya.MontoyaApi;
 import hae.Config;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.rule.RuleProcessor;
 
@@ -25,10 +26,10 @@ public class Rule extends JPanel {
     private final JTabbedPane tabbedPane;
     private JCheckBox headerCheckBox;
 
-    public Rule(MontoyaApi api, ConfigLoader configLoader, Object[][] data, JTabbedPane tabbedPane) {
+    public Rule(MontoyaApi api, ConfigLoader configLoader, Object[][] data, JTabbedPane tabbedPane, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
-        this.ruleProcessor = new RuleProcessor(api, configLoader);
+        this.ruleProcessor = new RuleProcessor(api, configLoader, ruleRepository);
         this.tabbedPane = tabbedPane;
 
         initComponents(data);

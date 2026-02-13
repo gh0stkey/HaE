@@ -1,18 +1,16 @@
 package hae.instances.http.utils;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.persistence.PersistedList;
-import burp.api.montoya.persistence.PersistedObject;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import hae.Config;
 import hae.cache.DataCache;
+import hae.repository.DataRepository;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
-import hae.utils.DataManager;
 import hae.utils.string.HashCalculator;
-import hae.utils.string.StringProcessor;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -26,57 +24,14 @@ public class RegularMatcher {
     private static final Pattern formatIndexPattern = Pattern.compile("\\{(\\d+)}");
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final DataRepository dataRepository;
+    private final RuleRepository ruleRepository;
 
-    public RegularMatcher(MontoyaApi api, ConfigLoader configLoader) {
+    public RegularMatcher(MontoyaApi api, ConfigLoader configLoader, DataRepository dataRepository, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
-    }
-
-    public synchronized static void updateGlobalMatchCache(MontoyaApi api, String host, String name, List<String> dataList, boolean flag) {
-        // 添加到全局变量中，便于Databoard检索
-        if (!Objects.equals(host, "") && host != null) {
-            Config.globalDataMap.compute(host, (existingHost, existingMap) -> {
-                Map<String, List<String>> gRuleMap = Optional.ofNullable(existingMap).orElse(new ConcurrentHashMap<>());
-
-                gRuleMap.merge(name, new ArrayList<>(dataList), (existingList, newList) -> {
-                    Set<String> combinedSet = new LinkedHashSet<>(existingList);
-                    combinedSet.addAll(newList);
-                    return new ArrayList<>(combinedSet);
-                });
-
-                if (flag) {
-                    // 数据存储在BurpSuite空间内
-                    try {
-                        DataManager dataManager = new DataManager(api);
-                        PersistedObject persistedObject = PersistedObject.persistedObject();
-                        gRuleMap.forEach((kName, vList) -> {
-                            PersistedList<String> persistedList = PersistedList.persistedStringList();
-                            persistedList.addAll(vList);
-                            persistedObject.setStringList(kName, persistedList);
-                        });
-                        dataManager.putData("data", host, persistedObject);
-                    } catch (Exception ignored) {
-                    }
-                }
-
-                return gRuleMap;
-            });
-
-            String[] splitHost = host.split("\\.");
-            String onlyHost = host.split(":")[0];
-
-            String anyHost = (splitHost.length > 2 && !StringProcessor.matchHostIsIp(onlyHost)) ? StringProcessor.replaceFirstOccurrence(onlyHost, splitHost[0], "*") : "";
-
-            if (!Config.globalDataMap.containsKey(anyHost) && !anyHost.isEmpty()) {
-                // 添加通配符Host，实际数据从查询哪里将所有数据提取
-                Config.globalDataMap.put(anyHost, new HashMap<>());
-            }
-
-            if (!Config.globalDataMap.containsKey("*")) {
-                // 添加通配符全匹配，同上
-                Config.globalDataMap.put("*", new HashMap<>());
-            }
-        }
+        this.dataRepository = dataRepository;
+        this.ruleRepository = ruleRepository;
     }
 
     public Map<String, Map<String, Object>> performRegexMatching(String host, String type, String message, String header, String body) {
@@ -112,8 +67,8 @@ public class RegularMatcher {
     private Map<String, Map<String, Object>> applyMatchingRules(String host, String type, String message, String firstLine, String header, String body) {
         Map<String, Map<String, Object>> finalMap = new HashMap<>();
 
-        Config.globalRules.keySet().parallelStream().forEach(i -> {
-            for (Object[] objects : Config.globalRules.get(i)) {
+        ruleRepository.getAllGroupNames().parallelStream().forEach(i -> {
+            for (Object[] objects : ruleRepository.getRulesByGroup(i)) {
                 String matchContent = "";
                 // 遍历获取规则
                 List<String> result;
@@ -182,7 +137,7 @@ public class RegularMatcher {
                         String nameAndSize = String.format("%s (%s)", name, result.size());
                         finalMap.put(nameAndSize, tmpMap);
 
-                        updateGlobalMatchCache(api, host, name, result, true);
+                        dataRepository.mergeData(host, name, result, true);
                     }
                 }
             }

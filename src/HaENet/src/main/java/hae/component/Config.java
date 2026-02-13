@@ -1,11 +1,9 @@
 package hae.component;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.core.Registration;
 import hae.component.board.message.MessageTableModel;
 import hae.component.rule.Rules;
-import hae.instances.http.HttpMessageActiveHandler;
-import hae.instances.http.HttpMessagePassiveHandler;
+import hae.service.HandlerRegistry;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
 
@@ -28,20 +26,17 @@ public class Config extends JPanel {
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final Rules rules;
-
-    private Registration activeHandler;
-    private Registration passiveHandler;
+    private final HandlerRegistry handlerRegistry;
 
     private boolean isLoadingData = false;
 
-    public Config(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel, Rules rules) {
+    public Config(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel, Rules rules,
+                  HandlerRegistry handlerRegistry) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.rules = rules;
-
-        this.activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
-        this.passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
+        this.handlerRegistry = handlerRegistry;
 
         initComponents();
     }
@@ -398,21 +393,9 @@ public class Config extends JPanel {
         configLoader.setMode(selected ? "true" : "false");
 
         if (checkBox.isSelected()) {
-            if (hae.Config.proVersionStatus && passiveHandler.isRegistered()) {
-                passiveHandler.deregister();
-            }
-
-            if (!activeHandler.isRegistered()) {
-                activeHandler = api.http().registerHttpHandler(new HttpMessageActiveHandler(api, configLoader, messageTableModel));
-            }
+            handlerRegistry.switchToActiveMode();
         } else {
-            if (hae.Config.proVersionStatus && !passiveHandler.isRegistered()) {
-                passiveHandler = api.scanner().registerScanCheck(new HttpMessagePassiveHandler(api, configLoader, messageTableModel));
-            }
-
-            if (activeHandler.isRegistered()) {
-                activeHandler.deregister();
-            }
+            handlerRegistry.switchToPassiveMode();
         }
     }
 

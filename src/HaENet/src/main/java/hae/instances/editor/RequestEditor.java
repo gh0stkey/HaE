@@ -12,6 +12,8 @@ import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
 import hae.Config;
 import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
+import hae.repository.DataRepository;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
@@ -25,10 +27,15 @@ import java.util.Map;
 public class RequestEditor implements HttpRequestEditorProvider {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final DataRepository dataRepository;
+    private final RuleRepository ruleRepository;
 
-    public RequestEditor(MontoyaApi api, ConfigLoader configLoader) {
+    public RequestEditor(MontoyaApi api, ConfigLoader configLoader,
+                         DataRepository dataRepository, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
+        this.dataRepository = dataRepository;
+        this.ruleRepository = ruleRepository;
     }
 
     public static boolean isListHasData(List<Map<String, String>> dataList) {
@@ -55,7 +62,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
 
     @Override
     public ExtensionProvidedHttpRequestEditor provideHttpRequestEditor(EditorCreationContext editorCreationContext) {
-        return new Editor(api, configLoader, editorCreationContext);
+        return new Editor(api, configLoader, dataRepository, ruleRepository, editorCreationContext);
     }
 
     private static class Editor implements ExtensionProvidedHttpRequestEditor {
@@ -68,12 +75,14 @@ public class RequestEditor implements HttpRequestEditorProvider {
         private HttpRequestResponse requestResponse;
         private List<Map<String, String>> dataList;
 
-        public Editor(MontoyaApi api, ConfigLoader configLoader, EditorCreationContext creationContext) {
+        public Editor(MontoyaApi api, ConfigLoader configLoader,
+                      DataRepository dataRepository, RuleRepository ruleRepository,
+                      EditorCreationContext creationContext) {
             this.api = api;
             this.configLoader = configLoader;
             this.httpUtils = new HttpUtils(api, configLoader);
             this.creationContext = creationContext;
-            this.messageProcessor = new MessageProcessor(api, configLoader);
+            this.messageProcessor = new MessageProcessor(api, configLoader, dataRepository, ruleRepository);
         }
 
         @Override

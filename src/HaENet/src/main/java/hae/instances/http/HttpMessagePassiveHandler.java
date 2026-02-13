@@ -11,6 +11,8 @@ import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.http.utils.MessageProcessor;
+import hae.repository.DataRepository;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
@@ -32,12 +34,13 @@ public class HttpMessagePassiveHandler implements ScanCheck {
     private final MessageTableModel messageTableModel;
     private final MessageProcessor messageProcessor;
 
-    public HttpMessagePassiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
+    public HttpMessagePassiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
+                                     DataRepository dataRepository, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
-        this.messageProcessor = new MessageProcessor(api, configLoader);
+        this.messageProcessor = new MessageProcessor(api, configLoader, dataRepository, ruleRepository);
     }
 
     @Override
