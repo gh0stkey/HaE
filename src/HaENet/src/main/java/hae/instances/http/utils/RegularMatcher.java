@@ -156,9 +156,9 @@ public class RegularMatcher {
                             break;
                     }
 
-                    // 匹配内容为空则跳出
+                    // 匹配内容为空则跳过当前规则，继续下一条规则
                     if (matchContent.isBlank()) {
-                        break;
+                        continue;
                     }
 
                     try {
