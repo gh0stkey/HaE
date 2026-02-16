@@ -1,7 +1,7 @@
 package hae.component.rule;
 
 import burp.api.montoya.MontoyaApi;
-import hae.Config;
+import hae.AppConstants;
 import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.rule.RuleProcessor;
@@ -15,7 +15,7 @@ public class Rules extends JTabbedPane {
     private final RuleRepository ruleRepository;
     private final RuleProcessor ruleProcessor;
     private final JTextField ruleGroupNameTextField;
-    private ConfigLoader configLoader;
+    private final ConfigLoader configLoader;
     private Component tabComponent;
     private int selectedIndex;
     private final Action cancelActionPerformed = new AbstractAction() {
@@ -106,7 +106,7 @@ public class Rules extends JTabbedPane {
                                 e.consume();
                                 // 直接创建新标签
                                 String newTitle = ruleProcessor.newRule();
-                                Rule newRule = new Rule(api, configLoader, Config.ruleTemplate, Rules.this, ruleRepository);
+                                Rule newRule = new Rule(api, configLoader, AppConstants.ruleTemplate, Rules.this, ruleRepository);
                                 insertTab(newTitle, null, newRule, null, getTabCount() - 1);
                                 setSelectedIndex(getTabCount() - 2);
                             } else {
@@ -137,7 +137,6 @@ public class Rules extends JTabbedPane {
     public void reloadRuleGroup() {
         removeAll();
 
-        this.configLoader = new ConfigLoader(api);
         ruleRepository.setAll(configLoader.getRules());
         ruleRepository.getAllGroupNames().forEach(i -> addTab(i, new Rule(api, configLoader, ruleRepository.getRulesByGroup(i), this, ruleRepository)));
         addTab("...", null);
@@ -156,7 +155,4 @@ public class Rules extends JTabbedPane {
         }
     }
 }
-
-
-
 

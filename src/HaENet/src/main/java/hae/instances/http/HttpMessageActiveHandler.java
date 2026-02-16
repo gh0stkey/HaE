@@ -94,10 +94,20 @@ public class HttpMessageActiveHandler implements HttpHandler {
                 }
             } catch (Exception e) {
                 api.logging().logToError("handleHttpResponseReceived: " + e.getMessage());
+            } finally {
+                cleanupThreadLocals();
             }
+        } else {
+            cleanupThreadLocals();
         }
 
         return ResponseReceivedAction.continueWith(httpResponseReceived, annotations);
+    }
+
+    private void cleanupThreadLocals() {
+        host.remove();
+        colorList.remove();
+        commentList.remove();
     }
 
     private void setColorAndCommentList(List<Map<String, String>> result) {

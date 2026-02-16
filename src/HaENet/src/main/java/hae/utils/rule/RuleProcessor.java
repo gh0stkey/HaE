@@ -1,11 +1,12 @@
 package hae.utils.rule;
 
 import burp.api.montoya.MontoyaApi;
+import hae.AppConstants;
 import hae.cache.DataCache;
 import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.rule.model.Group;
-import hae.utils.rule.model.Info;
+import hae.utils.rule.model.RuleDefinition;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
@@ -39,21 +40,9 @@ public class RuleProcessor {
 
         List<Group> ruleGroupList = new ArrayList<>();
 
-        ruleRepository.getAll().forEach((k, v) -> {
-            List<Info> ruleList = Arrays.stream(v)
-                    .map(objects -> new Info(
-                            (boolean) objects[0],
-                            (String) objects[1],
-                            (String) objects[2],
-                            (String) objects[3],
-                            (String) objects[4],
-                            (String) objects[5],
-                            (String) objects[6],
-                            (String) objects[7],
-                            (boolean) objects[8]))
-                    .collect(Collectors.toList());
-            ruleGroupList.add(new Group(k, ruleList));
-        });
+        ruleRepository.getAll().forEach((k, v) ->
+                ruleGroupList.add(new Group(k, v))
+        );
 
         List<Map<String, Object>> outputGroupsMap = ruleGroupList.stream()
                 .map(Group::getFields)
@@ -62,20 +51,21 @@ public class RuleProcessor {
         Map<String, Object> outputMap = new LinkedHashMap<>();
         outputMap.put("rules", outputGroupsMap);
 
-        File f = new File(configLoader.getRulesFilePath());
-        try (Writer ws = new OutputStreamWriter(Files.newOutputStream(f.toPath()), StandardCharsets.UTF_8)) {
-            yaml.dump(outputMap, ws);
-        } catch (Exception ignored) {
+        File rulesFile = new File(configLoader.getRulesFilePath());
+        try (Writer writer = new OutputStreamWriter(Files.newOutputStream(rulesFile.toPath()), StandardCharsets.UTF_8)) {
+            yaml.dump(outputMap, writer);
+        } catch (Exception e) {
+            api.logging().logToError("Failed to save rules file: " + e.getMessage());
         }
     }
 
-    public void changeRule(Vector data, int select, String type) {
-        ruleRepository.updateRule(type, select, data.toArray());
+    public void changeRule(RuleDefinition rule, int select, String type) {
+        ruleRepository.updateRule(type, select, rule);
         this.rulesFormatAndSave();
     }
 
-    public void addRule(Vector data, String type) {
-        ruleRepository.addRule(type, data.toArray());
+    public void addRule(RuleDefinition rule, String type) {
+        ruleRepository.addRule(type, rule);
         this.rulesFormatAndSave();
     }
 
@@ -89,8 +79,8 @@ public class RuleProcessor {
         this.rulesFormatAndSave();
     }
 
-    public void deleteRuleGroup(String Rules) {
-        ruleRepository.removeGroup(Rules);
+    public void deleteRuleGroup(String groupName) {
+        ruleRepository.removeGroup(groupName);
         this.rulesFormatAndSave();
     }
 
@@ -102,7 +92,7 @@ public class RuleProcessor {
             i++;
         }
 
-        ruleRepository.putGroup(name + i, hae.Config.ruleTemplate);
+        ruleRepository.putGroup(name + i, new ArrayList<>(AppConstants.ruleTemplate));
         this.rulesFormatAndSave();
         return name + i;
     }

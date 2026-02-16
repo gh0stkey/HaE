@@ -30,12 +30,14 @@ public class HandlerRegistry {
     public void registerAll(boolean proVersion) {
         this.activeHandler = api.http().registerHttpHandler(
                 new HttpMessageActiveHandler(api, configLoader, messageTableModel, dataRepository, ruleRepository));
-        this.passiveHandler = api.scanner().registerScanCheck(
-                new HttpMessagePassiveHandler(api, configLoader, messageTableModel, dataRepository, ruleRepository));
+        if (proVersion) {
+            this.passiveHandler = api.scanner().registerScanCheck(
+                    new HttpMessagePassiveHandler(api, configLoader, messageTableModel, dataRepository, ruleRepository));
+        }
     }
 
     public void switchToActiveMode() {
-        if (hae.Config.proVersionStatus && passiveHandler.isRegistered()) {
+        if (hae.AppConstants.proVersionStatus && passiveHandler != null && passiveHandler.isRegistered()) {
             passiveHandler.deregister();
         }
 
@@ -46,7 +48,7 @@ public class HandlerRegistry {
     }
 
     public void switchToPassiveMode() {
-        if (hae.Config.proVersionStatus && !passiveHandler.isRegistered()) {
+        if (hae.AppConstants.proVersionStatus && (passiveHandler == null || !passiveHandler.isRegistered())) {
             passiveHandler = api.scanner().registerScanCheck(
                     new HttpMessagePassiveHandler(api, configLoader, messageTableModel, dataRepository, ruleRepository));
         }

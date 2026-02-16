@@ -9,7 +9,6 @@ import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.HttpRequestEditorProvider;
-import hae.Config;
 import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.repository.DataRepository;
@@ -20,7 +19,6 @@ import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -36,28 +34,6 @@ public class RequestEditor implements HttpRequestEditorProvider {
         this.configLoader = configLoader;
         this.dataRepository = dataRepository;
         this.ruleRepository = ruleRepository;
-    }
-
-    public static boolean isListHasData(List<Map<String, String>> dataList) {
-        if (dataList != null && !dataList.isEmpty()) {
-            Map<String, String> dataMap = dataList.get(0);
-            return dataMap != null && !dataMap.isEmpty();
-        }
-        return false;
-    }
-
-    public static void generateTabbedPaneFromResultMap(MontoyaApi api, ConfigLoader configLoader, JTabbedPane tabbedPane, List<Map<String, String>> result) {
-        tabbedPane.removeAll();
-        if (result != null && !result.isEmpty()) {
-            Map<String, String> dataMap = result.get(0);
-            if (dataMap != null && !dataMap.isEmpty()) {
-                dataMap.keySet().forEach(i -> {
-                    String[] extractData = dataMap.get(i).split(Config.boundary);
-                    Datatable dataPanel = new Datatable(api, configLoader, i, Arrays.asList(extractData));
-                    tabbedPane.addTab(i, dataPanel);
-                });
-            }
-        }
     }
 
     @Override
@@ -93,7 +69,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
         @Override
         public void setRequestResponse(HttpRequestResponse requestResponse) {
             this.requestResponse = requestResponse;
-            generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
+            EditorUtils.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
         }
 
         @Override
@@ -108,7 +84,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
 
                         if (!matches) {
                             this.dataList = messageProcessor.processRequest("", request, false);
-                            return isListHasData(this.dataList);
+                            return EditorUtils.isListHasData(this.dataList);
                         }
                     }
                 } catch (Exception ignored) {

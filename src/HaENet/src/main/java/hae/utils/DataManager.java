@@ -11,25 +11,20 @@ import hae.component.board.message.MessageTableModel;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class DataManager {
     private final MontoyaApi api;
     private final Persistence persistence;
+    private final PersistenceHelper persistenceHelper;
 
     public DataManager(MontoyaApi api) {
         this.api = api;
         this.persistence = api.persistence();
+        this.persistenceHelper = new PersistenceHelper(api.persistence());
     }
 
-    public synchronized void putData(String dataType, String dataName, PersistedObject persistedObject) {
-        if (persistence.extensionData().getChildObject(dataName) != null) {
-            persistence.extensionData().deleteChildObject(dataName);
-        }
-        persistence.extensionData().setChildObject(dataName, persistedObject);
-
-        saveIndex(dataType, dataName);
+    public void putData(String dataType, String dataName, PersistedObject persistedObject) {
+        persistenceHelper.putData(dataType, dataName, persistedObject);
     }
 
     public synchronized void loadData(MessageTableModel messageTableModel) {
@@ -38,22 +33,6 @@ public class DataManager {
 
         // 从索引加载消息数据
         loadMessageData(messageIndex, messageTableModel);
-    }
-
-    private void saveIndex(String indexName, String indexValue) {
-        PersistedList<String> indexList = persistence.extensionData().getStringList(indexName);
-
-        if (indexList != null && !indexList.isEmpty()) {
-            persistence.extensionData().deleteStringList(indexName);
-        } else if (indexList == null) {
-            indexList = PersistedList.persistedStringList();
-        }
-
-        if (!indexList.contains(indexValue)) {
-            indexList.add(indexValue);
-        }
-
-        persistence.extensionData().setStringList(indexName, indexList);
     }
 
     private void loadMessageData(PersistedList<String> messageIndex, MessageTableModel messageTableModel) {
@@ -72,19 +51,13 @@ public class DataManager {
         }
 
         final int batchSize = 2000;
-        final int threadCount = Math.max(8, Runtime.getRuntime().availableProcessors() * 2);
-        ExecutorService executorService = Executors.newWorkStealingPool(threadCount);
 
-        try {
-            // 分批处理
-            for (int i = 0; i < indexList.size(); i += batchSize) {
-                int endIndex = Math.min(i + batchSize, indexList.size());
-                List<String> batch = indexList.subList(i, endIndex);
+        // 分批处理
+        for (int i = 0; i < indexList.size(); i += batchSize) {
+            int endIndex = Math.min(i + batchSize, indexList.size());
+            List<String> batch = indexList.subList(i, endIndex);
 
-                processBatch(batch, messageTableModel);
-            }
-        } finally {
-            executorService.shutdown();
+            processBatch(batch, messageTableModel);
         }
     }
 

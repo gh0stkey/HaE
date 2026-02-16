@@ -24,7 +24,7 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "4.3.4";
+        String version = "4.4";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
@@ -43,11 +43,11 @@ public class HaE implements BurpExtension {
         MessageTableModel messageTableModel = new MessageTableModel(api, configLoader, ruleRepository);
 
         // 设置BurpSuite专业版状态
-        Config.proVersionStatus = getBurpSuiteProStatus(api);
+        AppConstants.proVersionStatus = getBurpSuiteProStatus(api);
 
         // 创建 HandlerRegistry（替代 component/Config 中的 handler 管理）
         HandlerRegistry handlerRegistry = new HandlerRegistry(api, configLoader, messageTableModel, dataRepository, ruleRepository);
-        handlerRegistry.registerAll(Config.proVersionStatus);
+        handlerRegistry.registerAll(AppConstants.proVersionStatus);
 
         // 注册Tab页（用于查询数据）
         api.userInterface().registerSuiteTab("HaE",
@@ -73,18 +73,20 @@ public class HaE implements BurpExtension {
 
         api.extension().registerUnloadingHandler(() -> {
             // 卸载清空数据
+            messageTableModel.dispose();
             dataRepository.clear();
             DataCache.clear();
             handlerRegistry.unregisterAll();
         });
     }
 
-    private Boolean getBurpSuiteProStatus(MontoyaApi api) {
+    private boolean getBurpSuiteProStatus(MontoyaApi api) {
         boolean burpSuiteProStatus = false;
 
         try {
             burpSuiteProStatus = api.burpSuite().version().edition() == BurpSuiteEdition.PROFESSIONAL;
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            api.logging().logToError("Failed to detect Burp Suite edition: " + e.getMessage());
         }
 
         return burpSuiteProStatus;

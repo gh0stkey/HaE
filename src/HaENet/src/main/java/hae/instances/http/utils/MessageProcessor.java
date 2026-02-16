@@ -4,7 +4,7 @@ import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
-import hae.Config;
+import hae.AppConstants;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
@@ -22,18 +22,19 @@ public class MessageProcessor {
         this.regularMatcher = new RegularMatcher(api, configLoader, dataRepository, ruleRepository);
     }
 
-    public List<Map<String, String>> processMessage(String host, String message, boolean flag) {
+    public List<Map<String, String>> processMessage(String host, String message, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
             obj = regularMatcher.performRegexMatching(host, "any", message, message, message);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            api.logging().logToError("processMessage error: " + e.getMessage());
         }
 
-        return getDataList(obj, flag);
+        return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processResponse(String host, HttpResponse httpResponse, boolean flag) {
+    public List<Map<String, String>> processResponse(String host, HttpResponse httpResponse, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
@@ -44,13 +45,14 @@ public class MessageProcessor {
                     .collect(Collectors.joining("\r\n"));
 
             obj = regularMatcher.performRegexMatching(host, "response", response, header, body);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            api.logging().logToError("processResponse error: " + e.getMessage());
         }
 
-        return getDataList(obj, flag);
+        return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processRequest(String host, HttpRequest httpRequest, boolean flag) {
+    public List<Map<String, String>> processRequest(String host, HttpRequest httpRequest, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
@@ -61,10 +63,11 @@ public class MessageProcessor {
                     .collect(Collectors.joining("\r\n"));
 
             obj = regularMatcher.performRegexMatching(host, "request", request, header, body);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            api.logging().logToError("processRequest error: " + e.getMessage());
         }
 
-        return getDataList(obj, flag);
+        return getDataList(obj, highlightAction);
     }
 
     private List<Map<String, String>> getDataList(Map<String, Map<String, Object>> obj, boolean actionFlag) {
@@ -124,7 +127,7 @@ public class MessageProcessor {
 
     public List<Integer> retrieveColorIndices(List<String> colors) {
         List<Integer> indices = new ArrayList<>();
-        String[] colorArray = Config.color;
+        String[] colorArray = AppConstants.color;
         int size = colorArray.length;
 
         for (String color : colors) {
@@ -140,7 +143,7 @@ public class MessageProcessor {
 
     private String upgradeColors(List<Integer> colorList) {
         if (colorList == null || colorList.isEmpty()) {
-            return Config.color[0];
+            return AppConstants.color[0];
         }
 
         // 创建副本避免修改原始数据
@@ -162,10 +165,10 @@ public class MessageProcessor {
 
         // 处理负数索引情况
         if (finalIndex < 0) {
-            return Config.color[0];
+            return AppConstants.color[0];
         }
 
-        return Config.color[finalIndex];
+        return AppConstants.color[finalIndex];
     }
 
     public String retrieveFinalColor(List<Integer> colorList) {

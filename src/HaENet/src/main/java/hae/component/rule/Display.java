@@ -1,6 +1,6 @@
 package hae.component.rule;
 
-import hae.Config;
+import hae.AppConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,10 +37,10 @@ public class Display extends JPanel {
         formatTextField = addTextField(3, c);
 
         addLabel("Scope:", 4, c);
-        scopeComboBox = addComboBox(Config.scope, 4, c);
+        scopeComboBox = addComboBox(AppConstants.scope, 4, c);
 
         addLabel("Engine:", 5, c);
-        engineComboBox = addComboBox(Config.engine, 5, c);
+        engineComboBox = addComboBox(AppConstants.engine, 5, c);
         engineComboBox.addActionListener(e -> {
             boolean isNfa = "nfa".equals(engineComboBox.getSelectedItem().toString());
             formatTextField.setEnabled(isNfa);
@@ -48,7 +48,7 @@ public class Display extends JPanel {
         });
 
         addLabel("Color:", 6, c);
-        colorComboBox = addComboBox(Config.color, 6, c);
+        colorComboBox = addComboBox(AppConstants.color, 6, c);
 
         addLabel("Sensitive:", 7, c);
         sensitiveComboBox = addComboBox(new Boolean[]{true, false}, 7, c);

@@ -25,13 +25,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
-    private static Boolean isMatchHost = false;
+    private boolean isMatchHost = false;
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final DataRepository dataRepository;
-    private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-    private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
+    private final DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
+    private final JComboBox<String> hostComboBox = new JComboBox<>(comboBoxModel);
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
     private JSplitPane splitPane;
@@ -83,7 +83,14 @@ public class Databoard extends JPanel {
                 selectedTitle = dataTabbedPane.getTitleAt(selectedIndex);
             }
 
-            messageTableModel.applyCommentFilter(StringProcessor.extractItemName(selectedTitle));
+            String finalTitle = selectedTitle;
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    messageTableModel.applyCommentFilter(StringProcessor.extractItemName(finalTitle));
+                    return null;
+                }
+            }.execute();
         });
 
         actionButton.addActionListener(e -> {
@@ -127,15 +134,19 @@ public class Databoard extends JPanel {
     }
 
     private void resizePanel() {
+        if (messageTable == null) {
+            return;
+        }
         splitPane.setDividerLocation(0.4);
         TableColumnModel columnModel = messageTable.getColumnModel();
         int totalWidth = (int) (getWidth() * 0.6);
-        columnModel.getColumn(0).setPreferredWidth((int) (totalWidth * 0.1));
-        columnModel.getColumn(1).setPreferredWidth((int) (totalWidth * 0.3));
+        columnModel.getColumn(0).setPreferredWidth((int) (totalWidth * 0.05));
+        columnModel.getColumn(1).setPreferredWidth((int) (totalWidth * 0.08));
         columnModel.getColumn(2).setPreferredWidth((int) (totalWidth * 0.3));
-        columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.1));
+        columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.27));
         columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
         columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
+        columnModel.getColumn(6).setPreferredWidth((int) (totalWidth * 0.1));
     }
 
     private void setProgressBar(boolean status, String message, int progress) {
@@ -253,7 +264,7 @@ public class Databoard extends JPanel {
                             List<String> mergedList = new ArrayList<>(selectedDataMap.get(ruleKey));
                             mergedList.addAll(dataList);
                             // 使用HashSet去重
-                            HashSet<String> uniqueSet = new HashSet<>(mergedList);
+                            Set<String> uniqueSet = new HashSet<>(mergedList);
                             selectedDataMap.put(ruleKey, new ArrayList<>(uniqueSet));
                         } else {
                             selectedDataMap.put(ruleKey, new ArrayList<>(dataList));
@@ -312,21 +323,25 @@ public class Databoard extends JPanel {
         applyHostFilterWorker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
-                RowFilter<Object, Object> rowFilter = new RowFilter<>() {
-                    public boolean include(Entry<?, ?> entry) {
-                        if (cleanedText.equals("*")) {
-                            return true;
-                        } else {
-                            String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
-                            return StringProcessor.matchesHostPattern(host, filterText);
-                        }
-                    }
-                };
-
-                sorter.setRowFilter(rowFilter);
                 messageTableModel.applyHostFilter(filterText);
-
                 return null;
+            }
+
+            @Override
+            protected void done() {
+                if (!isCancelled()) {
+                    RowFilter<Object, Object> rowFilter = new RowFilter<>() {
+                        public boolean include(Entry<?, ?> entry) {
+                            if (cleanedText.equals("*")) {
+                                return true;
+                            } else {
+                                String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
+                                return StringProcessor.matchesHostPattern(host, filterText);
+                            }
+                        }
+                    };
+                    sorter.setRowFilter(rowFilter);
+                }
             }
         };
 
@@ -401,7 +416,7 @@ public class Databoard extends JPanel {
                             String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
                             Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
                             datatablePanel.setTableListener(messageTableModel);
-                            insertTabSorted(dataTabbedPane, tabTitle, datatablePanel);
+                            Databoard.insertTabSorted(dataTabbedPane, tabTitle, datatablePanel);
                         }
 
                         JSplitPane messageSplitPane = messageTableModel.getSplitPane();
@@ -424,29 +439,29 @@ public class Databoard extends JPanel {
             }
         }
 
-        public static void insertTabSorted(JTabbedPane tabbedPane, String title, Component component) {
-            int insertIndex = 0;
-            int tabCount = tabbedPane.getTabCount();
-
-            // 使用 Collator 实现更友好的语言排序（支持中文、特殊字符等）
-            Collator collator = Collator.getInstance(Locale.getDefault());
-            collator.setStrength(Collator.PRIMARY); // 忽略大小写和重音
-
-            for (int i = 0; i < tabCount; i++) {
-                String existingTitle = tabbedPane.getTitleAt(i);
-                if (collator.compare(existingTitle, title) > 0) {
-                    insertIndex = i;
-                    break;
-                }
-                insertIndex = i + 1;
-            }
-
-            tabbedPane.insertTab(title, null, component, null, insertIndex);
-        }
-
         // 提供一个公共方法来发布进度
         public void publishProgress(int progress) {
             publish(progress);
         }
+    }
+
+    private static void insertTabSorted(JTabbedPane tabbedPane, String title, Component component) {
+        int insertIndex = 0;
+        int tabCount = tabbedPane.getTabCount();
+
+        // 使用 Collator 实现更友好的语言排序（支持中文、特殊字符等）
+        Collator collator = Collator.getInstance(Locale.getDefault());
+        collator.setStrength(Collator.PRIMARY); // 忽略大小写和重音
+
+        for (int i = 0; i < tabCount; i++) {
+            String existingTitle = tabbedPane.getTitleAt(i);
+            if (collator.compare(existingTitle, title) > 0) {
+                insertIndex = i;
+                break;
+            }
+            insertIndex = i + 1;
+        }
+
+        tabbedPane.insertTab(title, null, component, null, insertIndex);
     }
 }

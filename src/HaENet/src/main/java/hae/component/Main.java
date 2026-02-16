@@ -46,21 +46,21 @@ public class Main extends JPanel {
         JTabbedPane mainTabbedPane = new JTabbedPane();
 
         // 新增Logo
-        JTabbedPane HaETabbedPane = new JTabbedPane();
-        boolean isDarkBg = UIEnhancer.isDarkColor(HaETabbedPane.getBackground());
-        HaETabbedPane.addTab("", getImageIcon(isDarkBg), mainTabbedPane);
+        JTabbedPane haeTabbedPane = new JTabbedPane();
+        boolean isDarkBg = UIEnhancer.isDarkColor(haeTabbedPane.getBackground());
+        haeTabbedPane.addTab("", getImageIcon(isDarkBg), mainTabbedPane);
         // 中文Slogan：赋能白帽，高效作战
-        HaETabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations. ", null);
-        HaETabbedPane.setEnabledAt(1, false);
-        HaETabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
+        haeTabbedPane.addTab(" Highlighter and Extractor - Empower ethical hacker for efficient operations. ", null);
+        haeTabbedPane.setEnabledAt(1, false);
+        haeTabbedPane.addPropertyChangeListener("background", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent e) {
-                boolean isDarkBg = UIEnhancer.isDarkColor(HaETabbedPane.getBackground());
-                HaETabbedPane.setIconAt(0, getImageIcon(isDarkBg));
+                boolean isDarkBg = UIEnhancer.isDarkColor(haeTabbedPane.getBackground());
+                haeTabbedPane.setIconAt(0, getImageIcon(isDarkBg));
             }
         });
 
-        add(HaETabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+        add(haeTabbedPane, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                 new Insets(0, 0, 0, 0), 0, 0));
 

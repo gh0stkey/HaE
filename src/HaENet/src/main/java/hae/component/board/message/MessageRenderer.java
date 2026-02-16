@@ -36,14 +36,16 @@ public class MessageRenderer extends DefaultTableCellRenderer {
 
         // 添加边界检查以防止IndexOutOfBoundsException
         int modelRow = table.convertRowIndexToModel(row);
-        if (modelRow < 0 || modelRow >= log.size()) {
-            // 如果索引无效，返回默认渲染组件（使用默认背景色）
-            component.setBackground(Color.WHITE);
-            component.setForeground(Color.BLACK);
-            return component;
+        MessageEntry messageEntry;
+        synchronized (log) {
+            if (modelRow < 0 || modelRow >= log.size()) {
+                // 如果索引无效，返回默认渲染组件（使用默认背景色）
+                component.setBackground(Color.WHITE);
+                component.setForeground(Color.BLACK);
+                return component;
+            }
+            messageEntry = log.get(modelRow);
         }
-
-        MessageEntry messageEntry = log.get(modelRow);
 
         // 设置颜色
         String colorByLog = messageEntry.getColor();

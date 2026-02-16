@@ -64,7 +64,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
         @Override
         public void setMessage(WebSocketMessage webSocketMessage) {
             this.message = webSocketMessage.payload();
-            RequestEditor.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
+            EditorUtils.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
         }
 
         @Override
@@ -72,7 +72,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
             String websocketMessage = webSocketMessage.payload().toString();
             if (!websocketMessage.isEmpty()) {
                 this.dataList = messageProcessor.processMessage("", websocketMessage, false);
-                return RequestEditor.isListHasData(this.dataList);
+                return EditorUtils.isListHasData(this.dataList);
             }
             return false;
         }

@@ -5,6 +5,7 @@ import burp.api.montoya.persistence.PersistedList;
 import burp.api.montoya.persistence.PersistedObject;
 import burp.api.montoya.persistence.Persistence;
 import hae.repository.DataRepository;
+import hae.utils.PersistenceHelper;
 import hae.utils.string.StringProcessor;
 
 import java.util.*;
@@ -15,10 +16,12 @@ public class DataRepositoryImpl implements DataRepository {
     private final ConcurrentHashMap<String, Map<String, List<String>>> dataMap = new ConcurrentHashMap<>();
     private final MontoyaApi api;
     private final Persistence persistence;
+    private final PersistenceHelper persistenceHelper;
 
     public DataRepositoryImpl(MontoyaApi api) {
         this.api = api;
         this.persistence = api.persistence();
+        this.persistenceHelper = new PersistenceHelper(api.persistence());
     }
 
     @Override
@@ -48,7 +51,7 @@ public class DataRepositoryImpl implements DataRepository {
 
     @Override
     public Map<String, Map<String, List<String>>> getAll() {
-        return dataMap;
+        return Collections.unmodifiableMap(dataMap);
     }
 
     @Override
@@ -74,8 +77,9 @@ public class DataRepositoryImpl implements DataRepository {
                         persistedList.addAll(vList);
                         persistedObject.setStringList(kName, persistedList);
                     });
-                    putData("data", host, persistedObject);
-                } catch (Exception ignored) {
+                    persistenceHelper.putData("data", host, persistedObject);
+                } catch (Exception e) {
+                    api.logging().logToError("Failed to persist data for host " + host + ": " + e.getMessage());
                 }
             }
 
@@ -153,34 +157,10 @@ public class DataRepositoryImpl implements DataRepository {
                 try {
                     dataObj.stringListKeys().forEach(dataKey ->
                             mergeData(index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    api.logging().logToError("Failed to load persisted data for " + index + ": " + e.getMessage());
                 }
             });
         }
-    }
-
-    private synchronized void putData(String dataType, String dataName, PersistedObject persistedObject) {
-        if (persistence.extensionData().getChildObject(dataName) != null) {
-            persistence.extensionData().deleteChildObject(dataName);
-        }
-        persistence.extensionData().setChildObject(dataName, persistedObject);
-
-        saveIndex(dataType, dataName);
-    }
-
-    private void saveIndex(String indexName, String indexValue) {
-        PersistedList<String> indexList = persistence.extensionData().getStringList(indexName);
-
-        if (indexList != null && !indexList.isEmpty()) {
-            persistence.extensionData().deleteStringList(indexName);
-        } else if (indexList == null) {
-            indexList = PersistedList.persistedStringList();
-        }
-
-        if (!indexList.contains(indexValue)) {
-            indexList.add(indexValue);
-        }
-
-        persistence.extensionData().setStringList(indexName, indexList);
     }
 }

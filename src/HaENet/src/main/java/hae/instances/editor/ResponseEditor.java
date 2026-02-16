@@ -70,7 +70,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
         @Override
         public void setRequestResponse(HttpRequestResponse requestResponse) {
             this.requestResponse = requestResponse;
-            RequestEditor.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
+            EditorUtils.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
         }
 
         @Override
@@ -94,7 +94,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
 
                 if (!matches) {
                     this.dataList = messageProcessor.processResponse("", response, false);
-                    return RequestEditor.isListHasData(this.dataList);
+                    return EditorUtils.isListHasData(this.dataList);
                 }
             }
 

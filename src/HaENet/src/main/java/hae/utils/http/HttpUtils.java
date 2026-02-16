@@ -49,7 +49,15 @@ public class HttpUtils {
                 isExcludeStatus = statusList.contains(String.valueOf(response.statusCode()));
             }
 
-            retStatus = isExcludeSuffix || isBlockHost || isToolScope || isExcludeStatus;
+            boolean isExceedSize = false;
+            String limitSize = configLoader.getLimitSize();
+            if (!limitSize.equals("0") && !limitSize.isBlank()) {
+                int limitMb = Integer.parseInt(limitSize);
+                int responseSizeMb = response.toByteArray().length() / 1024 / 1024;
+                isExceedSize = responseSizeMb >= limitMb;
+            }
+
+            retStatus = isExcludeSuffix || isBlockHost || isToolScope || isExcludeStatus || isExceedSize;
         } catch (Exception ignored) {
         }
 

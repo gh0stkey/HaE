@@ -175,26 +175,26 @@ public class Datatable extends JPanel {
         sorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
     }
 
-    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean firstFlag) {
+    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean isReversible) {
         return new RowFilter<>() {
             public boolean include(Entry<?, ?> entry) {
-                String searchFieldTextText = searchField.getText();
-                searchFieldTextText = searchFieldTextText.toLowerCase();
+                String searchText = searchField.getText();
+                searchText = searchText.toLowerCase();
                 String entryValue = ((String) entry.getValue(1)).toLowerCase();
-                boolean filterReturn = searchFieldTextText.isEmpty();
-                boolean firstFlagReturn = searchMode.isSelected() && firstFlag;
+                boolean filterReturn = searchText.isEmpty();
+                boolean reverseReturn = searchMode.isSelected() && isReversible;
                 if (regexMode.isSelected()) {
                     Pattern pattern = null;
                     try {
-                        pattern = Pattern.compile(searchFieldTextText, Pattern.CASE_INSENSITIVE);
+                        pattern = Pattern.compile(searchText, Pattern.CASE_INSENSITIVE);
                     } catch (Exception ignored) {
                     }
 
                     if (pattern != null) {
-                        filterReturn = filterReturn || pattern.matcher(entryValue).find() != firstFlagReturn;
+                        filterReturn = filterReturn || pattern.matcher(entryValue).find() != reverseReturn;
                     }
                 } else {
-                    filterReturn = filterReturn || entryValue.contains(searchFieldTextText) != firstFlagReturn;
+                    filterReturn = filterReturn || entryValue.contains(searchText) != reverseReturn;
                 }
 
                 return filterReturn;
@@ -207,15 +207,16 @@ public class Datatable extends JPanel {
             doubleClickWorker.cancel(true);
         }
 
+        // 在EDT上读取表格数据（Swing线程安全）
+        String rowData = dataTable.getValueAt(selectedRow, 1).toString();
+
         doubleClickWorker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
-                String rowData = dataTable.getValueAt(selectedRow, 1).toString();
-                SwingUtilities.invokeLater(() -> {
-                    if (!isCancelled()) {
-                        messagePanel.applyMessageFilter(tabName, rowData);
-                    }
-                });
+                if (!isCancelled()) {
+                    // 在后台线程执行过滤，applyMessageFilter内部已通过invokeLater更新UI
+                    messagePanel.applyMessageFilter(tabName, rowData);
+                }
                 return null;
             }
         };

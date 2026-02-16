@@ -5,12 +5,13 @@ import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
-import hae.Config;
+import hae.AppConstants;
 import hae.cache.DataCache;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.string.HashCalculator;
+import hae.utils.rule.model.RuleDefinition;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -65,24 +66,24 @@ public class RegularMatcher {
     }
 
     private Map<String, Map<String, Object>> applyMatchingRules(String host, String type, String message, String firstLine, String header, String body) {
-        Map<String, Map<String, Object>> finalMap = new HashMap<>();
+        Map<String, Map<String, Object>> finalMap = new ConcurrentHashMap<>();
 
         ruleRepository.getAllGroupNames().parallelStream().forEach(i -> {
-            for (Object[] objects : ruleRepository.getRulesByGroup(i)) {
+            for (RuleDefinition rule : ruleRepository.getRulesByGroup(i)) {
                 String matchContent = "";
                 // 遍历获取规则
                 List<String> result;
                 Map<String, Object> tmpMap = new HashMap<>();
 
-                boolean loaded = (Boolean) objects[0];
-                String name = objects[1].toString();
-                String f_regex = objects[2].toString();
-                String s_regex = objects[3].toString();
-                String format = objects[4].toString();
-                String color = objects[5].toString();
-                String scope = objects[6].toString();
-                String engine = objects[7].toString();
-                boolean sensitive = (Boolean) objects[8];
+                boolean loaded = rule.isLoaded();
+                String name = rule.getName();
+                String firstRegex = rule.getFirstRegex();
+                String secondRegex = rule.getSecondRegex();
+                String format = rule.getFormat();
+                String color = rule.getColor();
+                String scope = rule.getScope();
+                String engine = rule.getEngine();
+                boolean sensitive = rule.isSensitive();
 
                 // 判断规则是否开启与作用域
                 if (loaded && (scope.contains(type) || scope.contains("any") || type.equals("any"))) {
@@ -117,21 +118,21 @@ public class RegularMatcher {
                     }
 
                     try {
-                        result = new ArrayList<>(executeRegexEngine(f_regex, s_regex, matchContent, format, engine, sensitive));
+                        result = new ArrayList<>(executeRegexEngine(firstRegex, secondRegex, matchContent, format, engine, sensitive));
                     } catch (Exception e) {
-                        api.logging().logToError(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, f_regex));
+                        api.logging().logToError(String.format("[x] Error Info:\nName: %s\nRegex: %s", name, firstRegex));
                         api.logging().logToError(e.getMessage());
                         continue;
                     }
 
                     // 去除重复内容
-                    HashSet tmpList = new HashSet(result);
+                    Set<String> tmpSet = new LinkedHashSet<>(result);
                     result.clear();
-                    result.addAll(tmpList);
+                    result.addAll(tmpSet);
 
                     if (!result.isEmpty()) {
                         tmpMap.put("color", color);
-                        String dataStr = String.join(Config.boundary, result);
+                        String dataStr = String.join(AppConstants.boundary, result);
                         tmpMap.put("data", dataStr);
 
                         String nameAndSize = String.format("%s (%s)", name, result.size());
@@ -146,34 +147,34 @@ public class RegularMatcher {
         return finalMap;
     }
 
-    private List<String> executeRegexEngine(String f_regex, String s_regex, String content, String format, String engine, boolean sensitive) {
+    private List<String> executeRegexEngine(String firstRegex, String secondRegex, String content, String format, String engine, boolean sensitive) {
         List<String> retList = new ArrayList<>();
         if ("nfa".equals(engine)) {
-            Matcher matcher = createPatternMatcher(f_regex, content, sensitive);
-            retList.addAll(extractRegexMatchResults(s_regex, format, sensitive, matcher));
+            Matcher matcher = createPatternMatcher(firstRegex, content, sensitive);
+            retList.addAll(extractRegexMatchResults(secondRegex, format, sensitive, matcher));
         } else {
             // DFA不支持格式化输出，因此不关注format
             String newContent = content;
-            String newFirstRegex = f_regex;
+            String newFirstRegex = firstRegex;
             if (!sensitive) {
                 newContent = content.toLowerCase();
-                newFirstRegex = f_regex.toLowerCase();
+                newFirstRegex = firstRegex.toLowerCase();
             }
             AutomatonMatcher autoMatcher = createAutomatonMatcher(newFirstRegex, newContent);
-            retList.addAll(extractRegexMatchResults(s_regex, autoMatcher, content));
+            retList.addAll(extractRegexMatchResults(secondRegex, autoMatcher, content));
         }
         return retList;
     }
 
-    private List<String> extractRegexMatchResults(String s_regex, String format, boolean sensitive, Matcher matcher) {
+    private List<String> extractRegexMatchResults(String secondRegex, String format, boolean sensitive, Matcher matcher) {
         List<String> matches = new ArrayList<>();
-        if (s_regex.isEmpty()) {
+        if (secondRegex.isEmpty()) {
             matches.addAll(formatMatchResults(matcher, format));
         } else {
             while (matcher.find()) {
                 String matchContent = matcher.group(1);
                 if (!matchContent.isEmpty()) {
-                    Matcher secondMatcher = createPatternMatcher(s_regex, matchContent, sensitive);
+                    Matcher secondMatcher = createPatternMatcher(secondRegex, matchContent, sensitive);
                     matches.addAll(formatMatchResults(secondMatcher, format));
                 }
             }
@@ -181,15 +182,15 @@ public class RegularMatcher {
         return matches;
     }
 
-    private List<String> extractRegexMatchResults(String s_regex, AutomatonMatcher autoMatcher, String content) {
+    private List<String> extractRegexMatchResults(String secondRegex, AutomatonMatcher autoMatcher, String content) {
         List<String> matches = new ArrayList<>();
-        if (s_regex.isEmpty()) {
+        if (secondRegex.isEmpty()) {
             matches.addAll(formatMatchResults(autoMatcher, content));
         } else {
             while (autoMatcher.find()) {
                 String s = autoMatcher.group();
                 if (!s.isEmpty()) {
-                    autoMatcher = createAutomatonMatcher(s_regex, extractMatchedContent(content, s));
+                    autoMatcher = createAutomatonMatcher(secondRegex, extractMatchedContent(content, s));
                     matches.addAll(formatMatchResults(autoMatcher, content));
                 }
             }
@@ -242,7 +243,8 @@ public class RegularMatcher {
     }
 
     private Matcher createPatternMatcher(String regex, String content, boolean sensitive) {
-        Pattern pattern = nfaPatternCache.computeIfAbsent(regex, k -> {
+        String cacheKey = regex + "|" + sensitive;
+        Pattern pattern = nfaPatternCache.computeIfAbsent(cacheKey, k -> {
             int flags = sensitive ? 0 : Pattern.CASE_INSENSITIVE;
             return Pattern.compile(regex, flags);
         });

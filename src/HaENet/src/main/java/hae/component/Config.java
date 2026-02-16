@@ -109,7 +109,7 @@ public class Config extends JPanel {
         scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.X_AXIS));
         scopePanel.setBorder(new EmptyBorder(3, 0, 6, 0));
 
-        String[] scopeInit = hae.Config.scopeOptions.split("\\|");
+        String[] scopeInit = hae.AppConstants.scopeOptions.split("\\|");
         String[] scopeMode = configLoader.getScope().split("\\|");
         for (String scope : scopeInit) {
             JCheckBox checkBox = new JCheckBox(scope);
@@ -131,7 +131,7 @@ public class Config extends JPanel {
         modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.X_AXIS));
 
         JCheckBox checkBox = new JCheckBox("Enable active http message handler");
-        checkBox.setEnabled(hae.Config.proVersionStatus);
+        checkBox.setEnabled(hae.AppConstants.proVersionStatus);
         modePanel.add(checkBox);
         checkBox.addActionListener(e -> updateModeStatus(checkBox));
         checkBox.setSelected(configLoader.getMode());
@@ -169,7 +169,7 @@ public class Config extends JPanel {
         return limitSizeTextField;
     }
 
-    private TableModelListener craeteSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+    private TableModelListener createSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
         return e -> {
             // 如果是程序正在加载数据，不处理事件
             if (isLoadingData) {
@@ -199,7 +199,7 @@ public class Config extends JPanel {
                 }
 
                 if (selected.equals("Dynamic Header")) {
-                    if (!values.equals(configLoader.getExcludeStatus())) {
+                    if (!values.equals(configLoader.getDynamicHeader())) {
                         configLoader.setDynamicHeader(values);
                     }
                 }
@@ -269,7 +269,7 @@ public class Config extends JPanel {
         JComboBox<String> setTypeComboBox = new JComboBox<>();
         setTypeComboBox.setModel(new DefaultComboBoxModel<>(mode));
 
-        model.addTableModelListener(craeteSettingTableModelListener(setTypeComboBox, model));
+        model.addTableModelListener(createSettingTableModelListener(setTypeComboBox, model));
 
         setTypeComboBox.addActionListener(createSettingActionListener(setTypeComboBox, model));
 
@@ -317,7 +317,8 @@ public class Config extends JPanel {
                 if (data != null && !data.isEmpty()) {
                     addDataToTable(data, model);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
+                api.logging().logToError("Clipboard paste error: " + ex.getMessage());
             }
         });
 
@@ -403,15 +404,15 @@ public class Config extends JPanel {
         String boxText = checkBox.getText();
         boolean selected = checkBox.isSelected();
 
-        Set<String> HaEScope = new HashSet<>(Arrays.asList(configLoader.getScope().split("\\|")));
+        Set<String> haeScope = new HashSet<>(Arrays.asList(configLoader.getScope().split("\\|")));
 
         if (selected) {
-            HaEScope.add(boxText);
+            haeScope.add(boxText);
         } else {
-            HaEScope.remove(boxText);
+            haeScope.remove(boxText);
         }
 
-        configLoader.setScope(String.join("|", HaEScope));
+        configLoader.setScope(String.join("|", haeScope));
     }
 
     private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {

@@ -1,73 +1,86 @@
 package hae.repository.impl;
 
 import hae.repository.RuleRepository;
+import hae.utils.rule.model.RuleDefinition;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RuleRepositoryImpl implements RuleRepository {
-    private final Map<String, Object[][]> rules;
+    private final ConcurrentHashMap<String, List<RuleDefinition>> rules;
 
-    public RuleRepositoryImpl(Map<String, Object[][]> initialRules) {
-        this.rules = new HashMap<>(initialRules);
+    public RuleRepositoryImpl(Map<String, List<RuleDefinition>> initialRules) {
+        this.rules = new ConcurrentHashMap<>(initialRules);
     }
 
     @Override
-    public synchronized Object[][] getRulesByGroup(String groupName) {
-        return rules.get(groupName);
+    public List<RuleDefinition> getRulesByGroup(String groupName) {
+        List<RuleDefinition> group = rules.get(groupName);
+        return group != null ? new ArrayList<>(group) : null;
     }
 
     @Override
-    public synchronized Set<String> getAllGroupNames() {
+    public Set<String> getAllGroupNames() {
         return new HashSet<>(rules.keySet());
     }
 
     @Override
-    public synchronized boolean containsGroup(String groupName) {
+    public boolean containsGroup(String groupName) {
         return rules.containsKey(groupName);
     }
 
     @Override
-    public synchronized Map<String, Object[][]> getAll() {
+    public Map<String, List<RuleDefinition>> getAll() {
         return new HashMap<>(rules);
     }
 
     @Override
-    public synchronized void setAll(Map<String, Object[][]> newRules) {
+    public synchronized void setAll(Map<String, List<RuleDefinition>> newRules) {
         rules.clear();
         rules.putAll(newRules);
     }
 
     @Override
-    public synchronized void putGroup(String groupName, Object[][] groupRules) {
-        rules.put(groupName, groupRules);
+    public void putGroup(String groupName, List<RuleDefinition> groupRules) {
+        rules.put(groupName, new ArrayList<>(groupRules));
     }
 
     @Override
-    public synchronized void removeGroup(String groupName) {
+    public void removeGroup(String groupName) {
         rules.remove(groupName);
     }
 
     @Override
     public synchronized void renameGroup(String oldName, String newName) {
-        rules.put(newName, rules.remove(oldName));
+        List<RuleDefinition> data = rules.remove(oldName);
+        if (data != null) {
+            rules.put(newName, data);
+        }
     }
 
     @Override
-    public synchronized void updateRule(String groupName, int index, Object[] rule) {
-        rules.get(groupName)[index] = rule;
+    public synchronized void updateRule(String groupName, int index, RuleDefinition rule) {
+        List<RuleDefinition> group = rules.get(groupName);
+        if (group != null && index >= 0 && index < group.size()) {
+            group.set(index, rule);
+        }
     }
 
     @Override
-    public synchronized void addRule(String groupName, Object[] rule) {
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(rules.get(groupName)));
-        x.add(rule);
-        rules.put(groupName, x.toArray(new Object[x.size()][]));
+    public synchronized void addRule(String groupName, RuleDefinition rule) {
+        List<RuleDefinition> group = rules.get(groupName);
+        if (group == null) {
+            return;
+        }
+        group.add(rule);
     }
 
     @Override
     public synchronized void removeRule(String groupName, int index) {
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(rules.get(groupName)));
-        x.remove(index);
-        rules.put(groupName, x.toArray(new Object[x.size()][]));
+        List<RuleDefinition> group = rules.get(groupName);
+        if (group == null || index < 0 || index >= group.size()) {
+            return;
+        }
+        group.remove(index);
     }
 }
