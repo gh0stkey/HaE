@@ -8,7 +8,6 @@ import burp.api.montoya.persistence.PersistedList;
 import burp.api.montoya.persistence.PersistedObject;
 import burp.api.montoya.persistence.Persistence;
 import hae.component.board.message.MessageTableModel;
-import hae.instances.http.utils.RegularMatcher;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,12 +33,10 @@ public class DataManager {
     }
 
     public synchronized void loadData(MessageTableModel messageTableModel) {
-        // 1. 获取索引
-        PersistedList<String> dataIndex = persistence.extensionData().getStringList("data"); // 数据索引
-        PersistedList<String> messageIndex = persistence.extensionData().getStringList("message"); // 消息索引
+        // 获取消息索引
+        PersistedList<String> messageIndex = persistence.extensionData().getStringList("message");
 
-        // 2. 从索引获取数据
-        loadHaEData(dataIndex);
+        // 从索引加载消息数据
         loadMessageData(messageIndex, messageTableModel);
     }
 
@@ -57,18 +54,6 @@ public class DataManager {
         }
 
         persistence.extensionData().setStringList(indexName, indexList);
-    }
-
-    private void loadHaEData(PersistedList<String> dataIndex) {
-        if (dataIndex != null && !dataIndex.isEmpty()) {
-            dataIndex.forEach(index -> {
-                PersistedObject dataObj = persistence.extensionData().getChildObject(index);
-                try {
-                    dataObj.stringListKeys().forEach(dataKey -> RegularMatcher.updateGlobalMatchCache(api, index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
-                } catch (Exception ignored) {
-                }
-            });
-        }
     }
 
     private void loadMessageData(PersistedList<String> messageIndex, MessageTableModel messageTableModel) {

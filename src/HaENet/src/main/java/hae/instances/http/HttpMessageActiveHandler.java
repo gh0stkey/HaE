@@ -8,6 +8,8 @@ import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import hae.component.board.message.MessageTableModel;
 import hae.instances.http.utils.MessageProcessor;
+import hae.repository.DataRepository;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
@@ -30,12 +32,13 @@ public class HttpMessageActiveHandler implements HttpHandler {
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> commentList = ThreadLocal.withInitial(ArrayList::new);
 
-    public HttpMessageActiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
+    public HttpMessageActiveHandler(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
+                                    DataRepository dataRepository, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
-        this.messageProcessor = new MessageProcessor(api, configLoader);
+        this.messageProcessor = new MessageProcessor(api, configLoader, dataRepository, ruleRepository);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package hae.utils.rule;
 
 import burp.api.montoya.MontoyaApi;
-import hae.Config;
 import hae.cache.DataCache;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.rule.model.Group;
 import hae.utils.rule.model.Info;
@@ -21,10 +21,12 @@ import java.util.stream.Collectors;
 public class RuleProcessor {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final RuleRepository ruleRepository;
 
-    public RuleProcessor(MontoyaApi api, ConfigLoader configLoader) {
+    public RuleProcessor(MontoyaApi api, ConfigLoader configLoader, RuleRepository ruleRepository) {
         this.api = api;
         this.configLoader = configLoader;
+        this.ruleRepository = ruleRepository;
     }
 
     public void rulesFormatAndSave() {
@@ -37,7 +39,7 @@ public class RuleProcessor {
 
         List<Group> ruleGroupList = new ArrayList<>();
 
-        Config.globalRules.forEach((k, v) -> {
+        ruleRepository.getAll().forEach((k, v) -> {
             List<Info> ruleList = Arrays.stream(v)
                     .map(objects -> new Info(
                             (boolean) objects[0],
@@ -68,31 +70,27 @@ public class RuleProcessor {
     }
 
     public void changeRule(Vector data, int select, String type) {
-        Config.globalRules.get(type)[select] = data.toArray();
+        ruleRepository.updateRule(type, select, data.toArray());
         this.rulesFormatAndSave();
     }
 
     public void addRule(Vector data, String type) {
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.globalRules.get(type)));
-        x.add(data.toArray());
-        Config.globalRules.put(type, x.toArray(new Object[x.size()][]));
+        ruleRepository.addRule(type, data.toArray());
         this.rulesFormatAndSave();
     }
 
     public void removeRule(int select, String type) {
-        ArrayList<Object[]> x = new ArrayList<>(Arrays.asList(Config.globalRules.get(type)));
-        x.remove(select);
-        Config.globalRules.put(type, x.toArray(new Object[x.size()][]));
+        ruleRepository.removeRule(type, select);
         this.rulesFormatAndSave();
     }
 
     public void renameRuleGroup(String oldName, String newName) {
-        Config.globalRules.put(newName, Config.globalRules.remove(oldName));
+        ruleRepository.renameGroup(oldName, newName);
         this.rulesFormatAndSave();
     }
 
     public void deleteRuleGroup(String Rules) {
-        Config.globalRules.remove(Rules);
+        ruleRepository.removeGroup(Rules);
         this.rulesFormatAndSave();
     }
 
@@ -100,14 +98,12 @@ public class RuleProcessor {
         int i = 0;
         String name = "New ";
 
-        while (Config.globalRules.containsKey(name + i)) {
+        while (ruleRepository.containsGroup(name + i)) {
             i++;
         }
 
-        Config.globalRules.put(name + i, Config.ruleTemplate);
+        ruleRepository.putGroup(name + i, hae.Config.ruleTemplate);
         this.rulesFormatAndSave();
         return name + i;
     }
 }
-
-

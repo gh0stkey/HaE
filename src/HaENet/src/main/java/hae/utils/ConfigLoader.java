@@ -45,7 +45,6 @@ public class ConfigLoader {
             initRules();
         }
 
-        Config.globalRules = getRules();
     }
 
     private static boolean isValidConfigPath(String configPath) {

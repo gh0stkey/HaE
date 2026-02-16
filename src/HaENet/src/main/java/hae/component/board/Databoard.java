@@ -1,11 +1,11 @@
 package hae.component.board;
 
 import burp.api.montoya.MontoyaApi;
-import hae.Config;
 import hae.cache.DataCache;
 import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
+import hae.repository.DataRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
 import hae.utils.string.StringProcessor;
@@ -21,7 +21,7 @@ import java.awt.event.*;
 import java.text.Collator;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
@@ -29,6 +29,7 @@ public class Databoard extends JPanel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
+    private final DataRepository dataRepository;
     private final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
     private final JComboBox hostComboBox = new JComboBox(comboBoxModel);
     private JTextField hostTextField;
@@ -39,10 +40,12 @@ public class Databoard extends JPanel {
     private SwingWorker<Map<String, List<String>>, Integer> handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
 
-    public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel) {
+    public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
+                     DataRepository dataRepository) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
+        this.dataRepository = dataRepository;
 
         initComponents();
     }
@@ -223,7 +226,7 @@ public class Databoard extends JPanel {
     }
 
     private Map<String, List<String>> getSelectedMapByHost(String selectedHost, DataLoadingWorker worker) {
-        ConcurrentHashMap<String, Map<String, List<String>>> dataMap = Config.globalDataMap;
+        Map<String, Map<String, List<String>>> dataMap = dataRepository.getAll();
         Map<String, List<String>> selectedDataMap;
 
         if (selectedHost.contains("*")) {
@@ -332,8 +335,8 @@ public class Databoard extends JPanel {
 
     private List<String> getHostByList() {
         List<String> result = new ArrayList<>();
-        if (!Config.globalDataMap.isEmpty()) {
-            result = new ArrayList<>(Config.globalDataMap.keySet());
+        if (!dataRepository.isEmpty()) {
+            result = new ArrayList<>(dataRepository.getAllHosts());
         }
 
         return result;
@@ -356,34 +359,7 @@ public class Databoard extends JPanel {
             splitPane.setVisible(false);
             progressBar.setVisible(false);
 
-            Config.globalDataMap.keySet().parallelStream().forEach(key -> {
-                if (StringProcessor.matchesHostPattern(key, host) || host.equals("*")) {
-                    Config.globalDataMap.remove(key);
-                }
-            });
-
-            // 删除无用的数据
-            Set<String> wildcardKeys = Config.globalDataMap.keySet().stream()
-                    .filter(key -> key.startsWith("*."))
-                    .collect(Collectors.toSet());
-
-            Set<String> existingSuffixes = Config.globalDataMap.keySet().stream()
-                    .filter(key -> !key.startsWith("*."))
-                    .map(key -> {
-                        int dotIndex = key.indexOf(".");
-                        return dotIndex != -1 ? key.substring(dotIndex) : "";
-                    })
-                    .collect(Collectors.toSet());
-
-            Set<String> keysToRemove = wildcardKeys.stream()
-                    .filter(key -> !existingSuffixes.contains(key.substring(1)))
-                    .collect(Collectors.toSet());
-
-            keysToRemove.forEach(Config.globalDataMap::remove);
-
-            if (Config.globalDataMap.size() == 1 && Config.globalDataMap.keySet().stream().anyMatch(key -> key.equals("*"))) {
-                Config.globalDataMap.remove("*");
-            }
+            dataRepository.removeMatching(host);
 
             messageTableModel.deleteByHost(host);
 

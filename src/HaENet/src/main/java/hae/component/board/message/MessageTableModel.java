@@ -10,6 +10,7 @@ import burp.api.montoya.ui.UserInterface;
 import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.HttpResponseEditor;
 import hae.Config;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 import hae.utils.DataManager;
 import hae.utils.string.StringProcessor;
@@ -32,16 +33,18 @@ import static burp.api.montoya.ui.editor.EditorOptions.READ_ONLY;
 public class MessageTableModel extends AbstractTableModel {
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
+    private final RuleRepository ruleRepository;
     private final MessageTable messageTable;
     private final JSplitPane splitPane;
     private final LinkedList<MessageEntry> log = new LinkedList<>();
     private final LinkedList<MessageEntry> filteredLog;
     private SwingWorker<Void, Void> currentWorker;
 
-    public MessageTableModel(MontoyaApi api, ConfigLoader configLoader) {
+    public MessageTableModel(MontoyaApi api, ConfigLoader configLoader, RuleRepository ruleRepository) {
         this.filteredLog = new LinkedList<>();
         this.api = api;
         this.configLoader = configLoader;
+        this.ruleRepository = ruleRepository;
 
         UserInterface userInterface = api.userInterface();
         HttpRequestEditor requestViewer = userInterface.createHttpRequestEditor(READ_ONLY);
@@ -327,8 +330,8 @@ public class MessageTableModel extends AbstractTableModel {
                         .map(HttpHeader::toString)
                         .collect(Collectors.joining("\r\n"));
 
-                Config.globalRules.keySet().forEach(i -> {
-                    for (Object[] objects : Config.globalRules.get(i)) {
+                ruleRepository.getAllGroupNames().forEach(i -> {
+                    for (Object[] objects : ruleRepository.getRulesByGroup(i)) {
                         String name = objects[1].toString();
                         String format = objects[4].toString();
                         String scope = objects[6].toString();

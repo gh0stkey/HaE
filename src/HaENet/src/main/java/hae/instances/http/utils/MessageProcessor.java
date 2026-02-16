@@ -5,6 +5,8 @@ import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import hae.Config;
+import hae.repository.DataRepository;
+import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
 
 import java.nio.charset.StandardCharsets;
@@ -15,9 +17,9 @@ public class MessageProcessor {
     private final MontoyaApi api;
     private final RegularMatcher regularMatcher;
 
-    public MessageProcessor(MontoyaApi api, ConfigLoader configLoader) {
+    public MessageProcessor(MontoyaApi api, ConfigLoader configLoader, DataRepository dataRepository, RuleRepository ruleRepository) {
         this.api = api;
-        this.regularMatcher = new RegularMatcher(api, configLoader);
+        this.regularMatcher = new RegularMatcher(api, configLoader, dataRepository, ruleRepository);
     }
 
     public List<Map<String, String>> processMessage(String host, String message, boolean flag) {
