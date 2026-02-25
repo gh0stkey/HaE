@@ -9,6 +9,7 @@ import hae.AppConstants;
 import hae.cache.DataCache;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
+import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.string.HashCalculator;
 import hae.utils.rule.model.RuleDefinition;
@@ -137,6 +138,11 @@ public class RegularMatcher {
 
                         String nameAndSize = String.format("%s (%s)", name, result.size());
                         finalMap.put(nameAndSize, tmpMap);
+
+                        // 提取匹配内容的上下文（前后各50个字符）
+                        for (String match : result) {
+                            ValidatorService.putContext(name, match, matchContent);
+                        }
 
                         dataRepository.mergeData(host, name, result, true);
                     }

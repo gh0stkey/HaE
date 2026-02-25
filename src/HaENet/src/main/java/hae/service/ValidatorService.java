@@ -45,6 +45,10 @@ public class ValidatorService {
     // ruleName -> matchValue -> severity
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> severityStore = new ConcurrentHashMap<>();
 
+    // ruleName -> matchValue -> [before, after]
+    private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String[]>> contextStore = new ConcurrentHashMap<>();
+    private static final int CONTEXT_LENGTH = 50;
+
     public ValidatorService(MontoyaApi api, RuleRepository ruleRepository) {
         this.api = api;
         this.ruleRepository = ruleRepository;
@@ -147,14 +151,28 @@ public class ValidatorService {
         return null;
     }
 
+    public static void putContext(String ruleName, String matchValue, String matchContent) {
+        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>());
+        if (ruleCtx.containsKey(matchValue)) return;
+        int pos = matchContent.indexOf(matchValue);
+        if (pos < 0) return;
+        String before = matchContent.substring(Math.max(0, pos - CONTEXT_LENGTH), pos);
+        String after = matchContent.substring(
+                Math.min(pos + matchValue.length(), matchContent.length()),
+                Math.min(pos + matchValue.length() + CONTEXT_LENGTH, matchContent.length()));
+        ruleCtx.putIfAbsent(matchValue, new String[]{before, after});
+    }
+
     public void clear() {
         severityStore.clear();
+        contextStore.clear();
     }
 
     public void dispose() {
         executor.shutdownNow();
         persistAll();
         severityStore.clear();
+        contextStore.clear();
     }
 
     public static int compareBySeverity(String a, String b) {
@@ -230,13 +248,14 @@ public class ValidatorService {
         ruleObj.addProperty("group", group);
         root.add("rule", ruleObj);
 
-        JsonArray items = getJsonElements(matches);
+        JsonArray items = getJsonElements(rule.getName(), matches);
         root.add("items", items);
 
         return GSON.toJson(root);
     }
 
-    private static @NonNull JsonArray getJsonElements(List<String> matches) {
+    private static @NonNull JsonArray getJsonElements(String ruleName, List<String> matches) {
+        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(ruleName);
         JsonArray items = new JsonArray();
         for (int i = 0; i < matches.size(); i++) {
             JsonObject item = new JsonObject();
@@ -245,8 +264,9 @@ public class ValidatorService {
             JsonObject data = new JsonObject();
             data.addProperty("match", matches.get(i));
             JsonObject context = new JsonObject();
-            context.addProperty("before", "");
-            context.addProperty("after", "");
+            String[] ctx = ruleCtx != null ? ruleCtx.get(matches.get(i)) : null;
+            context.addProperty("before", ctx != null ? ctx[0] : "");
+            context.addProperty("after", ctx != null ? ctx[1] : "");
             data.add("context", context);
 
             item.add("data", data);
