@@ -36,11 +36,11 @@ public class AppConstants {
     public static final String modeStatus = "true";
 
     public static final String[] ruleFields = {
-            "Loaded", "Name", "F-Regex", "S-Regex", "Format", "Color", "Scope", "Engine", "Sensitive"
+            "Loaded", "Name", "F-Regex", "S-Regex", "Format", "Color", "Scope", "Engine", "Sensitive", "Validator", "V-Timeout", "V-Bulk"
     };
 
     public static final List<RuleDefinition> ruleTemplate = List.of(
-            new RuleDefinition(false, "New Name", "(First Regex)", "(Second Regex)", "{0}", "gray", "any", "nfa", false)
+            new RuleDefinition(false, "New Name", "(First Regex)", "(Second Regex)", "{0}", "gray", "any", "nfa", false, "", 5000, 500)
     );
 
     public static final String[] engine = new String[]{

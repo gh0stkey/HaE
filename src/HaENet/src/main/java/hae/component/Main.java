@@ -7,6 +7,7 @@ import hae.component.rule.Rules;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.service.HandlerRegistry;
+import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
 
@@ -23,15 +24,18 @@ public class Main extends JPanel {
     private final RuleRepository ruleRepository;
     private final DataRepository dataRepository;
     private final HandlerRegistry handlerRegistry;
+    private final ValidatorService validatorService;
 
     public Main(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
-                RuleRepository ruleRepository, DataRepository dataRepository, HandlerRegistry handlerRegistry) {
+                RuleRepository ruleRepository, DataRepository dataRepository, HandlerRegistry handlerRegistry,
+                ValidatorService validatorService) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.ruleRepository = ruleRepository;
         this.dataRepository = dataRepository;
         this.handlerRegistry = handlerRegistry;
+        this.validatorService = validatorService;
 
         initComponents();
     }
@@ -67,7 +71,7 @@ public class Main extends JPanel {
         // 依次添加Rules、Config、Databoard
         Rules rules = new Rules(api, configLoader, ruleRepository);
         mainTabbedPane.addTab("Rules", rules);
-        mainTabbedPane.addTab("Databoard", new Databoard(api, configLoader, messageTableModel, dataRepository));
+        mainTabbedPane.addTab("Databoard", new Databoard(api, configLoader, messageTableModel, dataRepository, validatorService));
         mainTabbedPane.addTab("Config", new Config(api, configLoader, messageTableModel, rules, handlerRegistry));
     }
 

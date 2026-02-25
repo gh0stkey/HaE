@@ -6,6 +6,7 @@ import hae.component.board.message.MessageTableModel;
 import hae.component.board.message.MessageTableModel.MessageTable;
 import hae.component.board.table.Datatable;
 import hae.repository.DataRepository;
+import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
 import hae.utils.string.StringProcessor;
@@ -30,6 +31,7 @@ public class Databoard extends JPanel {
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final DataRepository dataRepository;
+    private final ValidatorService validatorService;
     private final DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
     private final JComboBox<String> hostComboBox = new JComboBox<>(comboBoxModel);
     private JTextField hostTextField;
@@ -41,11 +43,12 @@ public class Databoard extends JPanel {
     private SwingWorker<Void, Void> applyHostFilterWorker;
 
     public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
-                     DataRepository dataRepository) {
+                     DataRepository dataRepository, ValidatorService validatorService) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.dataRepository = dataRepository;
+        this.validatorService = validatorService;
 
         initComponents();
     }
@@ -91,6 +94,25 @@ public class Databoard extends JPanel {
                     return null;
                 }
             }.execute();
+        });
+
+        dataTabbedPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) { showTabPopup(e); }
+            @Override
+            public void mouseReleased(MouseEvent e) { showTabPopup(e); }
+            private void showTabPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int tabIndex = dataTabbedPane.indexAtLocation(e.getX(), e.getY());
+                    if (tabIndex != -1) {
+                        JPopupMenu popup = new JPopupMenu();
+                        JMenuItem revalidateItem = new JMenuItem("Revalidate");
+                        revalidateItem.addActionListener(ev -> revalidateTab(tabIndex));
+                        popup.add(revalidateItem);
+                        popup.show(dataTabbedPane, e.getX(), e.getY());
+                    }
+                }
+            }
         });
 
         actionButton.addActionListener(e -> {
@@ -382,6 +404,28 @@ public class Databoard extends JPanel {
         }
     }
 
+    private void revalidateTab(int tabIndex) {
+        Component comp = dataTabbedPane.getComponentAt(tabIndex);
+        if (!(comp instanceof Datatable dt)) return;
+
+        List<String> matches = new ArrayList<>();
+        JTable table = dt.getDataTable();
+        for (int r = 0; r < table.getModel().getRowCount(); r++) {
+            matches.add(table.getModel().getValueAt(r, 1).toString());
+        }
+        if (matches.isEmpty()) return;
+
+        progressBar.setVisible(true);
+        setProgressBar(true, "Validating...", 0);
+
+        validatorService.revalidateAll(Map.of(dt.getTabName(), matches), null, () ->
+                SwingUtilities.invokeLater(() -> {
+                    dt.refreshSeverities();
+                    setProgressBar(false, "Validation complete", 100);
+                })
+        );
+    }
+
     // 定义为内部类
     private class DataLoadingWorker extends SwingWorker<Map<String, List<String>>, Integer> {
         private final String selectedHost;
@@ -414,7 +458,7 @@ public class Databoard extends JPanel {
 
                         for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
                             String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                            Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue());
+                            Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue(), validatorService);
                             datatablePanel.setTableListener(messageTableModel);
                             Databoard.insertTabSorted(dataTabbedPane, tabTitle, datatablePanel);
                         }

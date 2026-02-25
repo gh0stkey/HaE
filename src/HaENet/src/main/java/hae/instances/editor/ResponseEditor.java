@@ -14,6 +14,7 @@ import hae.component.board.table.Datatable;
 import hae.instances.http.utils.MessageProcessor;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
+import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.http.HttpUtils;
 import hae.utils.string.StringProcessor;
@@ -28,18 +29,21 @@ public class ResponseEditor implements HttpResponseEditorProvider {
     private final ConfigLoader configLoader;
     private final DataRepository dataRepository;
     private final RuleRepository ruleRepository;
+    private final ValidatorService validatorService;
 
     public ResponseEditor(MontoyaApi api, ConfigLoader configLoader,
-                          DataRepository dataRepository, RuleRepository ruleRepository) {
+                          DataRepository dataRepository, RuleRepository ruleRepository,
+                          ValidatorService validatorService) {
         this.api = api;
         this.configLoader = configLoader;
         this.dataRepository = dataRepository;
         this.ruleRepository = ruleRepository;
+        this.validatorService = validatorService;
     }
 
     @Override
     public ExtensionProvidedHttpResponseEditor provideHttpResponseEditor(EditorCreationContext editorCreationContext) {
-        return new Editor(api, configLoader, dataRepository, ruleRepository, editorCreationContext);
+        return new Editor(api, configLoader, dataRepository, ruleRepository, validatorService, editorCreationContext);
     }
 
     private static class Editor implements ExtensionProvidedHttpResponseEditor {
@@ -48,18 +52,20 @@ public class ResponseEditor implements HttpResponseEditorProvider {
         private final HttpUtils httpUtils;
         private final EditorCreationContext creationContext;
         private final MessageProcessor messageProcessor;
+        private final ValidatorService validatorService;
         private final JTabbedPane jTabbedPane = new JTabbedPane();
         private HttpRequestResponse requestResponse;
         private List<Map<String, String>> dataList;
 
         public Editor(MontoyaApi api, ConfigLoader configLoader,
                       DataRepository dataRepository, RuleRepository ruleRepository,
-                      EditorCreationContext creationContext) {
+                      ValidatorService validatorService, EditorCreationContext creationContext) {
             this.api = api;
             this.configLoader = configLoader;
             this.httpUtils = new HttpUtils(api, configLoader);
             this.creationContext = creationContext;
             this.messageProcessor = new MessageProcessor(api, configLoader, dataRepository, ruleRepository);
+            this.validatorService = validatorService;
         }
 
         @Override
@@ -70,7 +76,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
         @Override
         public void setRequestResponse(HttpRequestResponse requestResponse) {
             this.requestResponse = requestResponse;
-            EditorUtils.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList);
+            EditorUtils.generateTabbedPaneFromResultMap(api, configLoader, jTabbedPane, this.dataList, validatorService);
         }
 
         @Override

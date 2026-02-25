@@ -2,13 +2,12 @@ package hae.utils;
 
 import burp.api.montoya.MontoyaApi;
 import hae.AppConstants;
+import hae.utils.rule.model.RuleDefinition;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
-
-import hae.utils.rule.model.RuleDefinition;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -115,7 +114,6 @@ public class ConfigLoader {
     }
 
     // 获取规则配置
-    @SuppressWarnings("unchecked")
     public Map<String, List<RuleDefinition>> getRules() {
         Map<String, List<RuleDefinition>> rules = new HashMap<>();
 

@@ -13,9 +13,13 @@ public class RuleDefinition {
     private String scope;
     private String engine;
     private boolean sensitive;
+    private String validator;
+    private int validatorTimeout;
+    private int validatorBulk;
 
     public RuleDefinition(boolean loaded, String name, String firstRegex, String secondRegex,
-                          String format, String color, String scope, String engine, boolean sensitive) {
+                          String format, String color, String scope, String engine, boolean sensitive,
+                          String validator, int validatorTimeout, int validatorBulk) {
         this.loaded = loaded;
         this.name = name;
         this.firstRegex = firstRegex;
@@ -25,6 +29,9 @@ public class RuleDefinition {
         this.scope = scope;
         this.engine = engine;
         this.sensitive = sensitive;
+        this.validator = validator;
+        this.validatorTimeout = validatorTimeout;
+        this.validatorBulk = validatorBulk;
     }
 
     // ---- Getters ----
@@ -65,6 +72,18 @@ public class RuleDefinition {
         return sensitive;
     }
 
+    public String getValidator() {
+        return validator;
+    }
+
+    public int getValidatorTimeout() {
+        return validatorTimeout;
+    }
+
+    public int getValidatorBulk() {
+        return validatorBulk;
+    }
+
     // ---- Setters ----
 
     public void setLoaded(boolean loaded) {
@@ -103,6 +122,18 @@ public class RuleDefinition {
         this.sensitive = sensitive;
     }
 
+    public void setValidator(String validator) {
+        this.validator = validator;
+    }
+
+    public void setValidatorTimeout(int validatorTimeout) {
+        this.validatorTimeout = validatorTimeout;
+    }
+
+    public void setValidatorBulk(int validatorBulk) {
+        this.validatorBulk = validatorBulk;
+    }
+
     public static RuleDefinition fromObjectArray(Object[] objects) {
         return new RuleDefinition(
                 (boolean) objects[0],
@@ -113,12 +144,15 @@ public class RuleDefinition {
                 (String) objects[5],
                 (String) objects[6],
                 (String) objects[7],
-                (boolean) objects[8]
+                (boolean) objects[8],
+                (String) objects[9],
+                (int) objects[10],
+                (int) objects[11]
         );
     }
 
     public Object[] toObjectArray() {
-        return new Object[]{loaded, name, firstRegex, secondRegex, format, color, scope, engine, sensitive};
+        return new Object[]{loaded, name, firstRegex, secondRegex, format, color, scope, engine, sensitive, validator, validatorTimeout, validatorBulk};
     }
 
     public Map<String, Object> toYamlMap() {
@@ -132,10 +166,28 @@ public class RuleDefinition {
         fields.put("scope", scope);
         fields.put("engine", engine);
         fields.put("sensitive", sensitive);
+        if (validator != null && !validator.isBlank()) {
+            Map<String, Object> validatorMap = new LinkedHashMap<>();
+            validatorMap.put("command", validator);
+            if (validatorTimeout > 0) validatorMap.put("timeout", validatorTimeout);
+            if (validatorBulk > 0) validatorMap.put("bulk", validatorBulk);
+            fields.put("validator", validatorMap);
+        }
         return fields;
     }
 
     public static RuleDefinition fromYamlMap(Map<String, Object> fields) {
+        String validatorCmd = "";
+        int timeout = 5000;
+        int bulk = 500;
+
+        Object validatorObj = fields.get("validator");
+        if (validatorObj instanceof Map) {
+            Map<String, Object> vMap = (Map<String, Object>) validatorObj;
+            validatorCmd = String.valueOf(vMap.getOrDefault("command", ""));
+            timeout = vMap.containsKey("timeout") ? ((Number) vMap.get("timeout")).intValue() : 0;
+            bulk = vMap.containsKey("bulk") ? ((Number) vMap.get("bulk")).intValue() : 0;
+        }
         return new RuleDefinition(
                 (boolean) fields.getOrDefault("loaded", false),
                 (String) fields.getOrDefault("name", ""),
@@ -145,7 +197,10 @@ public class RuleDefinition {
                 (String) fields.getOrDefault("color", "gray"),
                 (String) fields.getOrDefault("scope", "any"),
                 (String) fields.getOrDefault("engine", "nfa"),
-                (boolean) fields.getOrDefault("sensitive", false)
+                (boolean) fields.getOrDefault("sensitive", false),
+                validatorCmd,
+                timeout,
+                bulk
         );
     }
 }

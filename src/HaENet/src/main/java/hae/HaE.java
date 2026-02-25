@@ -16,6 +16,7 @@ import hae.repository.RuleRepository;
 import hae.repository.impl.DataRepositoryImpl;
 import hae.repository.impl.RuleRepositoryImpl;
 import hae.service.HandlerRegistry;
+import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.DataManager;
 
@@ -24,7 +25,7 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "4.4";
+        String version = "5.0";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
@@ -49,9 +50,11 @@ public class HaE implements BurpExtension {
         HandlerRegistry handlerRegistry = new HandlerRegistry(api, configLoader, messageTableModel, dataRepository, ruleRepository);
         handlerRegistry.registerAll(AppConstants.proVersionStatus);
 
+        ValidatorService validatorService = new ValidatorService(api, ruleRepository);
+
         // 注册Tab页（用于查询数据）
         api.userInterface().registerSuiteTab("HaE",
-                new Main(api, configLoader, messageTableModel, ruleRepository, dataRepository, handlerRegistry));
+                new Main(api, configLoader, messageTableModel, ruleRepository, dataRepository, handlerRegistry, validatorService));
 
         // 注册WebSocket处理器
         api.proxy().registerWebSocketCreationHandler(proxyWebSocketCreation ->
@@ -60,23 +63,23 @@ public class HaE implements BurpExtension {
 
         // 注册消息编辑框（用于展示数据）
         api.userInterface().registerHttpRequestEditorProvider(
-                new RequestEditor(api, configLoader, dataRepository, ruleRepository));
+                new RequestEditor(api, configLoader, dataRepository, ruleRepository, validatorService));
         api.userInterface().registerHttpResponseEditorProvider(
-                new ResponseEditor(api, configLoader, dataRepository, ruleRepository));
+                new ResponseEditor(api, configLoader, dataRepository, ruleRepository, validatorService));
         api.userInterface().registerWebSocketMessageEditorProvider(
-                new WebSocketEditor(api, configLoader, dataRepository, ruleRepository));
+                new WebSocketEditor(api, configLoader, dataRepository, ruleRepository, validatorService));
 
-        // 从BurpSuite里加载数据（打破循环依赖）
+        // 从BurpSuite里加载数据
         dataRepository.loadFromPersistence();
         DataManager dataManager = new DataManager(api);
         dataManager.loadData(messageTableModel);
 
         api.extension().registerUnloadingHandler(() -> {
-            // 卸载清空数据
             messageTableModel.dispose();
             dataRepository.clear();
             DataCache.clear();
             handlerRegistry.unregisterAll();
+            validatorService.dispose();
         });
     }
 

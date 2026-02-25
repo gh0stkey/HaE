@@ -42,7 +42,7 @@ Alternatively, you can also place the configuration files in the `/.config/HaE/`
 
 ### Rule Definitions
 
-Currently, HaE Network rules consist of 8 fields, with detailed meanings as follows:
+Currently, HaE Network rules consist of 9 fields, with detailed meanings as follows:
 
 | Field     | Meaning                                                      |
 | --------- | ------------------------------------------------------------ |
@@ -54,6 +54,7 @@ Currently, HaE Network rules consist of 8 fields, with detailed meanings as foll
 | Engine    | Regex engine, indicating which engine the current rule's regular expression uses. **DFA engine**: scans each character in the text string only once, fast speed, fewer features; **NFA engine**: repeatedly marks and unmarks characters, slower but richer features (e.g., grouping, replacement, splitting). |
 | Color     | Match color, indicating the highlight color to mark when the current rule matches the corresponding HTTP message. HaE Network has a color upgrade algorithm that automatically upgrades the marking color when the same color appears. |
 | Sensitive | Case sensitivity, indicating whether the current rule is case-sensitive. If sensitive (`True`), it strictly matches the case; if insensitive (`False`), it does not consider case differences. |
+| Validator | External validator for classifying matched data by severity (high/medium/low/none). Contains three sub-settings: **Command** — the validator command that receives match data via stdin (JSON) and returns severity results via stdout; **Timeout** — maximum wait time per execution in milliseconds (default: 5000); **Bulk** — number of matches sent per invocation (default: 500). |
 
 ## Key Features and Advantages
 

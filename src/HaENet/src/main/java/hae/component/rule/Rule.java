@@ -98,6 +98,10 @@ public class Rule extends JPanel {
         // 设置Loaded列的宽度（第一列）
         setupColumnWidths(ruleTable);
 
+        // 隐藏V-Timeout和V-Bulk列（数据保留在model中，仅从视图移除）
+        ruleTable.removeColumn(ruleTable.getColumnModel().getColumn(11));
+        ruleTable.removeColumn(ruleTable.getColumnModel().getColumn(10));
+
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.weightx = 1.0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -260,17 +264,26 @@ public class Rule extends JPanel {
     }
 
     private void populateDisplayFromTable(Display ruleDisplay, JTable ruleTable, int selectedRow) {
-        ruleDisplay.ruleNameTextField.setText(ruleTable.getValueAt(selectedRow, 1).toString());
-        ruleDisplay.firstRegexTextField.setText(ruleTable.getValueAt(selectedRow, 2).toString());
-        ruleDisplay.secondRegexTextField.setText(ruleTable.getValueAt(selectedRow, 3).toString());
-        ruleDisplay.formatTextField.setText(ruleTable.getValueAt(selectedRow, 4).toString());
-        ruleDisplay.colorComboBox.setSelectedItem(ruleTable.getValueAt(selectedRow, 5).toString());
-        ruleDisplay.scopeComboBox.setSelectedItem(ruleTable.getValueAt(selectedRow, 6).toString());
-        ruleDisplay.engineComboBox.setSelectedItem(ruleTable.getValueAt(selectedRow, 7).toString());
-        ruleDisplay.sensitiveComboBox.setSelectedItem(ruleTable.getValueAt(selectedRow, 8));
+        DefaultTableModel model = (DefaultTableModel) ruleTable.getModel();
+        int modelRow = ruleTable.convertRowIndexToModel(selectedRow);
+        ruleDisplay.ruleNameTextField.setText(model.getValueAt(modelRow, 1).toString());
+        ruleDisplay.firstRegexTextField.setText(model.getValueAt(modelRow, 2).toString());
+        ruleDisplay.secondRegexTextField.setText(model.getValueAt(modelRow, 3).toString());
+        ruleDisplay.formatTextField.setText(model.getValueAt(modelRow, 4).toString());
+        ruleDisplay.colorComboBox.setSelectedItem(model.getValueAt(modelRow, 5).toString());
+        ruleDisplay.scopeComboBox.setSelectedItem(model.getValueAt(modelRow, 6).toString());
+        ruleDisplay.engineComboBox.setSelectedItem(model.getValueAt(modelRow, 7).toString());
+        ruleDisplay.sensitiveComboBox.setSelectedItem(model.getValueAt(modelRow, 8));
+        ruleDisplay.validatorTextField.setText(model.getValueAt(modelRow, 9).toString());
+        ruleDisplay.validatorTimeoutTextField.setText(model.getValueAt(modelRow, 10).toString());
+        ruleDisplay.validatorBulkTextField.setText(model.getValueAt(modelRow, 11).toString());
     }
 
     private RuleDefinition createRuleDataFromDisplay(Display ruleDisplay) {
+        int timeout = 0;
+        int bulk = 0;
+        try { timeout = Integer.parseInt(ruleDisplay.validatorTimeoutTextField.getText().trim()); } catch (NumberFormatException ignored) {}
+        try { bulk = Integer.parseInt(ruleDisplay.validatorBulkTextField.getText().trim()); } catch (NumberFormatException ignored) {}
         return new RuleDefinition(
                 false,
                 ruleDisplay.ruleNameTextField.getText(),
@@ -280,7 +293,10 @@ public class Rule extends JPanel {
                 ruleDisplay.colorComboBox.getSelectedItem().toString(),
                 ruleDisplay.scopeComboBox.getSelectedItem().toString(),
                 ruleDisplay.engineComboBox.getSelectedItem().toString(),
-                (Boolean) ruleDisplay.sensitiveComboBox.getSelectedItem()
+                (Boolean) ruleDisplay.sensitiveComboBox.getSelectedItem(),
+                ruleDisplay.validatorTextField.getText(),
+                timeout,
+                bulk
         );
     }
 
@@ -299,6 +315,14 @@ public class Rule extends JPanel {
     }
 
     private RuleDefinition rowToRuleDefinition(Vector row) {
+        int timeout = 0;
+        int bulk = 0;
+        Object tObj = row.get(10);
+        Object bObj = row.get(11);
+        if (tObj instanceof Number) timeout = ((Number) tObj).intValue();
+        else try { timeout = Integer.parseInt(tObj.toString().trim()); } catch (NumberFormatException ignored) {}
+        if (bObj instanceof Number) bulk = ((Number) bObj).intValue();
+        else try { bulk = Integer.parseInt(bObj.toString().trim()); } catch (NumberFormatException ignored) {}
         return new RuleDefinition(
                 (Boolean) row.get(0),
                 (String) row.get(1),
@@ -308,7 +332,10 @@ public class Rule extends JPanel {
                 (String) row.get(5),
                 (String) row.get(6),
                 (String) row.get(7),
-                (Boolean) row.get(8)
+                (Boolean) row.get(8),
+                (String) row.get(9),
+                timeout,
+                bulk
         );
     }
 
