@@ -357,7 +357,7 @@ public class Databoard extends JPanel {
                             if (cleanedText.equals("*")) {
                                 return true;
                             } else {
-                                String host = StringProcessor.getHostByUrl((String) entry.getValue(1));
+                                String host = StringProcessor.getHostByUrl((String) entry.getValue(2));
                                 return StringProcessor.matchesHostPattern(host, filterText);
                             }
                         }
