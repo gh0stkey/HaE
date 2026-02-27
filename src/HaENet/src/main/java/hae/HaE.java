@@ -25,7 +25,7 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "5.0";
+        String version = "5.0.1";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
@@ -57,9 +57,11 @@ public class HaE implements BurpExtension {
                 new Main(api, configLoader, messageTableModel, ruleRepository, dataRepository, handlerRegistry, validatorService));
 
         // 注册WebSocket处理器
-        api.proxy().registerWebSocketCreationHandler(proxyWebSocketCreation ->
-                proxyWebSocketCreation.proxyWebSocket().registerProxyMessageHandler(
-                        new WebSocketMessageHandler(api, configLoader, dataRepository, ruleRepository)));
+        api.proxy().registerWebSocketCreationHandler(proxyWebSocketCreation -> {
+            String wsUrl = proxyWebSocketCreation.upgradeRequest().url();
+            proxyWebSocketCreation.proxyWebSocket().registerProxyMessageHandler(
+                    new WebSocketMessageHandler(api, configLoader, dataRepository, ruleRepository, wsUrl));
+        });
 
         // 注册消息编辑框（用于展示数据）
         api.userInterface().registerHttpRequestEditorProvider(

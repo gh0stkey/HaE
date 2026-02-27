@@ -14,6 +14,7 @@ import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
+import hae.utils.string.StringProcessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,7 +78,9 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
         public boolean isEnabledFor(WebSocketMessage webSocketMessage) {
             String websocketMessage = webSocketMessage.payload().toString();
             if (!websocketMessage.isEmpty()) {
-                this.dataList = messageProcessor.processMessage("", websocketMessage, false);
+                String url = webSocketMessage.upgradeRequest().url();
+                String host = StringProcessor.getHostByUrl(url);
+                this.dataList = messageProcessor.processMessage(host, url, websocketMessage, false);
                 return EditorUtils.isListHasData(this.dataList);
             }
             return false;

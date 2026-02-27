@@ -86,10 +86,13 @@ public class ResponseEditor implements HttpResponseEditorProvider {
             if (response != null) {
                 HttpRequest request = requestResponse.request();
                 boolean matches = false;
+                String host = "";
+                String url = "";
 
                 if (request != null) {
                     try {
-                        String host = StringProcessor.getHostByUrl(request.url());
+                        url = request.url();
+                        host = StringProcessor.getHostByUrl(url);
                         if (!host.isEmpty()) {
                             String toolType = creationContext.toolSource().toolType().toolName();
                             matches = httpUtils.verifyHttpRequestResponse(requestResponse, toolType);
@@ -99,7 +102,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
                 }
 
                 if (!matches) {
-                    this.dataList = messageProcessor.processResponse("", response, false);
+                    this.dataList = messageProcessor.processResponse(host, url, response, false);
                     return EditorUtils.isListHasData(this.dataList);
                 }
             }

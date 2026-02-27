@@ -83,13 +83,14 @@ public class RequestEditor implements HttpRequestEditorProvider {
             HttpRequest request = requestResponse.request();
             if (request != null) {
                 try {
-                    String host = StringProcessor.getHostByUrl(request.url());
+                    String url = request.url();
+                    String host = StringProcessor.getHostByUrl(url);
                     if (!host.isEmpty()) {
                         String toolType = creationContext.toolSource().toolType().toolName();
                         boolean matches = httpUtils.verifyHttpRequestResponse(requestResponse, toolType);
 
                         if (!matches) {
-                            this.dataList = messageProcessor.processRequest("", request, false);
+                            this.dataList = messageProcessor.processRequest(host, url, request, false);
                             return EditorUtils.isListHasData(this.dataList);
                         }
                     }

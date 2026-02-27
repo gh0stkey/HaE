@@ -36,7 +36,7 @@ public class RegularMatcher {
         this.ruleRepository = ruleRepository;
     }
 
-    public Map<String, Map<String, Object>> performRegexMatching(String host, String type, String message, String header, String body) {
+    public Map<String, Map<String, Object>> performRegexMatching(String host, String url, String type, String message, String header, String body) {
         // 删除动态响应头再进行存储
         String originalMessage = message;
         String dynamicHeader = configLoader.getDynamicHeader();
@@ -58,7 +58,7 @@ public class RegularMatcher {
 
         // 最终返回的结果
         String firstLine = originalMessage.split("\\r?\\n", 2)[0];
-        Map<String, Map<String, Object>> finalMap = applyMatchingRules(host, type, originalMessage, firstLine, header, body);
+        Map<String, Map<String, Object>> finalMap = applyMatchingRules(host, url, type, originalMessage, firstLine, header, body);
 
         // 数据缓存写入，有可能是空值，当作匹配过的索引不再匹配
         DataCache.put(messageIndex, finalMap);
@@ -66,7 +66,7 @@ public class RegularMatcher {
         return finalMap;
     }
 
-    private Map<String, Map<String, Object>> applyMatchingRules(String host, String type, String message, String firstLine, String header, String body) {
+    private Map<String, Map<String, Object>> applyMatchingRules(String host, String url, String type, String message, String firstLine, String header, String body) {
         Map<String, Map<String, Object>> finalMap = new ConcurrentHashMap<>();
 
         ruleRepository.getAllGroupNames().parallelStream().forEach(i -> {
@@ -142,6 +142,7 @@ public class RegularMatcher {
                         // 提取匹配内容的上下文（前后各50个字符）
                         for (String match : result) {
                             ValidatorService.putContext(name, match, matchContent);
+                            ValidatorService.putUrl(name, match, url);
                         }
 
                         dataRepository.mergeData(host, name, result, true);

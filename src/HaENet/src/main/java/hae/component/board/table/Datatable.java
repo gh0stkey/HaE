@@ -40,6 +40,7 @@ public class Datatable extends JPanel {
             ValidatorService.SEVERITY_LOW, ValidatorService.SEVERITY_NONE
     ));
     private SwingWorker<Void, Void> doubleClickWorker;
+    private final JLabel statusLabel = new JLabel();
 
     public Datatable(MontoyaApi api, ConfigLoader configLoader, String tabName, List<String> dataList,
                      ValidatorService validatorService) {
@@ -185,6 +186,8 @@ public class Datatable extends JPanel {
 
         setLayout(new BorderLayout(0, 5));
 
+        Font toolbarFont = dataTable.getFont().deriveFont(12f);
+
         JPanel optionsPanel = new JPanel();
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.X_AXIS));
 
@@ -192,6 +195,8 @@ public class Datatable extends JPanel {
         JPanel settingMenuPanel = new JPanel(new GridLayout(2, 1));
         settingMenuPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         JPopupMenu settingMenu = new JPopupMenu();
+        searchMode.setFont(toolbarFont);
+        regexMode.setFont(toolbarFont);
         settingMenuPanel.add(searchMode);
         settingMenuPanel.add(regexMode);
         regexMode.setSelected(true);
@@ -199,6 +204,7 @@ public class Datatable extends JPanel {
         settingMenu.add(settingMenuPanel);
 
         JButton settingsButton = new JButton("Settings");
+        settingsButton.setFont(toolbarFont);
         setMenuShow(settingMenu, settingsButton);
 
         // Severity filter toggles
@@ -233,7 +239,7 @@ public class Datatable extends JPanel {
             btn.setToolTipText(level);
             btn.setPreferredSize(new Dimension(26, 20));
             btn.setMaximumSize(new Dimension(26, 20));
-            btn.setFont(btn.getFont().deriveFont(Font.BOLD, 11f));
+            btn.setFont(toolbarFont.deriveFont(Font.BOLD));
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);
@@ -249,13 +255,36 @@ public class Datatable extends JPanel {
             severityPanel.add(Box.createHorizontalStrut(2));
         }
 
+        // 分隔符
+        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+        separator.setMaximumSize(new Dimension(1, 20));
+
+        searchField.setFont(toolbarFont);
+        secondSearchField.setFont(toolbarFont);
+
+        statusLabel.setFont(toolbarFont);
+        statusLabel.setForeground(Color.GRAY);
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        updateStatusLabel();
+
+        dataTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateStatusLabel();
+            }
+        });
+
+        // 左侧：Settings + Severity
         optionsPanel.add(settingsButton);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(severityPanel);
-        optionsPanel.add(Box.createHorizontalStrut(5));
+        optionsPanel.add(Box.createHorizontalStrut(6));
+        optionsPanel.add(separator);
+        optionsPanel.add(Box.createHorizontalStrut(6));
+        // 右侧：搜索 + 状态
         optionsPanel.add(searchField);
         optionsPanel.add(Box.createHorizontalStrut(5));
         optionsPanel.add(secondSearchField);
+        optionsPanel.add(statusLabel);
 
         footerPanel.setBorder(BorderFactory.createEmptyBorder(2, 3, 5, 3));
         footerPanel.add(optionsPanel, BorderLayout.CENTER);
@@ -304,6 +333,7 @@ public class Datatable extends JPanel {
         }
 
         sorter.setRowFilter(RowFilter.andFilter(filters));
+        updateStatusLabel();
     }
 
     private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean isReversible) {
@@ -401,6 +431,12 @@ public class Datatable extends JPanel {
         return selectData.toString();
     }
 
+
+    private void updateStatusLabel() {
+        int selected = dataTable.getSelectedRowCount();
+        int total = dataTable.getRowCount();
+        statusLabel.setText(String.format("Selected %d / %d", selected, total));
+    }
 
     public JTable getDataTable() {
         return this.dataTable;

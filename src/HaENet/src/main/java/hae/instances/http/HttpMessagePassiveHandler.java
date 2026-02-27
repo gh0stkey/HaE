@@ -61,8 +61,8 @@ public class HttpMessagePassiveHandler implements ScanCheck {
         if (!matches) {
             try {
                 String host = StringProcessor.getHostByUrl(request.url());
-                setColorAndCommentList(messageProcessor.processRequest(host, request, true), colorList, commentList);
-                setColorAndCommentList(messageProcessor.processResponse(host, response, true), colorList, commentList);
+                setColorAndCommentList(messageProcessor.processRequest(host, request.url(), request, true), colorList, commentList);
+                setColorAndCommentList(messageProcessor.processResponse(host, request.url(), response, true), colorList, commentList);
 
                 String url = request.url();
                 String method = request.method();

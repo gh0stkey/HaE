@@ -22,11 +22,11 @@ public class MessageProcessor {
         this.regularMatcher = new RegularMatcher(api, configLoader, dataRepository, ruleRepository);
     }
 
-    public List<Map<String, String>> processMessage(String host, String message, boolean highlightAction) {
+    public List<Map<String, String>> processMessage(String host, String url, String message, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
-            obj = regularMatcher.performRegexMatching(host, "any", message, message, message);
+            obj = regularMatcher.performRegexMatching(host, url, "any", message, message, message);
         } catch (Exception e) {
             api.logging().logToError("processMessage error: " + e.getMessage());
         }
@@ -34,7 +34,7 @@ public class MessageProcessor {
         return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processResponse(String host, HttpResponse httpResponse, boolean highlightAction) {
+    public List<Map<String, String>> processResponse(String host, String url, HttpResponse httpResponse, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
@@ -44,7 +44,7 @@ public class MessageProcessor {
                     .map(HttpHeader::toString)
                     .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.performRegexMatching(host, "response", response, header, body);
+            obj = regularMatcher.performRegexMatching(host, url, "response", response, header, body);
         } catch (Exception e) {
             api.logging().logToError("processResponse error: " + e.getMessage());
         }
@@ -52,7 +52,7 @@ public class MessageProcessor {
         return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processRequest(String host, HttpRequest httpRequest, boolean highlightAction) {
+    public List<Map<String, String>> processRequest(String host, String url, HttpRequest httpRequest, boolean highlightAction) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
@@ -62,7 +62,7 @@ public class MessageProcessor {
                     .map(HttpHeader::toString)
                     .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.performRegexMatching(host, "request", request, header, body);
+            obj = regularMatcher.performRegexMatching(host, url, "request", request, header, body);
         } catch (Exception e) {
             api.logging().logToError("processRequest error: " + e.getMessage());
         }

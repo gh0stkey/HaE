@@ -68,8 +68,8 @@ public class HttpMessageActiveHandler implements HttpHandler {
 
         if (!matches) {
             try {
-                setColorAndCommentList(messageProcessor.processRequest(host.get(), request, true));
-                setColorAndCommentList(messageProcessor.processResponse(host.get(), httpResponseReceived, true));
+                setColorAndCommentList(messageProcessor.processRequest(host.get(), request.url(), request, true));
+                setColorAndCommentList(messageProcessor.processResponse(host.get(), request.url(), httpResponseReceived, true));
 
                 if (!colorList.get().isEmpty() && !commentList.get().isEmpty()) {
                     HttpRequestResponse httpRequestResponse = HttpRequestResponse.httpRequestResponse(request, httpResponseReceived);

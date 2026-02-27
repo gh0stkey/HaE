@@ -47,6 +47,8 @@ public class ValidatorService {
 
     // ruleName -> matchValue -> [before, after]
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String[]>> contextStore = new ConcurrentHashMap<>();
+    // ruleName -> matchValue -> url
+    private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> urlStore = new ConcurrentHashMap<>();
     private static final int CONTEXT_LENGTH = 50;
 
     public ValidatorService(MontoyaApi api, RuleRepository ruleRepository) {
@@ -163,9 +165,15 @@ public class ValidatorService {
         ruleCtx.putIfAbsent(matchValue, new String[]{before, after});
     }
 
+    public static void putUrl(String ruleName, String matchValue, String url) {
+        ConcurrentHashMap<String, String> ruleUrls = urlStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>());
+        ruleUrls.putIfAbsent(matchValue, url);
+    }
+
     public void clear() {
         severityStore.clear();
         contextStore.clear();
+        urlStore.clear();
     }
 
     public void dispose() {
@@ -173,6 +181,7 @@ public class ValidatorService {
         persistAll();
         severityStore.clear();
         contextStore.clear();
+        urlStore.clear();
     }
 
     public static int compareBySeverity(String a, String b) {
@@ -256,6 +265,7 @@ public class ValidatorService {
 
     private static @NonNull JsonArray getJsonElements(String ruleName, List<String> matches) {
         ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(ruleName);
+        ConcurrentHashMap<String, String> ruleUrls = urlStore.get(ruleName);
         JsonArray items = new JsonArray();
         for (int i = 0; i < matches.size(); i++) {
             JsonObject item = new JsonObject();
@@ -263,6 +273,8 @@ public class ValidatorService {
 
             JsonObject data = new JsonObject();
             data.addProperty("match", matches.get(i));
+            String url = ruleUrls != null ? ruleUrls.get(matches.get(i)) : null;
+            data.addProperty("url", url != null ? url : "");
             JsonObject context = new JsonObject();
             String[] ctx = ruleCtx != null ? ruleCtx.get(matches.get(i)) : null;
             context.addProperty("before", ctx != null ? ctx[0] : "");
