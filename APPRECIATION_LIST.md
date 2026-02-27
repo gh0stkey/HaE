@@ -36,3 +36,4 @@ We appreciate everyone's support for the project. The following list is sorted b
 | cshu                       | 18.88 CNY  |
 | Fzz2                       | 50.00 CNY  |
 | tzrj                       | 50.00 CNY  |
+| 冰淇霖                      | 88.00 CNY  |
