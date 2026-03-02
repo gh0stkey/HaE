@@ -5,14 +5,6 @@ import hae.component.board.message.MessageTableModel;
 import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -21,8 +13,15 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 
 public class Datatable extends JPanel {
+
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final JTable dataTable;
@@ -35,21 +34,30 @@ public class Datatable extends JPanel {
     private final String tabName;
     private final JPanel footerPanel;
     private final ValidatorService validatorService;
-    private final Set<String> selectedSeverities = new LinkedHashSet<>(List.of(
-            ValidatorService.SEVERITY_HIGH, ValidatorService.SEVERITY_MEDIUM,
-            ValidatorService.SEVERITY_LOW, ValidatorService.SEVERITY_NONE
-    ));
+    private final Set<String> selectedSeverities = new LinkedHashSet<>(
+        List.of(
+            ValidatorService.SEVERITY_HIGH,
+            ValidatorService.SEVERITY_MEDIUM,
+            ValidatorService.SEVERITY_LOW,
+            ValidatorService.SEVERITY_NONE
+        )
+    );
     private SwingWorker<Void, Void> doubleClickWorker;
     private final JLabel statusLabel = new JLabel();
 
-    public Datatable(MontoyaApi api, ConfigLoader configLoader, String tabName, List<String> dataList,
-                     ValidatorService validatorService) {
+    public Datatable(
+        MontoyaApi api,
+        ConfigLoader configLoader,
+        String tabName,
+        List<String> dataList,
+        ValidatorService validatorService
+    ) {
         this.api = api;
         this.configLoader = configLoader;
         this.tabName = tabName;
         this.validatorService = validatorService;
 
-        String[] columnNames = {"#", "Information", "Severity"};
+        String[] columnNames = { "#", "Information", "Severity" };
         this.dataTableModel = new DefaultTableModel(columnNames, 0);
 
         this.dataTable = new JTable(dataTableModel);
@@ -68,12 +76,25 @@ public class Datatable extends JPanel {
         sorter.setComparator(0, (Comparator<Integer>) Integer::compareTo);
 
         // 设置Severity排序
-        sorter.setComparator(2, (Comparator<String>) ValidatorService::compareBySeverity);
+        sorter.setComparator(
+            2,
+            (Comparator<String>) ValidatorService::compareBySeverity
+        );
 
         for (String item : dataList) {
             if (!item.isEmpty()) {
-                String severity = validatorService != null ? validatorService.getSeverity(tabName, item) : null;
-                addRowToTable(new Object[]{item, severity != null ? severity : ValidatorService.SEVERITY_NONE});
+                String severity =
+                    validatorService != null
+                        ? validatorService.getSeverity(tabName, item)
+                        : null;
+                addRowToTable(
+                    new Object[] {
+                        item,
+                        severity != null
+                            ? severity
+                            : ValidatorService.SEVERITY_NONE,
+                    }
+                );
             }
         }
 
@@ -87,53 +108,63 @@ public class Datatable extends JPanel {
                 allMatches.add((String) dataTableModel.getValueAt(i, 1));
             }
             if (!allMatches.isEmpty()) {
-                validatorService.autoValidate(Map.of(tabName, allMatches), null, () ->
-                        SwingUtilities.invokeLater(this::refreshSeverities)
+                validatorService.autoValidate(
+                    Map.of(tabName, allMatches),
+                    null,
+                    () -> SwingUtilities.invokeLater(this::refreshSeverities)
                 );
             }
         }
 
         UIEnhancer.setTextFieldPlaceholder(searchField, "Search");
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                performSearch();
-            }
+        searchField
+            .getDocument()
+            .addDocumentListener(
+                new DocumentListener() {
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                performSearch();
-            }
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
 
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                performSearch();
-            }
-
-        });
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
+                }
+            );
 
         UIEnhancer.setTextFieldPlaceholder(secondSearchField, "Second search");
-        secondSearchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                performSearch();
-            }
+        secondSearchField
+            .getDocument()
+            .addDocumentListener(
+                new DocumentListener() {
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                performSearch();
-            }
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
 
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                performSearch();
-            }
-
-        });
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        performSearch();
+                    }
+                }
+            );
 
         // 设置布局
         JScrollPane scrollPane = new JScrollPane(dataTable);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setVerticalScrollBarPolicy(
+            ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+        );
 
         TableColumn idColumn = dataTable.getColumnModel().getColumn(0);
         idColumn.setPreferredWidth(50);
@@ -142,7 +173,9 @@ public class Datatable extends JPanel {
         TableColumn severityColumn = dataTable.getColumnModel().getColumn(2);
         severityColumn.setPreferredWidth(80);
         severityColumn.setMaxWidth(100);
-        severityColumn.setCellRenderer(new SeverityBadgeRenderer());
+        severityColumn.setCellRenderer(
+            new ValidatorService.SeverityBadgeRenderer()
+        );
 
         if (validatorService != null) {
             JPopupMenu rowPopup = new JPopupMenu();
@@ -152,36 +185,40 @@ public class Datatable extends JPanel {
 
             JMenu severityMenu = new JMenu("Set Severity");
             for (String level : ValidatorService.SEVERITY_LEVELS) {
-                JMenuItem item = new JMenuItem(level.substring(0, 1).toUpperCase() + level.substring(1));
-                item.setForeground(getSeverityColor(level));
+                JMenuItem item = new JMenuItem(
+                    level.substring(0, 1).toUpperCase() + level.substring(1)
+                );
+                item.setForeground(ValidatorService.getSeverityColor(level));
                 item.addActionListener(e -> setSelectedRowsSeverity(level));
                 severityMenu.add(item);
             }
             rowPopup.add(severityMenu);
 
-            dataTable.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    showPopupIfNeeded(e);
-                }
+            dataTable.addMouseListener(
+                new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        showPopupIfNeeded(e);
+                    }
 
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    showPopupIfNeeded(e);
-                }
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        showPopupIfNeeded(e);
+                    }
 
-                private void showPopupIfNeeded(MouseEvent e) {
-                    if (e.isPopupTrigger()) {
-                        int row = dataTable.rowAtPoint(e.getPoint());
-                        if (row >= 0 && !dataTable.isRowSelected(row)) {
-                            dataTable.setRowSelectionInterval(row, row);
-                        }
-                        if (dataTable.getSelectedRowCount() > 0) {
-                            rowPopup.show(dataTable, e.getX(), e.getY());
+                    private void showPopupIfNeeded(MouseEvent e) {
+                        if (e.isPopupTrigger()) {
+                            int row = dataTable.rowAtPoint(e.getPoint());
+                            if (row >= 0 && !dataTable.isRowSelected(row)) {
+                                dataTable.setRowSelectionInterval(row, row);
+                            }
+                            if (dataTable.getSelectedRowCount() > 0) {
+                                rowPopup.show(dataTable, e.getX(), e.getY());
+                            }
                         }
                     }
                 }
-            });
+            );
         }
 
         setLayout(new BorderLayout(0, 5));
@@ -207,16 +244,21 @@ public class Datatable extends JPanel {
         settingsButton.setFont(toolbarFont);
         setMenuShow(settingMenu, settingsButton);
 
-        // Severity filter toggles
         JPanel severityPanel = new JPanel();
         severityPanel.setLayout(new BoxLayout(severityPanel, BoxLayout.X_AXIS));
         for (String level : ValidatorService.SEVERITY_LEVELS) {
-            Color levelColor = getSeverityColor(level);
-            JToggleButton btn = new JToggleButton(level.substring(0, 1).toUpperCase(), true) {
+            Color levelColor = ValidatorService.getSeverityColor(level);
+            JToggleButton btn = new JToggleButton(
+                level.substring(0, 1).toUpperCase(),
+                true
+            ) {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                    );
                     if (isSelected()) {
                         g2.setColor(levelColor);
                         g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
@@ -225,13 +267,21 @@ public class Datatable extends JPanel {
                         g2.setColor(getParent().getBackground());
                         g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                         g2.setColor(levelColor);
-                        g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                        g2.drawRoundRect(
+                            0,
+                            0,
+                            getWidth() - 1,
+                            getHeight() - 1,
+                            8,
+                            8
+                        );
                     }
                     g2.setFont(getFont());
                     FontMetrics fm = g2.getFontMetrics();
                     String text = getText();
                     int x = (getWidth() - fm.stringWidth(text)) / 2;
-                    int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                    int y =
+                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                     g2.drawString(text, x, y);
                     g2.dispose();
                 }
@@ -267,11 +317,13 @@ public class Datatable extends JPanel {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
         updateStatusLabel();
 
-        dataTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                updateStatusLabel();
-            }
-        });
+        dataTable
+            .getSelectionModel()
+            .addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    updateStatusLabel();
+                }
+            });
 
         // 左侧：Settings + Severity
         optionsPanel.add(settingsButton);
@@ -303,10 +355,12 @@ public class Datatable extends JPanel {
         });
     }
 
-
     private void addRowToTable(Object[] data) {
         int rowCount = dataTableModel.getRowCount();
-        int id = rowCount > 0 ? (Integer) dataTableModel.getValueAt(rowCount - 1, 0) + 1 : 1;
+        int id =
+            rowCount > 0
+                ? (Integer) dataTableModel.getValueAt(rowCount - 1, 0) + 1
+                : 1;
         Object[] rowData = new Object[data.length + 1];
         rowData[0] = id;
         System.arraycopy(data, 0, rowData, 1, data.length);
@@ -316,13 +370,14 @@ public class Datatable extends JPanel {
     private void performSearch() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-        // Severity filter
-        filters.add(new RowFilter<>() {
-            public boolean include(Entry<?, ?> entry) {
-                String severity = entry.getValue(2).toString();
-                return selectedSeverities.contains(severity);
+        filters.add(
+            new RowFilter<>() {
+                public boolean include(Entry<?, ?> entry) {
+                    String severity = entry.getValue(2).toString();
+                    return selectedSeverities.contains(severity);
+                }
             }
-        });
+        );
 
         if (UIEnhancer.hasUserInput(searchField)) {
             filters.add(getObjectObjectRowFilter(searchField, true));
@@ -336,7 +391,10 @@ public class Datatable extends JPanel {
         updateStatusLabel();
     }
 
-    private RowFilter<Object, Object> getObjectObjectRowFilter(JTextField searchField, boolean isReversible) {
+    private RowFilter<Object, Object> getObjectObjectRowFilter(
+        JTextField searchField,
+        boolean isReversible
+    ) {
         return new RowFilter<>() {
             public boolean include(Entry<?, ?> entry) {
                 String searchText = searchField.getText();
@@ -347,15 +405,21 @@ public class Datatable extends JPanel {
                 if (regexMode.isSelected()) {
                     Pattern pattern = null;
                     try {
-                        pattern = Pattern.compile(searchText, Pattern.CASE_INSENSITIVE);
-                    } catch (Exception ignored) {
-                    }
+                        pattern = Pattern.compile(
+                            searchText,
+                            Pattern.CASE_INSENSITIVE
+                        );
+                    } catch (Exception ignored) {}
 
                     if (pattern != null) {
-                        filterReturn = filterReturn || pattern.matcher(entryValue).find() != reverseReturn;
+                        filterReturn =
+                            filterReturn ||
+                            pattern.matcher(entryValue).find() != reverseReturn;
                     }
                 } else {
-                    filterReturn = filterReturn || entryValue.contains(searchText) != reverseReturn;
+                    filterReturn =
+                        filterReturn ||
+                        entryValue.contains(searchText) != reverseReturn;
                 }
 
                 return filterReturn;
@@ -363,13 +427,19 @@ public class Datatable extends JPanel {
         };
     }
 
-    private void handleDoubleClick(int selectedRow, MessageTableModel messagePanel) {
+    private void handleDoubleClick(
+        int selectedRow,
+        MessageTableModel messagePanel
+    ) {
         if (doubleClickWorker != null && !doubleClickWorker.isDone()) {
             doubleClickWorker.cancel(true);
         }
 
         // 在EDT上读取表格数据（Swing线程安全）
         String rowData = dataTable.getValueAt(selectedRow, 1).toString();
+
+        // 在请求/响应编辑器上设置搜索表达式，便于用户快速定位匹配数据
+        messagePanel.getMessageTable().setSearchExpression(rowData);
 
         doubleClickWorker = new SwingWorker<>() {
             @Override
@@ -386,32 +456,44 @@ public class Datatable extends JPanel {
 
     public void setTableListener(MessageTableModel messagePanel) {
         // 表格复制功能
-        dataTable.setTransferHandler(new TransferHandler() {
-            @Override
-            public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
-                if (comp instanceof JTable) {
-                    StringSelection stringSelection = new StringSelection(getSelectedDataAtTable((JTable) comp).replace("\0", "").replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", ""));
-                    clip.setContents(stringSelection, null);
-                } else {
-                    super.exportToClipboard(comp, clip, action);
+        dataTable.setTransferHandler(
+            new TransferHandler() {
+                @Override
+                public void exportToClipboard(
+                    JComponent comp,
+                    Clipboard clip,
+                    int action
+                ) throws IllegalStateException {
+                    if (comp instanceof JTable) {
+                        StringSelection stringSelection = new StringSelection(
+                            getSelectedDataAtTable((JTable) comp)
+                                .replace("\0", "")
+                                .replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "")
+                        );
+                        clip.setContents(stringSelection, null);
+                    } else {
+                        super.exportToClipboard(comp, clip, action);
+                    }
                 }
             }
-        });
+        );
 
         dataTable.setDefaultEditor(Object.class, null);
 
         // 表格内容双击事件
-        dataTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int selectedRow = dataTable.getSelectedRow();
-                    if (selectedRow != -1) {
-                        handleDoubleClick(selectedRow, messagePanel);
+        dataTable.addMouseListener(
+            new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        int selectedRow = dataTable.getSelectedRow();
+                        if (selectedRow != -1) {
+                            handleDoubleClick(selectedRow, messagePanel);
+                        }
                     }
                 }
             }
-        });
+        );
     }
 
     public String getSelectedDataAtTable(JTable table) {
@@ -419,7 +501,9 @@ public class Datatable extends JPanel {
         StringBuilder selectData = new StringBuilder();
 
         for (int row : selectRows) {
-            selectData.append(table.getValueAt(row, 1).toString()).append("\r\n");
+            selectData
+                .append(table.getValueAt(row, 1).toString())
+                .append("\r\n");
         }
 
         if (!selectData.isEmpty()) {
@@ -430,7 +514,6 @@ public class Datatable extends JPanel {
 
         return selectData.toString();
     }
-
 
     private void updateStatusLabel() {
         int selected = dataTable.getSelectedRowCount();
@@ -449,8 +532,15 @@ public class Datatable extends JPanel {
     public void refreshSeverities() {
         for (int i = 0; i < dataTableModel.getRowCount(); i++) {
             String matchValue = (String) dataTableModel.getValueAt(i, 1);
-            String severity = validatorService != null ? validatorService.getSeverity(tabName, matchValue) : null;
-            dataTableModel.setValueAt(severity != null ? severity : ValidatorService.SEVERITY_NONE, i, 2);
+            String severity =
+                validatorService != null
+                    ? validatorService.getSeverity(tabName, matchValue)
+                    : null;
+            dataTableModel.setValueAt(
+                severity != null ? severity : ValidatorService.SEVERITY_NONE,
+                i,
+                2
+            );
         }
         sorter.sort();
     }
@@ -466,7 +556,7 @@ public class Datatable extends JPanel {
         }
 
         validatorService.revalidateAll(Map.of(tabName, matches), null, () ->
-                SwingUtilities.invokeLater(this::refreshSeverities)
+            SwingUtilities.invokeLater(this::refreshSeverities)
         );
     }
 
@@ -484,30 +574,4 @@ public class Datatable extends JPanel {
         validatorService.persistRule(tabName);
         sorter.sort();
     }
-
-    private static Color getSeverityColor(String severity) {
-        return switch (severity) {
-            case ValidatorService.SEVERITY_HIGH -> new Color(220, 50, 50);
-            case ValidatorService.SEVERITY_MEDIUM -> new Color(220, 150, 30);
-            case ValidatorService.SEVERITY_LOW -> new Color(60, 130, 220);
-            default -> Color.GRAY;
-        };
-    }
-
-    private static class SeverityBadgeRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                       boolean hasFocus, int row, int column) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            String severity = value != null ? value.toString() : ValidatorService.SEVERITY_NONE;
-            label.setText(severity.substring(0, 1).toUpperCase());
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            if (!isSelected) {
-                label.setForeground(getSeverityColor(severity));
-            }
-            label.setFont(label.getFont().deriveFont(Font.BOLD));
-            return label;
-        }
-    }
 }
-

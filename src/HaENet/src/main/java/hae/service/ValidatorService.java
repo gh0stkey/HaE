@@ -10,29 +10,51 @@ import hae.repository.RuleRepository;
 import hae.utils.rule.model.RuleDefinition;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ValidatorService {
+
     public static final String SEVERITY_HIGH = "high";
     public static final String SEVERITY_MEDIUM = "medium";
     public static final String SEVERITY_LOW = "low";
     public static final String SEVERITY_NONE = "none";
-    public static final String[] SEVERITY_LEVELS = {SEVERITY_HIGH, SEVERITY_MEDIUM, SEVERITY_LOW, SEVERITY_NONE};
+    public static final String[] SEVERITY_LEVELS = {
+            SEVERITY_HIGH,
+            SEVERITY_MEDIUM,
+            SEVERITY_LOW,
+            SEVERITY_NONE,
+    };
     public static final Map<String, Integer> SEVERITY_RANK = Map.of(
-            SEVERITY_HIGH, 0, SEVERITY_MEDIUM, 1, SEVERITY_LOW, 2, SEVERITY_NONE, 3
+            SEVERITY_HIGH,
+            0,
+            SEVERITY_MEDIUM,
+            1,
+            SEVERITY_LOW,
+            2,
+            SEVERITY_NONE,
+            3
     );
 
     private static final int DEFAULT_TIMEOUT = 5000;
     private static final int DEFAULT_BULK = 500;
-    private static final Set<String> VALID_TAGS = Set.of(SEVERITY_NONE, SEVERITY_LOW, SEVERITY_MEDIUM, SEVERITY_HIGH);
+    private static final Set<String> VALID_TAGS = Set.of(
+            SEVERITY_NONE,
+            SEVERITY_LOW,
+            SEVERITY_MEDIUM,
+            SEVERITY_HIGH
+    );
 
     private static final String SEVERITY_INDEX_KEY = "severity_index";
     private static final String SEVERITY_PREFIX = "sev_";
@@ -40,15 +62,25 @@ public class ValidatorService {
     private final MontoyaApi api;
     private final RuleRepository ruleRepository;
     private final Persistence persistence;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor =
+            Executors.newSingleThreadExecutor();
 
     // ruleName -> matchValue -> severity
-    private final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> severityStore = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<
+            String,
+            ConcurrentHashMap<String, String>
+            > severityStore = new ConcurrentHashMap<>();
 
     // ruleName -> matchValue -> [before, after]
-    private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String[]>> contextStore = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<
+            String,
+            ConcurrentHashMap<String, String[]>
+            > contextStore = new ConcurrentHashMap<>();
     // ruleName -> matchValue -> url
-    private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> urlStore = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<
+            String,
+            ConcurrentHashMap<String, String>
+            > urlStore = new ConcurrentHashMap<>();
     private static final int CONTEXT_LENGTH = 50;
 
     public ValidatorService(MontoyaApi api, RuleRepository ruleRepository) {
@@ -63,33 +95,58 @@ public class ValidatorService {
         return ruleMap != null ? ruleMap.get(matchValue) : null;
     }
 
-    public void setSeverity(String ruleName, String matchValue, String severity) {
-        severityStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>()).put(matchValue, severity);
+    public void setSeverity(
+            String ruleName,
+            String matchValue,
+            String severity
+    ) {
+        severityStore
+                .computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>())
+                .put(matchValue, severity);
     }
 
-    public void revalidateAll(Map<String, List<String>> ruleDataMap, String groupName, Runnable onComplete) {
+    public void revalidateAll(
+            Map<String, List<String>> ruleDataMap,
+            String groupName,
+            Runnable onComplete
+    ) {
         executor.submit(() -> {
             try {
-                for (Map.Entry<String, List<String>> entry : ruleDataMap.entrySet()) {
+                for (Map.Entry<
+                        String,
+                        List<String>
+                        > entry : ruleDataMap.entrySet()) {
                     String ruleName = entry.getKey();
                     RuleDefinition rule = findRule(groupName, ruleName);
-                    if (rule != null && rule.getValidator() != null && !rule.getValidator().isEmpty()) {
+                    if (
+                            rule != null &&
+                                    rule.getValidator() != null &&
+                                    !rule.getValidator().isEmpty()
+                    ) {
                         runValidation(rule, groupName, entry.getValue());
                     }
                 }
             } catch (Exception e) {
-                api.logging().logToError("[Validator] Error: " + e.getMessage());
+                api
+                        .logging()
+                        .logToError("[Validator] Error: " + e.getMessage());
             } finally {
                 if (onComplete != null) onComplete.run();
             }
         });
     }
 
-    public void autoValidate(Map<String, List<String>> ruleDataMap, String groupName, Runnable onComplete) {
+    public void autoValidate(
+            Map<String, List<String>> ruleDataMap,
+            String groupName,
+            Runnable onComplete
+    ) {
         Map<String, List<String>> needValidation = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : ruleDataMap.entrySet()) {
             String ruleName = entry.getKey();
-            ConcurrentHashMap<String, String> ruleMap = severityStore.get(ruleName);
+            ConcurrentHashMap<String, String> ruleMap = severityStore.get(
+                    ruleName
+            );
             List<String> unseen = new ArrayList<>();
             for (String match : entry.getValue()) {
                 if (ruleMap == null || !ruleMap.containsKey(match)) {
@@ -107,19 +164,39 @@ public class ValidatorService {
         revalidateAll(needValidation, groupName, onComplete);
     }
 
-    private void runValidation(RuleDefinition rule, String group, List<String> matches) {
+    private void runValidation(
+            RuleDefinition rule,
+            String group,
+            List<String> matches
+    ) {
         if (matches.isEmpty()) return;
 
-        int timeout = rule.getValidatorTimeout() > 0 ? rule.getValidatorTimeout() : DEFAULT_TIMEOUT;
-        int bulk = rule.getValidatorBulk() > 0 ? rule.getValidatorBulk() : DEFAULT_BULK;
+        int timeout =
+                rule.getValidatorTimeout() > 0
+                        ? rule.getValidatorTimeout()
+                        : DEFAULT_TIMEOUT;
+        int bulk =
+                rule.getValidatorBulk() > 0
+                        ? rule.getValidatorBulk()
+                        : DEFAULT_BULK;
 
-        ConcurrentHashMap<String, String> ruleStore = severityStore.computeIfAbsent(rule.getName(), k -> new ConcurrentHashMap<>());
+        ConcurrentHashMap<String, String> ruleStore =
+                severityStore.computeIfAbsent(rule.getName(), k ->
+                        new ConcurrentHashMap<>()
+                );
 
         for (int offset = 0; offset < matches.size(); offset += bulk) {
-            List<String> batch = matches.subList(offset, Math.min(offset + bulk, matches.size()));
+            List<String> batch = matches.subList(
+                    offset,
+                    Math.min(offset + bulk, matches.size())
+            );
 
             String inputJson = buildInputJson(rule, group, batch);
-            String output = executeCommand(rule.getValidator(), inputJson, timeout);
+            String output = executeCommand(
+                    rule.getValidator(),
+                    inputJson,
+                    timeout
+            );
             if (output == null) continue;
 
             Map<Integer, String> resultMap = parseOutput(output);
@@ -129,13 +206,23 @@ public class ValidatorService {
             }
         }
 
-        api.logging().logToOutput(String.format("[Validator] %s: validated %d matches", rule.getName(), matches.size()));
+        api
+                .logging()
+                .logToOutput(
+                        String.format(
+                                "[Validator] %s: validated %d matches",
+                                rule.getName(),
+                                matches.size()
+                        )
+                );
         persistRule(rule.getName());
     }
 
     private RuleDefinition findRule(String groupHint, String ruleName) {
         if (groupHint != null) {
-            List<RuleDefinition> rules = ruleRepository.getRulesByGroup(groupHint);
+            List<RuleDefinition> rules = ruleRepository.getRulesByGroup(
+                    groupHint
+            );
             if (rules != null) {
                 for (RuleDefinition r : rules) {
                     if (r.getName().equals(ruleName)) return r;
@@ -153,20 +240,37 @@ public class ValidatorService {
         return null;
     }
 
-    public static void putContext(String ruleName, String matchValue, String matchContent) {
-        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>());
+    public static void putContext(
+            String ruleName,
+            String matchValue,
+            String matchContent
+    ) {
+        ConcurrentHashMap<String, String[]> ruleCtx =
+                contextStore.computeIfAbsent(ruleName, k ->
+                        new ConcurrentHashMap<>()
+                );
         if (ruleCtx.containsKey(matchValue)) return;
         int pos = matchContent.indexOf(matchValue);
         if (pos < 0) return;
-        String before = matchContent.substring(Math.max(0, pos - CONTEXT_LENGTH), pos);
+        String before = matchContent.substring(
+                Math.max(0, pos - CONTEXT_LENGTH),
+                pos
+        );
         String after = matchContent.substring(
                 Math.min(pos + matchValue.length(), matchContent.length()),
-                Math.min(pos + matchValue.length() + CONTEXT_LENGTH, matchContent.length()));
+                Math.min(
+                        pos + matchValue.length() + CONTEXT_LENGTH,
+                        matchContent.length()
+                )
+        );
         ruleCtx.putIfAbsent(matchValue, new String[]{before, after});
     }
 
     public static void putUrl(String ruleName, String matchValue, String url) {
-        ConcurrentHashMap<String, String> ruleUrls = urlStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>());
+        ConcurrentHashMap<String, String> ruleUrls = urlStore.computeIfAbsent(
+                ruleName,
+                k -> new ConcurrentHashMap<>()
+        );
         ruleUrls.putIfAbsent(matchValue, url);
     }
 
@@ -190,15 +294,31 @@ public class ValidatorService {
         return Integer.compare(ra, rb);
     }
 
+    public static Color getSeverityColor(String severity) {
+        return switch (severity) {
+            case SEVERITY_HIGH -> new Color(220, 50, 50);
+            case SEVERITY_MEDIUM -> new Color(220, 150, 30);
+            case SEVERITY_LOW -> new Color(60, 130, 220);
+            default -> Color.GRAY;
+        };
+    }
+
     private void loadFromPersistence() {
         try {
-            PersistedList<String> index = persistence.extensionData().getStringList(SEVERITY_INDEX_KEY);
+            PersistedList<String> index = persistence
+                    .extensionData()
+                    .getStringList(SEVERITY_INDEX_KEY);
             if (index == null || index.isEmpty()) return;
 
             for (String ruleName : index) {
-                PersistedList<String> entries = persistence.extensionData().getStringList(SEVERITY_PREFIX + ruleName);
+                PersistedList<String> entries = persistence
+                        .extensionData()
+                        .getStringList(SEVERITY_PREFIX + ruleName);
                 if (entries == null) continue;
-                ConcurrentHashMap<String, String> ruleMap = severityStore.computeIfAbsent(ruleName, k -> new ConcurrentHashMap<>());
+                ConcurrentHashMap<String, String> ruleMap =
+                        severityStore.computeIfAbsent(ruleName, k ->
+                                new ConcurrentHashMap<>()
+                        );
                 for (String entry : entries) {
                     int sep = entry.lastIndexOf('\t');
                     if (sep > 0 && sep < entry.length() - 1) {
@@ -211,32 +331,51 @@ public class ValidatorService {
                 }
             }
         } catch (Exception e) {
-            api.logging().logToError("[Validator] Failed to load severity: " + e.getMessage());
+            api
+                    .logging()
+                    .logToError(
+                            "[Validator] Failed to load severity: " + e.getMessage()
+                    );
         }
     }
 
     public synchronized void persistRule(String ruleName) {
         try {
-            ConcurrentHashMap<String, String> ruleMap = severityStore.get(ruleName);
+            ConcurrentHashMap<String, String> ruleMap = severityStore.get(
+                    ruleName
+            );
             if (ruleMap == null || ruleMap.isEmpty()) return;
 
             PersistedList<String> entries = PersistedList.persistedStringList();
             for (Map.Entry<String, String> e : ruleMap.entrySet()) {
                 entries.add(e.getKey() + "\t" + e.getValue());
             }
-            persistence.extensionData().setStringList(SEVERITY_PREFIX + ruleName, entries);
+            persistence
+                    .extensionData()
+                    .setStringList(SEVERITY_PREFIX + ruleName, entries);
 
             // Update index
-            PersistedList<String> index = persistence.extensionData().getStringList(SEVERITY_INDEX_KEY);
+            PersistedList<String> index = persistence
+                    .extensionData()
+                    .getStringList(SEVERITY_INDEX_KEY);
             if (index == null) {
                 index = PersistedList.persistedStringList();
             }
             if (!index.contains(ruleName)) {
                 index.add(ruleName);
-                persistence.extensionData().setStringList(SEVERITY_INDEX_KEY, index);
+                persistence
+                        .extensionData()
+                        .setStringList(SEVERITY_INDEX_KEY, index);
             }
         } catch (Exception e) {
-            api.logging().logToError("[Validator] Failed to persist severity for " + ruleName + ": " + e.getMessage());
+            api
+                    .logging()
+                    .logToError(
+                            "[Validator] Failed to persist severity for " +
+                                    ruleName +
+                                    ": " +
+                                    e.getMessage()
+                    );
         }
     }
 
@@ -248,7 +387,11 @@ public class ValidatorService {
 
     private static final Gson GSON = new Gson();
 
-    private static String buildInputJson(RuleDefinition rule, String group, List<String> matches) {
+    private static String buildInputJson(
+            RuleDefinition rule,
+            String group,
+            List<String> matches
+    ) {
         JsonObject root = new JsonObject();
 
         JsonObject ruleObj = new JsonObject();
@@ -263,8 +406,13 @@ public class ValidatorService {
         return GSON.toJson(root);
     }
 
-    private static @NonNull JsonArray getJsonElements(String ruleName, List<String> matches) {
-        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(ruleName);
+    private static @NonNull JsonArray getJsonElements(
+            String ruleName,
+            List<String> matches
+    ) {
+        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(
+                ruleName
+        );
         ConcurrentHashMap<String, String> ruleUrls = urlStore.get(ruleName);
         JsonArray items = new JsonArray();
         for (int i = 0; i < matches.size(); i++) {
@@ -287,7 +435,11 @@ public class ValidatorService {
         return items;
     }
 
-    private static String executeCommand(String command, String input, long timeout) {
+    public static String executeCommand(
+            String command,
+            String input,
+            long timeout
+    ) {
         try {
             String osName = System.getProperty("os.name", "").toLowerCase();
             String[] cmd = osName.contains("win")
@@ -306,7 +458,9 @@ public class ValidatorService {
             StringBuilder stdout = new StringBuilder();
             Thread reader = new Thread(() -> {
                 try (InputStream is = process.getInputStream()) {
-                    stdout.append(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+                    stdout.append(
+                            new String(is.readAllBytes(), StandardCharsets.UTF_8)
+                    );
                 } catch (IOException ignored) {
                 }
             });
@@ -328,7 +482,7 @@ public class ValidatorService {
         }
     }
 
-    private static Map<Integer, String> parseOutput(String output) {
+    public static Map<Integer, String> parseOutput(String output) {
         Map<Integer, String> severityMap = new HashMap<>();
         try {
             JsonObject parsed = GSON.fromJson(output, JsonObject.class);
@@ -346,5 +500,35 @@ public class ValidatorService {
         } catch (Exception ignored) {
         }
         return severityMap;
+    }
+
+    public static class SeverityBadgeRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                boolean hasFocus,
+                int row,
+                int column
+        ) {
+            JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table,
+                    value,
+                    isSelected,
+                    hasFocus,
+                    row,
+                    column
+            );
+            String severity = value != null ? value.toString() : SEVERITY_NONE;
+            label.setText(severity.substring(0, 1).toUpperCase());
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            if (!isSelected) {
+                label.setForeground(getSeverityColor(severity));
+            }
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
+            return label;
+        }
     }
 }

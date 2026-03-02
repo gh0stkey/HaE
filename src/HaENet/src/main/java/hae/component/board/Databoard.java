@@ -22,28 +22,38 @@ import java.awt.event.*;
 import java.text.Collator;
 import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Databoard extends JPanel {
+
     private boolean isMatchHost = false;
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final DataRepository dataRepository;
     private final ValidatorService validatorService;
-    private final DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
-    private final JComboBox<String> hostComboBox = new JComboBox<>(comboBoxModel);
+    private final DefaultComboBoxModel<String> comboBoxModel =
+            new DefaultComboBoxModel<>();
+    private final JComboBox<String> hostComboBox = new JComboBox<>(
+            comboBoxModel
+    );
     private JTextField hostTextField;
     private JTabbedPane dataTabbedPane;
     private JSplitPane splitPane;
     private MessageTable messageTable;
     private JProgressBar progressBar;
-    private SwingWorker<Map<String, List<String>>, Integer> handleComboBoxWorker;
+    private SwingWorker<
+            Map<String, List<String>>,
+            Integer
+            > handleComboBoxWorker;
     private SwingWorker<Void, Void> applyHostFilterWorker;
 
-    public Databoard(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel,
-                     DataRepository dataRepository, ValidatorService validatorService) {
+    public Databoard(
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            MessageTableModel messageTableModel,
+            DataRepository dataRepository,
+            ValidatorService validatorService
+    ) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
@@ -55,10 +65,36 @@ public class Databoard extends JPanel {
 
     private void initComponents() {
         setLayout(new GridBagLayout());
-        ((GridBagLayout) getLayout()).columnWidths = new int[]{25, 0, 0, 0, 20, 0};
-        ((GridBagLayout) getLayout()).rowHeights = new int[]{0, 65, 20, 0, 0};
-        ((GridBagLayout) getLayout()).columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 1.0E-4};
-        ((GridBagLayout) getLayout()).rowWeights = new double[]{0.0, 1.0, 0.0, 0.0, 1.0E-4};
+        ((GridBagLayout) getLayout()).columnWidths = new int[]{
+                25,
+                0,
+                0,
+                0,
+                20,
+                0,
+        };
+        ((GridBagLayout) getLayout()).rowHeights = new int[]{
+                0,
+                65,
+                20,
+                0,
+                0,
+        };
+        ((GridBagLayout) getLayout()).columnWeights = new double[]{
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                1.0E-4,
+        };
+        ((GridBagLayout) getLayout()).rowWeights = new double[]{
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                1.0E-4,
+        };
         JLabel hostLabel = new JLabel("Host:");
 
         JButton clearDataButton = new JButton("Clear data");
@@ -90,30 +126,48 @@ public class Databoard extends JPanel {
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() {
-                    messageTableModel.applyCommentFilter(StringProcessor.extractItemName(finalTitle));
+                    messageTableModel.applyCommentFilter(
+                            StringProcessor.extractItemName(finalTitle)
+                    );
                     return null;
                 }
-            }.execute();
+            }
+                    .execute();
         });
 
-        dataTabbedPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) { showTabPopup(e); }
-            @Override
-            public void mouseReleased(MouseEvent e) { showTabPopup(e); }
-            private void showTabPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    int tabIndex = dataTabbedPane.indexAtLocation(e.getX(), e.getY());
-                    if (tabIndex != -1) {
-                        JPopupMenu popup = new JPopupMenu();
-                        JMenuItem revalidateItem = new JMenuItem("Revalidate");
-                        revalidateItem.addActionListener(ev -> revalidateTab(tabIndex));
-                        popup.add(revalidateItem);
-                        popup.show(dataTabbedPane, e.getX(), e.getY());
+        dataTabbedPane.addMouseListener(
+                new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        showTabPopup(e);
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        showTabPopup(e);
+                    }
+
+                    private void showTabPopup(MouseEvent e) {
+                        if (e.isPopupTrigger()) {
+                            int tabIndex = dataTabbedPane.indexAtLocation(
+                                    e.getX(),
+                                    e.getY()
+                            );
+                            if (tabIndex != -1) {
+                                JPopupMenu popup = new JPopupMenu();
+                                JMenuItem revalidateItem = new JMenuItem(
+                                        "Revalidate"
+                                );
+                                revalidateItem.addActionListener(ev ->
+                                        revalidateTab(tabIndex)
+                                );
+                                popup.add(revalidateItem);
+                                popup.show(dataTabbedPane, e.getX(), e.getY());
+                            }
+                        }
                     }
                 }
-            }
-        });
+        );
 
         actionButton.addActionListener(e -> {
             int x = 0;
@@ -125,32 +179,116 @@ public class Databoard extends JPanel {
         clearCacheButton.addActionListener(this::clearCacheActionPerformed);
 
         progressBar = new JProgressBar();
-        splitPane.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                resizePanel();
-            }
-        });
+        splitPane.addComponentListener(
+                new ComponentAdapter() {
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        resizePanel();
+                    }
+                }
+        );
 
         splitPane.setVisible(false);
         progressBar.setVisible(false);
 
-        add(hostLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(8, 0, 5, 5), 0, 0));
-        add(hostTextField, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(8, 0, 5, 5), 0, 0));
-        add(actionButton, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(8, 0, 5, 5), 0, 0));
+        add(
+                hostLabel,
+                new GridBagConstraints(
+                        1,
+                        0,
+                        1,
+                        1,
+                        0.0,
+                        0.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.BOTH,
+                        new Insets(8, 0, 5, 5),
+                        0,
+                        0
+                )
+        );
+        add(
+                hostTextField,
+                new GridBagConstraints(
+                        2,
+                        0,
+                        1,
+                        1,
+                        0.0,
+                        0.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.BOTH,
+                        new Insets(8, 0, 5, 5),
+                        0,
+                        0
+                )
+        );
+        add(
+                actionButton,
+                new GridBagConstraints(
+                        3,
+                        0,
+                        1,
+                        1,
+                        0.0,
+                        0.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.BOTH,
+                        new Insets(8, 0, 5, 5),
+                        0,
+                        0
+                )
+        );
 
-        add(splitPane, new GridBagConstraints(1, 1, 3, 1, 0.0, 1.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(0, 5, 0, 5), 0, 0));
-        add(progressBar, new GridBagConstraints(1, 2, 3, 1, 1.0, 0.0,
-                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                new Insets(0, 5, 0, 5), 0, 0));
+        add(
+                splitPane,
+                new GridBagConstraints(
+                        1,
+                        1,
+                        3,
+                        1,
+                        0.0,
+                        1.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.BOTH,
+                        new Insets(0, 5, 0, 5),
+                        0,
+                        0
+                )
+        );
+        add(
+                progressBar,
+                new GridBagConstraints(
+                        1,
+                        2,
+                        3,
+                        1,
+                        1.0,
+                        0.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.HORIZONTAL,
+                        new Insets(0, 5, 0, 5),
+                        0,
+                        0
+                )
+        );
         hostComboBox.setMaximumRowCount(5);
-        add(hostComboBox, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                new Insets(8, 0, 5, 5), 0, 0));
+        add(
+                hostComboBox,
+                new GridBagConstraints(
+                        2,
+                        0,
+                        1,
+                        1,
+                        0.0,
+                        0.0,
+                        GridBagConstraints.CENTER,
+                        GridBagConstraints.BOTH,
+                        new Insets(8, 0, 5, 5),
+                        0,
+                        0
+                )
+        );
 
         setAutoMatch();
     }
@@ -159,16 +297,7 @@ public class Databoard extends JPanel {
         if (messageTable == null) {
             return;
         }
-        splitPane.setDividerLocation(0.4);
-        TableColumnModel columnModel = messageTable.getColumnModel();
-        int totalWidth = (int) (getWidth() * 0.6);
-        columnModel.getColumn(0).setPreferredWidth((int) (totalWidth * 0.05));
-        columnModel.getColumn(1).setPreferredWidth((int) (totalWidth * 0.08));
-        columnModel.getColumn(2).setPreferredWidth((int) (totalWidth * 0.3));
-        columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.27));
-        columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
-        columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
-        columnModel.getColumn(6).setPreferredWidth((int) (totalWidth * 0.1));
+        resizeMessageTable(splitPane, messageTable, getWidth());
     }
 
     private void setProgressBar(boolean status, String message, int progress) {
@@ -188,30 +317,35 @@ public class Databoard extends JPanel {
         hostComboBox.setSelectedItem(null);
         hostComboBox.addActionListener(this::handleComboBoxAction);
 
-        hostTextField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                handleKeyEvents(e);
-            }
-        });
+        hostTextField.addKeyListener(
+                new KeyAdapter() {
+                    @Override
+                    public void keyPressed(KeyEvent e) {
+                        handleKeyEvents(e);
+                    }
+                }
+        );
 
-        hostTextField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                filterComboBoxList();
-            }
+        hostTextField
+                .getDocument()
+                .addDocumentListener(
+                        new DocumentListener() {
+                            @Override
+                            public void insertUpdate(DocumentEvent e) {
+                                filterComboBoxList();
+                            }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                filterComboBoxList();
-            }
+                            @Override
+                            public void removeUpdate(DocumentEvent e) {
+                                filterComboBoxList();
+                            }
 
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                filterComboBoxList();
-            }
-
-        });
+                            @Override
+                            public void changedUpdate(DocumentEvent e) {
+                                filterComboBoxList();
+                            }
+                        }
+                );
     }
 
     private void handleComboBoxAction(ActionEvent e) {
@@ -222,7 +356,10 @@ public class Databoard extends JPanel {
                 hostTextField.setText(selectedHost);
                 hostComboBox.setPopupVisible(false);
 
-                if (handleComboBoxWorker != null && !handleComboBoxWorker.isDone()) {
+                if (
+                        handleComboBoxWorker != null &&
+                                !handleComboBoxWorker.isDone()
+                ) {
                     progressBar.setVisible(false);
                     handleComboBoxWorker.cancel(true);
                 }
@@ -258,8 +395,12 @@ public class Databoard extends JPanel {
         isMatchHost = false;
     }
 
-    private Map<String, List<String>> getSelectedMapByHost(String selectedHost, DataLoadingWorker worker) {
-        Map<String, Map<String, List<String>>> dataMap = dataRepository.getAll();
+    private Map<String, List<String>> getSelectedMapByHost(
+            String selectedHost,
+            DataLoadingWorker worker
+    ) {
+        Map<String, Map<String, List<String>>> dataMap =
+                dataRepository.getAll();
         Map<String, List<String>> selectedDataMap;
 
         if (selectedHost.contains("*")) {
@@ -268,7 +409,11 @@ public class Databoard extends JPanel {
 
             // 第一步：找出所有匹配的键（预处理）
             for (String key : dataMap.keySet()) {
-                if ((StringProcessor.matchesHostPattern(key, selectedHost) || selectedHost.equals("*")) && !key.contains("*")) {
+                if (
+                        (StringProcessor.matchesHostPattern(key, selectedHost) ||
+                                selectedHost.equals("*")) &&
+                                !key.contains("*")
+                ) {
                     matchingKeys.add(key);
                 }
             }
@@ -283,20 +428,28 @@ public class Databoard extends JPanel {
                     for (String ruleKey : ruleMap.keySet()) {
                         List<String> dataList = ruleMap.get(ruleKey);
                         if (selectedDataMap.containsKey(ruleKey)) {
-                            List<String> mergedList = new ArrayList<>(selectedDataMap.get(ruleKey));
+                            List<String> mergedList = new ArrayList<>(
+                                    selectedDataMap.get(ruleKey)
+                            );
                             mergedList.addAll(dataList);
                             // 使用HashSet去重
                             Set<String> uniqueSet = new HashSet<>(mergedList);
-                            selectedDataMap.put(ruleKey, new ArrayList<>(uniqueSet));
+                            selectedDataMap.put(
+                                    ruleKey,
+                                    new ArrayList<>(uniqueSet)
+                            );
                         } else {
-                            selectedDataMap.put(ruleKey, new ArrayList<>(dataList));
+                            selectedDataMap.put(
+                                    ruleKey,
+                                    new ArrayList<>(dataList)
+                            );
                         }
                     }
                 }
 
                 // 报告进度
                 if (worker != null && i % 5 == 0) {
-                    int progress = (int) ((i + 1) * 90.0 / totalKeys);
+                    int progress = (int) (((i + 1) * 90.0) / totalKeys);
                     worker.publishProgress(progress);
                 }
             }
@@ -335,8 +488,14 @@ public class Databoard extends JPanel {
     }
 
     private void applyHostFilter(String filterText) {
-        TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) messageTable.getRowSorter();
-        String cleanedText = StringProcessor.replaceFirstOccurrence(filterText, "*.", "");
+        TableRowSorter<TableModel> sorter = (TableRowSorter<
+                TableModel
+                >) messageTable.getRowSorter();
+        String cleanedText = StringProcessor.replaceFirstOccurrence(
+                filterText,
+                "*.",
+                ""
+        );
 
         if (applyHostFilterWorker != null && !applyHostFilterWorker.isDone()) {
             applyHostFilterWorker.cancel(true);
@@ -357,8 +516,13 @@ public class Databoard extends JPanel {
                             if (cleanedText.equals("*")) {
                                 return true;
                             } else {
-                                String host = StringProcessor.getHostByUrl((String) entry.getValue(2));
-                                return StringProcessor.matchesHostPattern(host, filterText);
+                                String host = StringProcessor.getHostByUrl(
+                                        (String) entry.getValue(2)
+                                );
+                                return StringProcessor.matchesHostPattern(
+                                        host,
+                                        filterText
+                                );
                             }
                         }
                     };
@@ -380,16 +544,24 @@ public class Databoard extends JPanel {
     }
 
     private void clearCacheActionPerformed(ActionEvent e) {
-        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear cache?", "Info",
-                JOptionPane.YES_NO_OPTION);
+        int retCode = JOptionPane.showConfirmDialog(
+                this,
+                "Do you want to clear cache?",
+                "Info",
+                JOptionPane.YES_NO_OPTION
+        );
         if (retCode == JOptionPane.YES_OPTION) {
             DataCache.clear();
         }
     }
 
     private void clearDataActionPerformed(ActionEvent e) {
-        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to clear data?", "Info",
-                JOptionPane.YES_NO_OPTION);
+        int retCode = JOptionPane.showConfirmDialog(
+                this,
+                "Do you want to clear data?",
+                "Info",
+                JOptionPane.YES_NO_OPTION
+        );
         String host = hostTextField.getText();
         if (retCode == JOptionPane.YES_OPTION && !host.isEmpty()) {
             dataTabbedPane.removeAll();
@@ -418,16 +590,21 @@ public class Databoard extends JPanel {
         progressBar.setVisible(true);
         setProgressBar(true, "Validating...", 0);
 
-        validatorService.revalidateAll(Map.of(dt.getTabName(), matches), null, () ->
-                SwingUtilities.invokeLater(() -> {
-                    dt.refreshSeverities();
-                    setProgressBar(false, "Validation complete", 100);
-                })
+        validatorService.revalidateAll(
+                Map.of(dt.getTabName(), matches),
+                null,
+                () ->
+                        SwingUtilities.invokeLater(() -> {
+                            dt.refreshSeverities();
+                            setProgressBar(false, "Validation complete", 100);
+                        })
         );
     }
 
     // 定义为内部类
-    private class DataLoadingWorker extends SwingWorker<Map<String, List<String>>, Integer> {
+    private class DataLoadingWorker
+            extends SwingWorker<Map<String, List<String>>, Integer> {
+
         private final String selectedHost;
 
         public DataLoadingWorker(String selectedHost) {
@@ -456,14 +633,17 @@ public class Databoard extends JPanel {
                     if (selectedDataMap != null && !selectedDataMap.isEmpty()) {
                         dataTabbedPane.removeAll();
 
-                        for (Map.Entry<String, List<String>> entry : selectedDataMap.entrySet()) {
-                            String tabTitle = String.format("%s (%s)", entry.getKey(), entry.getValue().size());
-                            Datatable datatablePanel = new Datatable(api, configLoader, entry.getKey(), entry.getValue(), validatorService);
-                            datatablePanel.setTableListener(messageTableModel);
-                            Databoard.insertTabSorted(dataTabbedPane, tabTitle, datatablePanel);
-                        }
+                        populateTabs(
+                                dataTabbedPane,
+                                selectedDataMap,
+                                api,
+                                configLoader,
+                                validatorService,
+                                messageTableModel
+                        );
 
-                        JSplitPane messageSplitPane = messageTableModel.getSplitPane();
+                        JSplitPane messageSplitPane =
+                                messageTableModel.getSplitPane();
                         splitPane.setLeftComponent(dataTabbedPane);
                         splitPane.setRightComponent(messageSplitPane);
                         messageTable = messageTableModel.getMessageTable();
@@ -477,7 +657,9 @@ public class Databoard extends JPanel {
                         setProgressBar(false, "Error", 0);
                     }
                 } catch (Exception e) {
-                    api.logging().logToOutput("DataLoadingWorker: " + e.getMessage());
+                    api
+                            .logging()
+                            .logToOutput("DataLoadingWorker: " + e.getMessage());
                     setProgressBar(false, "Error", 0);
                 }
             }
@@ -489,7 +671,54 @@ public class Databoard extends JPanel {
         }
     }
 
-    private static void insertTabSorted(JTabbedPane tabbedPane, String title, Component component) {
+    static void resizeMessageTable(
+            JSplitPane splitPane,
+            JTable messageTable,
+            int containerWidth
+    ) {
+        splitPane.setDividerLocation(0.4);
+        TableColumnModel columnModel = messageTable.getColumnModel();
+        int totalWidth = (int) (containerWidth * 0.6);
+        columnModel.getColumn(0).setPreferredWidth((int) (totalWidth * 0.05));
+        columnModel.getColumn(1).setPreferredWidth((int) (totalWidth * 0.08));
+        columnModel.getColumn(2).setPreferredWidth((int) (totalWidth * 0.3));
+        columnModel.getColumn(3).setPreferredWidth((int) (totalWidth * 0.27));
+        columnModel.getColumn(4).setPreferredWidth((int) (totalWidth * 0.1));
+        columnModel.getColumn(5).setPreferredWidth((int) (totalWidth * 0.1));
+        columnModel.getColumn(6).setPreferredWidth((int) (totalWidth * 0.1));
+    }
+
+    static void populateTabs(
+            JTabbedPane tabbedPane,
+            Map<String, List<String>> dataMap,
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            ValidatorService validatorService,
+            MessageTableModel messageTableModel
+    ) {
+        for (Map.Entry<String, List<String>> entry : dataMap.entrySet()) {
+            String tabTitle = String.format(
+                    "%s (%s)",
+                    entry.getKey(),
+                    entry.getValue().size()
+            );
+            Datatable datatablePanel = new Datatable(
+                    api,
+                    configLoader,
+                    entry.getKey(),
+                    entry.getValue(),
+                    validatorService
+            );
+            datatablePanel.setTableListener(messageTableModel);
+            insertTabSorted(tabbedPane, tabTitle, datatablePanel);
+        }
+    }
+
+    static void insertTabSorted(
+            JTabbedPane tabbedPane,
+            String title,
+            Component component
+    ) {
         int insertIndex = 0;
         int tabCount = tabbedPane.getTabCount();
 

@@ -11,8 +11,8 @@ import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
-import hae.utils.string.HashCalculator;
 import hae.utils.rule.model.RuleDefinition;
+import hae.utils.string.HashCalculator;
 
 import java.text.MessageFormat;
 import java.util.*;

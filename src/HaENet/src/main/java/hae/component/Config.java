@@ -18,8 +18,8 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class Config extends JPanel {
     private final MontoyaApi api;
