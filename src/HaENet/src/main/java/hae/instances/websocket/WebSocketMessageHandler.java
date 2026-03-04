@@ -30,7 +30,7 @@ public class WebSocketMessageHandler implements ProxyMessageHandler {
     @Override
     public TextMessageReceivedAction handleTextMessageReceived(InterceptedTextMessage interceptedTextMessage) {
         String message = interceptedTextMessage.payload();
-        List<Map<String, String>> result = messageProcessor.processMessage(host, url, message, true);
+        List<Map<String, String>> result = messageProcessor.processMessage(host, url, message, true, true);
 
         if (result != null && !result.isEmpty()) {
             interceptedTextMessage.annotations().setHighlightColor(HighlightColor.highlightColor(result.get(0).get("color")));

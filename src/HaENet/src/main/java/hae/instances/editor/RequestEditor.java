@@ -90,7 +90,7 @@ public class RequestEditor implements HttpRequestEditorProvider {
                         boolean matches = httpUtils.verifyHttpRequestResponse(requestResponse, toolType);
 
                         if (!matches) {
-                            this.dataList = messageProcessor.processRequest(host, url, request, false);
+                            this.dataList = messageProcessor.processRequest(host, url, request, false, false);
                             return EditorUtils.isListHasData(this.dataList);
                         }
                     }

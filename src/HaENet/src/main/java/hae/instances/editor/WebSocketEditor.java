@@ -80,7 +80,7 @@ public class WebSocketEditor implements WebSocketMessageEditorProvider {
             if (!websocketMessage.isEmpty()) {
                 String url = webSocketMessage.upgradeRequest().url();
                 String host = StringProcessor.getHostByUrl(url);
-                this.dataList = messageProcessor.processMessage(host, url, websocketMessage, false);
+                this.dataList = messageProcessor.processMessage(host, url, websocketMessage, false, false);
                 return EditorUtils.isListHasData(this.dataList);
             }
             return false;

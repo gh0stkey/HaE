@@ -167,7 +167,8 @@ public class ScopedDataboardDialog extends JDialog {
                                 host,
                                 url,
                                 request,
-                                true
+                                true,
+                                false
                             );
                         List<Map<String, String>> respHighlight = null;
                         if (response != null) {
@@ -175,7 +176,8 @@ public class ScopedDataboardDialog extends JDialog {
                                 host,
                                 url,
                                 response,
-                                true
+                                true,
+                                false
                             );
                         }
 
@@ -222,6 +224,7 @@ public class ScopedDataboardDialog extends JDialog {
                                 host,
                                 url,
                                 request,
+                                false,
                                 false
                             )
                         );
@@ -232,6 +235,7 @@ public class ScopedDataboardDialog extends JDialog {
                                     host,
                                     url,
                                     response,
+                                    false,
                                     false
                                 )
                             );

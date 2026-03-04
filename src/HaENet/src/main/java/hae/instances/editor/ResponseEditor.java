@@ -102,7 +102,7 @@ public class ResponseEditor implements HttpResponseEditorProvider {
                 }
 
                 if (!matches) {
-                    this.dataList = messageProcessor.processResponse(host, url, response, false);
+                    this.dataList = messageProcessor.processResponse(host, url, response, false, false);
                     return EditorUtils.isListHasData(this.dataList);
                 }
             }
