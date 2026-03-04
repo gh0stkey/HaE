@@ -37,3 +37,4 @@ We appreciate everyone's support for the project. The following list is sorted b
 | Fzz2                       | 50.00 CNY  |
 | tzrj                       | 50.00 CNY  |
 | 冰淇霖                      | 88.00 CNY  |
+| 强少张                      | 88.88 CNY  |
