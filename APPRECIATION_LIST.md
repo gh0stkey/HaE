@@ -38,3 +38,4 @@ We appreciate everyone's support for the project. The following list is sorted b
 | tzrj                       | 50.00 CNY  |
 | 冰淇霖                      | 88.00 CNY  |
 | 强少张                      | 88.88 CNY  |
+| J4team-jiwa                 | 88.88 CNY  |
