@@ -5,6 +5,13 @@ import hae.component.board.message.MessageTableModel;
 import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -13,12 +20,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableRowSorter;
 
 public class Datatable extends JPanel {
 
@@ -35,29 +36,29 @@ public class Datatable extends JPanel {
     private final JPanel footerPanel;
     private final ValidatorService validatorService;
     private final Set<String> selectedSeverities = new LinkedHashSet<>(
-        List.of(
-            ValidatorService.SEVERITY_HIGH,
-            ValidatorService.SEVERITY_MEDIUM,
-            ValidatorService.SEVERITY_LOW,
-            ValidatorService.SEVERITY_NONE
-        )
+            List.of(
+                    ValidatorService.SEVERITY_HIGH,
+                    ValidatorService.SEVERITY_MEDIUM,
+                    ValidatorService.SEVERITY_LOW,
+                    ValidatorService.SEVERITY_NONE
+            )
     );
     private SwingWorker<Void, Void> doubleClickWorker;
     private final JLabel statusLabel = new JLabel();
 
     public Datatable(
-        MontoyaApi api,
-        ConfigLoader configLoader,
-        String tabName,
-        List<String> dataList,
-        ValidatorService validatorService
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            String tabName,
+            List<String> dataList,
+            ValidatorService validatorService
     ) {
         this.api = api;
         this.configLoader = configLoader;
         this.tabName = tabName;
         this.validatorService = validatorService;
 
-        String[] columnNames = { "#", "Information", "Severity" };
+        String[] columnNames = {"#", "Information", "Severity"};
         this.dataTableModel = new DefaultTableModel(columnNames, 0);
 
         this.dataTable = new JTable(dataTableModel);
@@ -77,23 +78,23 @@ public class Datatable extends JPanel {
 
         // 设置Severity排序
         sorter.setComparator(
-            2,
-            (Comparator<String>) ValidatorService::compareBySeverity
+                2,
+                (Comparator<String>) ValidatorService::compareBySeverity
         );
 
         for (String item : dataList) {
             if (!item.isEmpty()) {
                 String severity =
-                    validatorService != null
-                        ? validatorService.getSeverity(tabName, item)
-                        : null;
+                        validatorService != null
+                                ? validatorService.getSeverity(tabName, item)
+                                : null;
                 addRowToTable(
-                    new Object[] {
-                        item,
-                        severity != null
-                            ? severity
-                            : ValidatorService.SEVERITY_NONE,
-                    }
+                        new Object[]{
+                                item,
+                                severity != null
+                                        ? severity
+                                        : ValidatorService.SEVERITY_NONE,
+                        }
                 );
             }
         }
@@ -109,61 +110,61 @@ public class Datatable extends JPanel {
             }
             if (!allMatches.isEmpty()) {
                 validatorService.autoValidate(
-                    Map.of(tabName, allMatches),
-                    null,
-                    () -> SwingUtilities.invokeLater(this::refreshSeverities)
+                        Map.of(tabName, allMatches),
+                        null,
+                        () -> SwingUtilities.invokeLater(this::refreshSeverities)
                 );
             }
         }
 
         UIEnhancer.setTextFieldPlaceholder(searchField, "Search");
         searchField
-            .getDocument()
-            .addDocumentListener(
-                new DocumentListener() {
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
+                .getDocument()
+                .addDocumentListener(
+                        new DocumentListener() {
+                            @Override
+                            public void insertUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
 
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
+                            @Override
+                            public void removeUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
 
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
-                }
-            );
+                            @Override
+                            public void changedUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
+                        }
+                );
 
         UIEnhancer.setTextFieldPlaceholder(secondSearchField, "Second search");
         secondSearchField
-            .getDocument()
-            .addDocumentListener(
-                new DocumentListener() {
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
+                .getDocument()
+                .addDocumentListener(
+                        new DocumentListener() {
+                            @Override
+                            public void insertUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
 
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
+                            @Override
+                            public void removeUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
 
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        performSearch();
-                    }
-                }
-            );
+                            @Override
+                            public void changedUpdate(DocumentEvent e) {
+                                performSearch();
+                            }
+                        }
+                );
 
         // 设置布局
         JScrollPane scrollPane = new JScrollPane(dataTable);
         scrollPane.setVerticalScrollBarPolicy(
-            ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
         );
 
         TableColumn idColumn = dataTable.getColumnModel().getColumn(0);
@@ -174,7 +175,7 @@ public class Datatable extends JPanel {
         severityColumn.setPreferredWidth(80);
         severityColumn.setMaxWidth(100);
         severityColumn.setCellRenderer(
-            new ValidatorService.SeverityBadgeRenderer()
+                new ValidatorService.SeverityBadgeRenderer()
         );
 
         if (validatorService != null) {
@@ -186,7 +187,7 @@ public class Datatable extends JPanel {
             JMenu severityMenu = new JMenu("Set Severity");
             for (String level : ValidatorService.SEVERITY_LEVELS) {
                 JMenuItem item = new JMenuItem(
-                    level.substring(0, 1).toUpperCase() + level.substring(1)
+                        level.substring(0, 1).toUpperCase() + level.substring(1)
                 );
                 item.setForeground(ValidatorService.getSeverityColor(level));
                 item.addActionListener(e -> setSelectedRowsSeverity(level));
@@ -195,29 +196,29 @@ public class Datatable extends JPanel {
             rowPopup.add(severityMenu);
 
             dataTable.addMouseListener(
-                new MouseAdapter() {
-                    @Override
-                    public void mousePressed(MouseEvent e) {
-                        showPopupIfNeeded(e);
-                    }
+                    new MouseAdapter() {
+                        @Override
+                        public void mousePressed(MouseEvent e) {
+                            showPopupIfNeeded(e);
+                        }
 
-                    @Override
-                    public void mouseReleased(MouseEvent e) {
-                        showPopupIfNeeded(e);
-                    }
+                        @Override
+                        public void mouseReleased(MouseEvent e) {
+                            showPopupIfNeeded(e);
+                        }
 
-                    private void showPopupIfNeeded(MouseEvent e) {
-                        if (e.isPopupTrigger()) {
-                            int row = dataTable.rowAtPoint(e.getPoint());
-                            if (row >= 0 && !dataTable.isRowSelected(row)) {
-                                dataTable.setRowSelectionInterval(row, row);
-                            }
-                            if (dataTable.getSelectedRowCount() > 0) {
-                                rowPopup.show(dataTable, e.getX(), e.getY());
+                        private void showPopupIfNeeded(MouseEvent e) {
+                            if (e.isPopupTrigger()) {
+                                int row = dataTable.rowAtPoint(e.getPoint());
+                                if (row >= 0 && !dataTable.isRowSelected(row)) {
+                                    dataTable.setRowSelectionInterval(row, row);
+                                }
+                                if (dataTable.getSelectedRowCount() > 0) {
+                                    rowPopup.show(dataTable, e.getX(), e.getY());
+                                }
                             }
                         }
                     }
-                }
             );
         }
 
@@ -249,15 +250,15 @@ public class Datatable extends JPanel {
         for (String level : ValidatorService.SEVERITY_LEVELS) {
             Color levelColor = ValidatorService.getSeverityColor(level);
             JToggleButton btn = new JToggleButton(
-                level.substring(0, 1).toUpperCase(),
-                true
+                    level.substring(0, 1).toUpperCase(),
+                    true
             ) {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(
-                        RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON
+                            RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON
                     );
                     if (isSelected()) {
                         g2.setColor(levelColor);
@@ -268,12 +269,12 @@ public class Datatable extends JPanel {
                         g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                         g2.setColor(levelColor);
                         g2.drawRoundRect(
-                            0,
-                            0,
-                            getWidth() - 1,
-                            getHeight() - 1,
-                            8,
-                            8
+                                0,
+                                0,
+                                getWidth() - 1,
+                                getHeight() - 1,
+                                8,
+                                8
                         );
                     }
                     g2.setFont(getFont());
@@ -281,7 +282,7 @@ public class Datatable extends JPanel {
                     String text = getText();
                     int x = (getWidth() - fm.stringWidth(text)) / 2;
                     int y =
-                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                            (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                     g2.drawString(text, x, y);
                     g2.dispose();
                 }
@@ -318,12 +319,12 @@ public class Datatable extends JPanel {
         updateStatusLabel();
 
         dataTable
-            .getSelectionModel()
-            .addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting()) {
-                    updateStatusLabel();
-                }
-            });
+                .getSelectionModel()
+                .addListSelectionListener(e -> {
+                    if (!e.getValueIsAdjusting()) {
+                        updateStatusLabel();
+                    }
+                });
 
         // 左侧：Settings + Severity
         optionsPanel.add(settingsButton);
@@ -358,9 +359,9 @@ public class Datatable extends JPanel {
     private void addRowToTable(Object[] data) {
         int rowCount = dataTableModel.getRowCount();
         int id =
-            rowCount > 0
-                ? (Integer) dataTableModel.getValueAt(rowCount - 1, 0) + 1
-                : 1;
+                rowCount > 0
+                        ? (Integer) dataTableModel.getValueAt(rowCount - 1, 0) + 1
+                        : 1;
         Object[] rowData = new Object[data.length + 1];
         rowData[0] = id;
         System.arraycopy(data, 0, rowData, 1, data.length);
@@ -371,12 +372,12 @@ public class Datatable extends JPanel {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
         filters.add(
-            new RowFilter<>() {
-                public boolean include(Entry<?, ?> entry) {
-                    String severity = entry.getValue(2).toString();
-                    return selectedSeverities.contains(severity);
+                new RowFilter<>() {
+                    public boolean include(Entry<?, ?> entry) {
+                        String severity = entry.getValue(2).toString();
+                        return selectedSeverities.contains(severity);
+                    }
                 }
-            }
         );
 
         if (UIEnhancer.hasUserInput(searchField)) {
@@ -392,8 +393,8 @@ public class Datatable extends JPanel {
     }
 
     private RowFilter<Object, Object> getObjectObjectRowFilter(
-        JTextField searchField,
-        boolean isReversible
+            JTextField searchField,
+            boolean isReversible
     ) {
         return new RowFilter<>() {
             public boolean include(Entry<?, ?> entry) {
@@ -406,20 +407,21 @@ public class Datatable extends JPanel {
                     Pattern pattern = null;
                     try {
                         pattern = Pattern.compile(
-                            searchText,
-                            Pattern.CASE_INSENSITIVE
+                                searchText,
+                                Pattern.CASE_INSENSITIVE
                         );
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
 
                     if (pattern != null) {
                         filterReturn =
-                            filterReturn ||
-                            pattern.matcher(entryValue).find() != reverseReturn;
+                                filterReturn ||
+                                        pattern.matcher(entryValue).find() != reverseReturn;
                     }
                 } else {
                     filterReturn =
-                        filterReturn ||
-                        entryValue.contains(searchText) != reverseReturn;
+                            filterReturn ||
+                                    entryValue.contains(searchText) != reverseReturn;
                 }
 
                 return filterReturn;
@@ -428,8 +430,8 @@ public class Datatable extends JPanel {
     }
 
     private void handleDoubleClick(
-        int selectedRow,
-        MessageTableModel messagePanel
+            int selectedRow,
+            MessageTableModel messagePanel
     ) {
         if (doubleClickWorker != null && !doubleClickWorker.isDone()) {
             doubleClickWorker.cancel(true);
@@ -457,42 +459,42 @@ public class Datatable extends JPanel {
     public void setTableListener(MessageTableModel messagePanel) {
         // 表格复制功能
         dataTable.setTransferHandler(
-            new TransferHandler() {
-                @Override
-                public void exportToClipboard(
-                    JComponent comp,
-                    Clipboard clip,
-                    int action
-                ) throws IllegalStateException {
-                    if (comp instanceof JTable) {
-                        StringSelection stringSelection = new StringSelection(
-                            getSelectedDataAtTable((JTable) comp)
-                                .replace("\0", "")
-                                .replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "")
-                        );
-                        clip.setContents(stringSelection, null);
-                    } else {
-                        super.exportToClipboard(comp, clip, action);
+                new TransferHandler() {
+                    @Override
+                    public void exportToClipboard(
+                            JComponent comp,
+                            Clipboard clip,
+                            int action
+                    ) throws IllegalStateException {
+                        if (comp instanceof JTable) {
+                            StringSelection stringSelection = new StringSelection(
+                                    getSelectedDataAtTable((JTable) comp)
+                                            .replace("\0", "")
+                                            .replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "")
+                            );
+                            clip.setContents(stringSelection, null);
+                        } else {
+                            super.exportToClipboard(comp, clip, action);
+                        }
                     }
                 }
-            }
         );
 
         dataTable.setDefaultEditor(Object.class, null);
 
         // 表格内容双击事件
         dataTable.addMouseListener(
-            new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        int selectedRow = dataTable.getSelectedRow();
-                        if (selectedRow != -1) {
-                            handleDoubleClick(selectedRow, messagePanel);
+                new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (e.getClickCount() == 2) {
+                            int selectedRow = dataTable.getSelectedRow();
+                            if (selectedRow != -1) {
+                                handleDoubleClick(selectedRow, messagePanel);
+                            }
                         }
                     }
                 }
-            }
         );
     }
 
@@ -502,8 +504,8 @@ public class Datatable extends JPanel {
 
         for (int row : selectRows) {
             selectData
-                .append(table.getValueAt(row, 1).toString())
-                .append("\r\n");
+                    .append(table.getValueAt(row, 1).toString())
+                    .append("\r\n");
         }
 
         if (!selectData.isEmpty()) {
@@ -533,13 +535,13 @@ public class Datatable extends JPanel {
         for (int i = 0; i < dataTableModel.getRowCount(); i++) {
             String matchValue = (String) dataTableModel.getValueAt(i, 1);
             String severity =
-                validatorService != null
-                    ? validatorService.getSeverity(tabName, matchValue)
-                    : null;
+                    validatorService != null
+                            ? validatorService.getSeverity(tabName, matchValue)
+                            : null;
             dataTableModel.setValueAt(
-                severity != null ? severity : ValidatorService.SEVERITY_NONE,
-                i,
-                2
+                    severity != null ? severity : ValidatorService.SEVERITY_NONE,
+                    i,
+                    2
             );
         }
         sorter.sort();
@@ -556,7 +558,7 @@ public class Datatable extends JPanel {
         }
 
         validatorService.revalidateAll(Map.of(tabName, matches), null, () ->
-            SwingUtilities.invokeLater(this::refreshSeverities)
+                SwingUtilities.invokeLater(this::refreshSeverities)
         );
     }
 

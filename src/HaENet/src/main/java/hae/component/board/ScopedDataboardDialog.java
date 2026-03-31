@@ -12,12 +12,13 @@ import hae.repository.RuleRepository;
 import hae.service.ValidatorService;
 import hae.utils.ConfigLoader;
 import hae.utils.string.StringProcessor;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.*;
 import java.util.List;
-import javax.swing.*;
 
 public class ScopedDataboardDialog extends JDialog {
 
@@ -30,19 +31,19 @@ public class ScopedDataboardDialog extends JDialog {
     private MessageTableModel.MessageTable messageTable;
 
     private ScopedDataboardDialog(
-        MontoyaApi api,
-        ConfigLoader configLoader,
-        RuleRepository ruleRepository,
-        ValidatorService validatorService
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            RuleRepository ruleRepository,
+            ValidatorService validatorService
     ) {
         super((Frame) null, "HaE Databoard", false);
         this.api = api;
         this.configLoader = configLoader;
         this.validatorService = validatorService;
         this.messageTableModel = new MessageTableModel(
-            api,
-            configLoader,
-            ruleRepository
+                api,
+                configLoader,
+                ruleRepository
         );
 
         this.dataTabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -55,13 +56,13 @@ public class ScopedDataboardDialog extends JDialog {
 
     private void initLayout() {
         Rectangle screenBounds =
-            GraphicsEnvironment.getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice()
-                .getDefaultConfiguration()
-                .getBounds();
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice()
+                        .getDefaultConfiguration()
+                        .getBounds();
         setSize(
-            (int) (screenBounds.width * 0.7),
-            (int) (screenBounds.height * 0.7)
+                (int) (screenBounds.width * 0.7),
+                (int) (screenBounds.height * 0.7)
         );
         setLocationRelativeTo(null);
 
@@ -69,21 +70,21 @@ public class ScopedDataboardDialog extends JDialog {
         add(splitPane, BorderLayout.CENTER);
 
         splitPane.addComponentListener(
-            new ComponentAdapter() {
-                @Override
-                public void componentResized(ComponentEvent e) {
-                    resizePanel();
+                new ComponentAdapter() {
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        resizePanel();
+                    }
                 }
-            }
         );
 
         addWindowListener(
-            new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosed(java.awt.event.WindowEvent e) {
-                    messageTableModel.dispose();
+                new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        messageTableModel.dispose();
+                    }
                 }
-            }
         );
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
@@ -106,21 +107,21 @@ public class ScopedDataboardDialog extends JDialog {
                 @Override
                 protected Void doInBackground() {
                     messageTableModel.applyCommentFilter(
-                        StringProcessor.extractItemName(selectedTitle)
+                            StringProcessor.extractItemName(selectedTitle)
                     );
                     return null;
                 }
             }
-                .execute();
+                    .execute();
         });
 
         Databoard.populateTabs(
-            dataTabbedPane,
-            ruleData,
-            api,
-            configLoader,
-            validatorService,
-            messageTableModel
+                dataTabbedPane,
+                ruleData,
+                api,
+                configLoader,
+                validatorService,
+                messageTableModel
         );
 
         splitPane.setLeftComponent(dataTabbedPane);
@@ -130,23 +131,23 @@ public class ScopedDataboardDialog extends JDialog {
     }
 
     public static void show(
-        MontoyaApi api,
-        ConfigLoader configLoader,
-        DataRepository dataRepository,
-        RuleRepository ruleRepository,
-        ValidatorService validatorService,
-        List<HttpRequestResponse> messages
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            DataRepository dataRepository,
+            RuleRepository ruleRepository,
+            ValidatorService validatorService,
+            List<HttpRequestResponse> messages
     ) {
         MessageProcessor messageProcessor = new MessageProcessor(
-            api,
-            configLoader,
-            dataRepository,
-            ruleRepository
+                api,
+                configLoader,
+                dataRepository,
+                ruleRepository
         );
 
         new SwingWorker<Void, Void>() {
             private final Map<String, List<String>> ruleDataMap =
-                new LinkedHashMap<>();
+                    new LinkedHashMap<>();
             private final List<Object[]> messageEntries = new ArrayList<>();
 
             @Override
@@ -163,21 +164,21 @@ public class ScopedDataboardDialog extends JDialog {
                         HttpResponse response = message.response();
 
                         List<Map<String, String>> reqHighlight =
-                            messageProcessor.processRequest(
-                                host,
-                                url,
-                                request,
-                                true,
-                                false
-                            );
+                                messageProcessor.processRequest(
+                                        host,
+                                        url,
+                                        request,
+                                        true,
+                                        false
+                                );
                         List<Map<String, String>> respHighlight = null;
                         if (response != null) {
                             respHighlight = messageProcessor.processResponse(
-                                host,
-                                url,
-                                response,
-                                true,
-                                false
+                                    host,
+                                    url,
+                                    response,
+                                    true,
+                                    false
                             );
                         }
 
@@ -188,65 +189,65 @@ public class ScopedDataboardDialog extends JDialog {
 
                         if (!colorList.isEmpty()) {
                             String color = messageProcessor.retrieveFinalColor(
-                                messageProcessor.retrieveColorIndices(colorList)
+                                    messageProcessor.retrieveColorIndices(colorList)
                             );
                             String comment = StringProcessor.mergeComment(
-                                String.join(", ", commentList)
+                                    String.join(", ", commentList)
                             );
                             if (!comment.isEmpty()) {
                                 String status =
-                                    response != null
-                                        ? String.valueOf(response.statusCode())
-                                        : "";
+                                        response != null
+                                                ? String.valueOf(response.statusCode())
+                                                : "";
                                 String length =
-                                    response != null
-                                        ? String.valueOf(
-                                              response.toByteArray().length()
-                                          )
-                                        : "0";
+                                        response != null
+                                                ? String.valueOf(
+                                                response.toByteArray().length()
+                                        )
+                                                : "0";
                                 messageEntries.add(
-                                    new Object[] {
-                                        message,
-                                        url,
-                                        request.method(),
-                                        status,
-                                        length,
-                                        comment,
-                                        color,
-                                    }
+                                        new Object[]{
+                                                message,
+                                                url,
+                                                request.method(),
+                                                status,
+                                                length,
+                                                comment,
+                                                color,
+                                        }
                                 );
                             }
                         }
 
                         mergeExtractResult(
-                            ruleDataMap,
-                            messageProcessor.processRequest(
-                                host,
-                                url,
-                                request,
-                                false,
-                                false
-                            )
+                                ruleDataMap,
+                                messageProcessor.processRequest(
+                                        host,
+                                        url,
+                                        request,
+                                        false,
+                                        false
+                                )
                         );
                         if (response != null) {
                             mergeExtractResult(
-                                ruleDataMap,
-                                messageProcessor.processResponse(
-                                    host,
-                                    url,
-                                    response,
-                                    false,
-                                    false
-                                )
+                                    ruleDataMap,
+                                    messageProcessor.processResponse(
+                                            host,
+                                            url,
+                                            response,
+                                            false,
+                                            false
+                                    )
                             );
                         }
                     } catch (Exception e) {
                         api
-                            .logging()
-                            .logToError(
-                                "ScopedDataboardDialog: skipping malformed message: " +
-                                    e.getMessage()
-                            );
+                                .logging()
+                                .logToError(
+                                        "ScopedDataboardDialog: skipping malformed message: " +
+                                                e.getMessage()
+                                );
                     }
                 }
                 return null;
@@ -258,48 +259,48 @@ public class ScopedDataboardDialog extends JDialog {
                     get();
                     if (ruleDataMap.isEmpty()) {
                         JOptionPane.showMessageDialog(
-                            null,
-                            "No data could be extracted from the selected message(s).",
-                            "HaE Databoard",
-                            JOptionPane.INFORMATION_MESSAGE
+                                null,
+                                "No data could be extracted from the selected message(s).",
+                                "HaE Databoard",
+                                JOptionPane.INFORMATION_MESSAGE
                         );
                         return;
                     }
 
                     ScopedDataboardDialog dialog = new ScopedDataboardDialog(
-                        api,
-                        configLoader,
-                        ruleRepository,
-                        validatorService
+                            api,
+                            configLoader,
+                            ruleRepository,
+                            validatorService
                     );
                     for (Object[] entry : messageEntries) {
                         dialog.messageTableModel.add(
-                            (HttpRequestResponse) entry[0],
-                            (String) entry[1],
-                            (String) entry[2],
-                            (String) entry[3],
-                            (String) entry[4],
-                            (String) entry[5],
-                            (String) entry[6],
-                            false
+                                (HttpRequestResponse) entry[0],
+                                (String) entry[1],
+                                (String) entry[2],
+                                (String) entry[3],
+                                (String) entry[4],
+                                (String) entry[5],
+                                (String) entry[6],
+                                false
                         );
                     }
                     dialog.populateData(ruleDataMap);
                     dialog.setVisible(true);
                 } catch (Exception e) {
                     api
-                        .logging()
-                        .logToError("ScopedDataboardDialog: " + e.getMessage());
+                            .logging()
+                            .logToError("ScopedDataboardDialog: " + e.getMessage());
                 }
             }
         }
-            .execute();
+                .execute();
     }
 
     private static void collectHighlight(
-        List<Map<String, String>> result,
-        List<String> colorList,
-        List<String> commentList
+            List<Map<String, String>> result,
+            List<String> colorList,
+            List<String> commentList
     ) {
         if (result != null && !result.isEmpty()) {
             colorList.add(result.get(0).get("color"));
@@ -308,27 +309,27 @@ public class ScopedDataboardDialog extends JDialog {
     }
 
     private static void mergeExtractResult(
-        Map<String, List<String>> target,
-        List<Map<String, String>> extractResult
+            Map<String, List<String>> target,
+            List<Map<String, String>> extractResult
     ) {
         if (extractResult == null || extractResult.isEmpty()) {
             return;
         }
         for (Map.Entry<String, String> entry : extractResult
-            .get(0)
-            .entrySet()) {
+                .get(0)
+                .entrySet()) {
             String ruleName = StringProcessor.extractItemName(entry.getKey());
             List<String> items = Arrays.asList(
-                entry.getValue().split(AppConstants.boundary)
+                    entry.getValue().split(AppConstants.boundary)
             );
             target.merge(
-                ruleName,
-                new ArrayList<>(items),
-                (existing, incoming) -> {
-                    Set<String> merged = new LinkedHashSet<>(existing);
-                    merged.addAll(incoming);
-                    return new ArrayList<>(merged);
-                }
+                    ruleName,
+                    new ArrayList<>(items),
+                    (existing, incoming) -> {
+                        Set<String> merged = new LinkedHashSet<>(existing);
+                        merged.addAll(incoming);
+                        return new ArrayList<>(merged);
+                    }
             );
         }
     }

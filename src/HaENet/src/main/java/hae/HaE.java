@@ -26,13 +26,13 @@ public class HaE implements BurpExtension {
     public void initialize(MontoyaApi api) {
         // 设置扩展名称
         api.extension().setName("HaE - Highlighter and Extractor");
-        String version = "5.2";
+        String version = "5.2.1";
 
         // 加载扩展后输出的项目信息
         Logging logging = api.logging();
         logging.logToOutput("[ HACK THE WORLD - TO DO IT ]");
         logging.logToOutput(
-            "[#] Author: EvilChen && 0chencc && vaycore && MingXi"
+                "[#] Author: EvilChen && 0chencc && vaycore && MingXi"
         );
         logging.logToOutput("[#] Github: https://github.com/gh0stkey/HaE");
         logging.logToOutput("[#] Version: " + version);
@@ -42,110 +42,110 @@ public class HaE implements BurpExtension {
 
         // 创建 Repository
         RuleRepository ruleRepository = new RuleRepositoryImpl(
-            configLoader.getRules()
+                configLoader.getRules()
         );
         DataRepository dataRepository = new DataRepositoryImpl(api);
 
         MessageTableModel messageTableModel = new MessageTableModel(
-            api,
-            configLoader,
-            ruleRepository
+                api,
+                configLoader,
+                ruleRepository
         );
 
         // 创建 HandlerRegistry（替代 component/Config 中的 handler 管理）
         HandlerRegistry handlerRegistry = new HandlerRegistry(
-            api,
-            configLoader,
-            messageTableModel,
-            dataRepository,
-            ruleRepository
+                api,
+                configLoader,
+                messageTableModel,
+                dataRepository,
+                ruleRepository
         );
         handlerRegistry.registerAll();
 
         ValidatorService validatorService = new ValidatorService(
-            api,
-            ruleRepository
+                api,
+                ruleRepository
         );
 
         // 注册Tab页（用于查询数据）
         api
-            .userInterface()
-            .registerSuiteTab(
-                "HaE",
-                new Main(
-                    api,
-                    configLoader,
-                    messageTableModel,
-                    ruleRepository,
-                    dataRepository,
-                    validatorService
-                )
-            );
+                .userInterface()
+                .registerSuiteTab(
+                        "HaE",
+                        new Main(
+                                api,
+                                configLoader,
+                                messageTableModel,
+                                ruleRepository,
+                                dataRepository,
+                                validatorService
+                        )
+                );
 
         // 注册WebSocket处理器
         api
-            .proxy()
-            .registerWebSocketCreationHandler(proxyWebSocketCreation -> {
-                String wsUrl = proxyWebSocketCreation.upgradeRequest().url();
-                proxyWebSocketCreation
-                    .proxyWebSocket()
-                    .registerProxyMessageHandler(
-                        new WebSocketMessageHandler(
-                            api,
-                            configLoader,
-                            dataRepository,
-                            ruleRepository,
-                            wsUrl
-                        )
-                    );
-            });
+                .proxy()
+                .registerWebSocketCreationHandler(proxyWebSocketCreation -> {
+                    String wsUrl = proxyWebSocketCreation.upgradeRequest().url();
+                    proxyWebSocketCreation
+                            .proxyWebSocket()
+                            .registerProxyMessageHandler(
+                                    new WebSocketMessageHandler(
+                                            api,
+                                            configLoader,
+                                            dataRepository,
+                                            ruleRepository,
+                                            wsUrl
+                                    )
+                            );
+                });
 
         // 注册消息编辑框（用于展示数据）
         api
-            .userInterface()
-            .registerHttpRequestEditorProvider(
-                new RequestEditor(
-                    api,
-                    configLoader,
-                    dataRepository,
-                    ruleRepository,
-                    validatorService
-                )
-            );
+                .userInterface()
+                .registerHttpRequestEditorProvider(
+                        new RequestEditor(
+                                api,
+                                configLoader,
+                                dataRepository,
+                                ruleRepository,
+                                validatorService
+                        )
+                );
         api
-            .userInterface()
-            .registerHttpResponseEditorProvider(
-                new ResponseEditor(
-                    api,
-                    configLoader,
-                    dataRepository,
-                    ruleRepository,
-                    validatorService
-                )
-            );
+                .userInterface()
+                .registerHttpResponseEditorProvider(
+                        new ResponseEditor(
+                                api,
+                                configLoader,
+                                dataRepository,
+                                ruleRepository,
+                                validatorService
+                        )
+                );
         api
-            .userInterface()
-            .registerWebSocketMessageEditorProvider(
-                new WebSocketEditor(
-                    api,
-                    configLoader,
-                    dataRepository,
-                    ruleRepository,
-                    validatorService
-                )
-            );
+                .userInterface()
+                .registerWebSocketMessageEditorProvider(
+                        new WebSocketEditor(
+                                api,
+                                configLoader,
+                                dataRepository,
+                                ruleRepository,
+                                validatorService
+                        )
+                );
 
         api
-            .userInterface()
-            .registerContextMenuItemsProvider(
-                new DataboardContextMenuProvider(
-                    api,
-                    configLoader,
-                    dataRepository,
-                    ruleRepository,
-                    validatorService
-                )
-            );
+                .userInterface()
+                .registerContextMenuItemsProvider(
+                        new DataboardContextMenuProvider(
+                                api,
+                                configLoader,
+                                dataRepository,
+                                ruleRepository,
+                                validatorService
+                        )
+                );
 
         // 从BurpSuite里加载数据
         dataRepository.loadFromPersistence();
@@ -153,13 +153,13 @@ public class HaE implements BurpExtension {
         dataManager.loadData(messageTableModel);
 
         api
-            .extension()
-            .registerUnloadingHandler(() -> {
-                messageTableModel.dispose();
-                dataRepository.clear();
-                DataCache.clear();
-                handlerRegistry.unregisterAll();
-                validatorService.dispose();
-            });
+                .extension()
+                .registerUnloadingHandler(() -> {
+                    messageTableModel.dispose();
+                    dataRepository.clear();
+                    DataCache.clear();
+                    handlerRegistry.unregisterAll();
+                    validatorService.dispose();
+                });
     }
 }

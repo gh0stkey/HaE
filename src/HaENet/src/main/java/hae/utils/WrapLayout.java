@@ -1,7 +1,6 @@
 package hae.utils;
 
 import java.awt.*;
-import javax.swing.*;
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.

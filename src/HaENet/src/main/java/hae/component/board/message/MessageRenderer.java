@@ -1,5 +1,7 @@
 package hae.component.board.message;
 
+import hae.utils.UIEnhancer;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -30,9 +32,22 @@ public class MessageRenderer extends DefaultTableCellRenderer {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                   boolean hasFocus, int row, int column) {
-        Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    public Component getTableCellRendererComponent(
+            JTable table,
+            Object value,
+            boolean isSelected,
+            boolean hasFocus,
+            int row,
+            int column
+    ) {
+        Component component = super.getTableCellRendererComponent(
+                table,
+                value,
+                isSelected,
+                hasFocus,
+                row,
+                column
+        );
 
         // 添加边界检查以防止IndexOutOfBoundsException
         int modelRow = table.convertRowIndexToModel(row);
@@ -40,8 +55,13 @@ public class MessageRenderer extends DefaultTableCellRenderer {
         synchronized (log) {
             if (modelRow < 0 || modelRow >= log.size()) {
                 // 如果索引无效，返回默认渲染组件（使用默认背景色）
-                component.setBackground(Color.WHITE);
-                component.setForeground(Color.BLACK);
+                Color defaultBg = table.getBackground();
+                component.setBackground(defaultBg);
+                component.setForeground(
+                        UIEnhancer.isDarkColor(defaultBg)
+                                ? Color.WHITE
+                                : Color.BLACK
+                );
                 return component;
             }
             messageEntry = log.get(modelRow);
@@ -51,24 +71,37 @@ public class MessageRenderer extends DefaultTableCellRenderer {
         String colorByLog = messageEntry.getColor();
         Color color = colorMap.get(colorByLog);
 
-        // 如果颜色映射中没有找到对应颜色，使用默认白色
+        // 如果颜色映射中没有找到对应颜色，使用默认背景色
         if (color == null) {
-            color = Color.WHITE;
+            color = table.getBackground();
         }
 
         if (isSelected) {
-            component.setBackground(UIManager.getColor("Table.selectionBackground"));
+            component.setBackground(
+                    UIManager.getColor("Table.selectionBackground")
+            );
+            component.setForeground(
+                    UIManager.getColor("Table.selectionForeground")
+            );
         } else {
             component.setBackground(color);
+            Color effectiveBg = (color.getAlpha() == 0)
+                    ? table.getBackground()
+                    : color;
+            component.setForeground(
+                    UIEnhancer.isDarkColor(effectiveBg) ? Color.WHITE : Color.BLACK
+            );
         }
-
-        component.setForeground(Color.BLACK);
 
         return component;
     }
 
     @Override
-    public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+    public void firePropertyChange(
+            String propertyName,
+            Object oldValue,
+            Object newValue
+    ) {
         super.firePropertyChange(propertyName, oldValue, newValue);
         // 监听表格排序的属性变化
         if ("tableCellRenderer".equals(propertyName)) {
