@@ -3,20 +3,20 @@ package hae.utils;
 import burp.api.montoya.MontoyaApi;
 import hae.AppConstants;
 import hae.utils.rule.model.RuleDefinition;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.representer.Representer;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.representer.Representer;
 
 public class ConfigLoader {
+
     private final MontoyaApi api;
     private final Yaml yaml;
     private final String configFilePath;
@@ -46,7 +46,6 @@ public class ConfigLoader {
         if (!(rulesFilePath.exists() && rulesFilePath.isFile())) {
             initRules();
         }
-
     }
 
     private static boolean isValidConfigPath(String configPath) {
@@ -75,7 +74,10 @@ public class ConfigLoader {
 
     private String determineConfigPath() {
         // 优先级1：用户根目录
-        String userConfigPath = String.format("%s/.config/HaE", System.getProperty("user.home"));
+        String userConfigPath = String.format(
+            "%s/.config/HaE",
+            System.getProperty("user.home")
+        );
         if (isValidConfigPath(userConfigPath)) {
             return userConfigPath;
         }
@@ -101,11 +103,16 @@ public class ConfigLoader {
         configMap.put("DynamicHeader", getDynamicHeader());
 
         try {
-            Writer writer = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8);
+            Writer writer = new OutputStreamWriter(
+                Files.newOutputStream(Paths.get(configFilePath)),
+                StandardCharsets.UTF_8
+            );
             yaml.dump(configMap, writer);
             writer.close();
         } catch (Exception e) {
-            api.logging().logToError("Failed to init config: " + e.getMessage());
+            api
+                .logging()
+                .logToError("Failed to init config: " + e.getMessage());
         }
     }
 
@@ -118,18 +125,24 @@ public class ConfigLoader {
         Map<String, List<RuleDefinition>> rules = new HashMap<>();
 
         try {
-            InputStream inputStream = Files.newInputStream(Paths.get(getRulesFilePath()));
+            InputStream inputStream = Files.newInputStream(
+                Paths.get(getRulesFilePath())
+            );
             Map<String, Object> rulesMap = yaml.load(inputStream);
 
             Object rulesObj = rulesMap.get("rules");
             if (rulesObj instanceof List) {
-                List<Map<String, Object>> groupData = (List<Map<String, Object>>) rulesObj;
+                List<Map<String, Object>> groupData = (List<
+                    Map<String, Object>
+                >) rulesObj;
                 for (Map<String, Object> groupFields : groupData) {
                     List<RuleDefinition> data = new ArrayList<>();
 
                     Object ruleObj = groupFields.get("rule");
                     if (ruleObj instanceof List) {
-                        List<Map<String, Object>> ruleData = (List<Map<String, Object>>) ruleObj;
+                        List<Map<String, Object>> ruleData = (List<
+                            Map<String, Object>
+                        >) ruleObj;
                         for (Map<String, Object> ruleFields : ruleData) {
                             data.add(RuleDefinition.fromYamlMap(ruleFields));
                         }
@@ -195,14 +208,6 @@ public class ConfigLoader {
         setValueToConfig("HaEScope", scope);
     }
 
-    public boolean getMode() {
-        return getValueFromConfig("HaEModeStatus", AppConstants.modeStatus).equals("true");
-    }
-
-    public void setMode(String mode) {
-        setValueToConfig("HaEModeStatus", mode);
-    }
-
     private String getValueFromConfig(String name, String defaultValue) {
         Map<String, Object> configData = getConfigData();
         if (configData != null && configData.containsKey(name)) {
@@ -222,12 +227,18 @@ public class ConfigLoader {
             return null;
         }
 
-        try (InputStream inputStream = Files.newInputStream(Paths.get(configFilePath))) {
+        try (
+            InputStream inputStream = Files.newInputStream(
+                Paths.get(configFilePath)
+            )
+        ) {
             cached = yaml.load(inputStream);
             configCache = cached;
             return cached;
         } catch (Exception e) {
-            api.logging().logToError("Failed to load config: " + e.getMessage());
+            api
+                .logging()
+                .logToError("Failed to load config: " + e.getMessage());
         }
 
         return null;
@@ -237,11 +248,18 @@ public class ConfigLoader {
         Map<String, Object> currentConfig = loadCurrentConfig();
         currentConfig.put(name, value);
 
-        try (Writer writer = new OutputStreamWriter(Files.newOutputStream(Paths.get(configFilePath)), StandardCharsets.UTF_8)) {
+        try (
+            Writer writer = new OutputStreamWriter(
+                Files.newOutputStream(Paths.get(configFilePath)),
+                StandardCharsets.UTF_8
+            )
+        ) {
             yaml.dump(currentConfig, writer);
             configCache = null; // 写入后失效缓存
         } catch (Exception e) {
-            api.logging().logToError("Failed to save config: " + e.getMessage());
+            api
+                .logging()
+                .logToError("Failed to save config: " + e.getMessage());
         }
     }
 
@@ -267,10 +285,15 @@ public class ConfigLoader {
     }
 
     private boolean copyRulesToFile(String targetFilePath) {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("rules/Rules.yml");
+        InputStream inputStream = getClass()
+            .getClassLoader()
+            .getResourceAsStream("rules/Rules.yml");
         File targetFile = new File(targetFilePath);
 
-        try (inputStream; OutputStream outputStream = new FileOutputStream(targetFile)) {
+        try (
+            inputStream;
+            OutputStream outputStream = new FileOutputStream(targetFile)
+        ) {
             if (inputStream != null) {
                 byte[] buffer = new byte[1024];
                 int length;
@@ -282,7 +305,9 @@ public class ConfigLoader {
                 return true;
             }
         } catch (Exception e) {
-            api.logging().logToError("Failed to copy rules file: " + e.getMessage());
+            api
+                .logging()
+                .logToError("Failed to copy rules file: " + e.getMessage());
         }
 
         return false;

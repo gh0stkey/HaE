@@ -3,10 +3,15 @@ package hae.component;
 import burp.api.montoya.MontoyaApi;
 import hae.component.board.message.MessageTableModel;
 import hae.component.rule.Rules;
-import hae.service.HandlerRegistry;
 import hae.utils.ConfigLoader;
 import hae.utils.UIEnhancer;
-
+import hae.utils.WrapLayout;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -14,29 +19,26 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 
 public class Config extends JPanel {
+
     private final MontoyaApi api;
     private final ConfigLoader configLoader;
     private final MessageTableModel messageTableModel;
     private final Rules rules;
-    private final HandlerRegistry handlerRegistry;
 
     private boolean isLoadingData = false;
 
-    public Config(MontoyaApi api, ConfigLoader configLoader, MessageTableModel messageTableModel, Rules rules,
-                  HandlerRegistry handlerRegistry) {
+    public Config(
+        MontoyaApi api,
+        ConfigLoader configLoader,
+        MessageTableModel messageTableModel,
+        Rules rules
+    ) {
         this.api = api;
         this.configLoader = configLoader;
         this.messageTableModel = messageTableModel;
         this.rules = rules;
-        this.handlerRegistry = handlerRegistry;
 
         initComponents();
     }
@@ -70,33 +72,28 @@ public class Config extends JPanel {
         constraints.gridx = 1;
         JTabbedPane configTabbedPanel = new JTabbedPane();
 
-        String[] settingMode = new String[]{"Exclude suffix", "Block host", "Exclude status", "Dynamic Header"};
+        String[] settingMode = new String[] {
+            "Exclude suffix",
+            "Block host",
+            "Exclude status",
+            "Dynamic Header",
+        };
         JPanel settingPanel = createConfigTablePanel(settingMode);
 
-        JPanel northPanel = new JPanel(new BorderLayout());
-
-        JPanel modePanel = getModePanel();
-        JScrollPane modeScrollPane = new JScrollPane(modePanel);
-        modeScrollPane.setBorder(new TitledBorder("Mode"));
-
-        JTextField limitPanel = getLimitPanel();
-        JScrollPane limitScrollPane = new JScrollPane(limitPanel);
-        limitScrollPane.setBorder(new TitledBorder("Limit Size (MB)"));
-
-        JSplitPane northTopPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, modeScrollPane, limitScrollPane);
-        northTopPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                northTopPanel.setDividerLocation(0.5);
-            }
-        });
+        JPanel northPanel = new JPanel();
+        northPanel.setLayout(new BoxLayout(northPanel, BoxLayout.Y_AXIS));
+        northPanel.setBorder(new TitledBorder("General"));
 
         JPanel scopePanel = getScopePanel();
-        JScrollPane scopeScrollPane = new JScrollPane(scopePanel);
-        scopeScrollPane.setBorder(new TitledBorder("Scope"));
+        northPanel.add(scopePanel);
 
-        northPanel.add(scopeScrollPane, BorderLayout.SOUTH);
-        northPanel.add(northTopPanel, BorderLayout.NORTH);
+        JPanel limitRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        JLabel limitLabel = new JLabel("Limit Size (MB):");
+        JTextField limitPanel = getLimitPanel();
+        limitPanel.setColumns(8);
+        limitRow.add(limitLabel);
+        limitRow.add(limitPanel);
+        northPanel.add(limitRow);
         settingPanel.add(northPanel, BorderLayout.NORTH);
 
         configTabbedPanel.add("Setting", settingPanel);
@@ -105,9 +102,8 @@ public class Config extends JPanel {
     }
 
     private JPanel getScopePanel() {
-        JPanel scopePanel = new JPanel();
-        scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.X_AXIS));
-        scopePanel.setBorder(new EmptyBorder(3, 0, 6, 0));
+        JPanel scopePanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 5, 2));
+        scopePanel.add(new JLabel("Scope:"));
 
         String[] scopeInit = hae.AppConstants.scopeOptions.split("\\|");
         String[] scopeMode = configLoader.getScope().split("\\|");
@@ -126,50 +122,43 @@ public class Config extends JPanel {
         return scopePanel;
     }
 
-    private JPanel getModePanel() {
-        JPanel modePanel = new JPanel();
-        modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.X_AXIS));
-
-        JCheckBox checkBox = new JCheckBox("Enable active http message handler");
-        checkBox.setEnabled(hae.AppConstants.proVersionStatus);
-        modePanel.add(checkBox);
-        checkBox.addActionListener(e -> updateModeStatus(checkBox));
-        checkBox.setSelected(configLoader.getMode());
-        updateModeStatus(checkBox);
-
-        return modePanel;
-    }
-
     private JTextField getLimitPanel() {
         JTextField limitSizeTextField = new JTextField();
-        limitSizeTextField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onTextChange();
-            }
+        limitSizeTextField
+            .getDocument()
+            .addDocumentListener(
+                new DocumentListener() {
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        onTextChange();
+                    }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onTextChange();
-            }
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        onTextChange();
+                    }
 
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                onTextChange();
-            }
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        onTextChange();
+                    }
 
-            private void onTextChange() {
-                String limitSizeText = limitSizeTextField.getText();
-                configLoader.setLimitSize(limitSizeText);
-            }
-        });
+                    private void onTextChange() {
+                        String limitSizeText = limitSizeTextField.getText();
+                        configLoader.setLimitSize(limitSizeText);
+                    }
+                }
+            );
 
         limitSizeTextField.setText(configLoader.getLimitSize());
 
         return limitSizeTextField;
     }
 
-    private TableModelListener createSettingTableModelListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+    private TableModelListener createSettingTableModelListener(
+        JComboBox<String> setTypeComboBox,
+        DefaultTableModel model
+    ) {
         return e -> {
             // 如果是程序正在加载数据，不处理事件
             if (isLoadingData) {
@@ -207,7 +196,10 @@ public class Config extends JPanel {
         };
     }
 
-    private ActionListener createSettingActionListener(JComboBox<String> setTypeComboBox, DefaultTableModel model) {
+    private ActionListener createSettingActionListener(
+        JComboBox<String> setTypeComboBox,
+        DefaultTableModel model
+    ) {
         return e -> {
             String selected = (String) setTypeComboBox.getSelectedItem();
 
@@ -217,19 +209,37 @@ public class Config extends JPanel {
 
             if (selected != null) {
                 if (selected.equals("Exclude suffix")) {
-                    addDataToTable(configLoader.getExcludeSuffix().replaceAll("\\|", "\r\n"), model);
+                    addDataToTable(
+                        configLoader
+                            .getExcludeSuffix()
+                            .replaceAll("\\|", "\r\n"),
+                        model
+                    );
                 }
 
                 if (selected.equals("Block host")) {
-                    addDataToTable(configLoader.getBlockHost().replaceAll("\\|", "\r\n"), model);
+                    addDataToTable(
+                        configLoader.getBlockHost().replaceAll("\\|", "\r\n"),
+                        model
+                    );
                 }
 
                 if (selected.equals("Exclude status")) {
-                    addDataToTable(configLoader.getExcludeStatus().replaceAll("\\|", "\r\n"), model);
+                    addDataToTable(
+                        configLoader
+                            .getExcludeStatus()
+                            .replaceAll("\\|", "\r\n"),
+                        model
+                    );
                 }
 
                 if (selected.equals("Dynamic Header")) {
-                    addDataToTable(configLoader.getDynamicHeader().replaceAll("\\|", "\r\n"), model);
+                    addDataToTable(
+                        configLoader
+                            .getDynamicHeader()
+                            .replaceAll("\\|", "\r\n"),
+                        model
+                    );
                 }
             }
 
@@ -253,8 +263,16 @@ public class Config extends JPanel {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(new EmptyBorder(0, 3, 0, 0));
         GridBagLayout layout = new GridBagLayout();
-        layout.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
-        layout.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+        layout.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0 };
+        layout.rowWeights = new double[] {
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            Double.MIN_VALUE,
+        };
         buttonPanel.setLayout(layout);
 
         JPanel inputPanel = new JPanel(new BorderLayout());
@@ -269,9 +287,13 @@ public class Config extends JPanel {
         JComboBox<String> setTypeComboBox = new JComboBox<>();
         setTypeComboBox.setModel(new DefaultComboBoxModel<>(mode));
 
-        model.addTableModelListener(createSettingTableModelListener(setTypeComboBox, model));
+        model.addTableModelListener(
+            createSettingTableModelListener(setTypeComboBox, model)
+        );
 
-        setTypeComboBox.addActionListener(createSettingActionListener(setTypeComboBox, model));
+        setTypeComboBox.addActionListener(
+            createSettingActionListener(setTypeComboBox, model)
+        );
 
         setTypeComboBox.setSelectedItem(mode[0]);
 
@@ -298,27 +320,35 @@ public class Config extends JPanel {
         settingPanel.add(buttonPanel, BorderLayout.EAST);
         settingPanel.add(inputPanel, BorderLayout.CENTER);
 
+        addButton.addActionListener(e ->
+            addActionPerformed(e, model, addTextField)
+        );
 
-        addButton.addActionListener(e -> addActionPerformed(e, model, addTextField));
-
-        addTextField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addActionPerformed(null, model, addTextField);
+        addTextField.addKeyListener(
+            new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        addActionPerformed(null, model, addTextField);
+                    }
                 }
             }
-        });
+        );
 
         pasteButton.addActionListener(e -> {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Clipboard clipboard =
+                Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
-                String data = (String) clipboard.getData(DataFlavor.stringFlavor);
+                String data = (String) clipboard.getData(
+                    DataFlavor.stringFlavor
+                );
                 if (data != null && !data.isEmpty()) {
                     addDataToTable(data, model);
                 }
             } catch (Exception ex) {
-                api.logging().logToError("Clipboard paste error: " + ex.getMessage());
+                api
+                    .logging()
+                    .logToError("Clipboard paste error: " + ex.getMessage());
             }
         });
 
@@ -340,7 +370,6 @@ public class Config extends JPanel {
         return settingMainPanel;
     }
 
-
     private String getFirstColumnDataAsString(DefaultTableModel model) {
         StringBuilder firstColumnData = new StringBuilder();
         int numRows = model.getRowCount();
@@ -359,7 +388,7 @@ public class Config extends JPanel {
         if (!data.isBlank()) {
             String[] rows = data.split("\\r?\\n");
             for (String row : rows) {
-                model.addRow(new String[]{row});
+                model.addRow(new String[] { row });
             }
             deduplicateTableData(model);
         }
@@ -389,22 +418,13 @@ public class Config extends JPanel {
         }
     }
 
-    public void updateModeStatus(JCheckBox checkBox) {
-        boolean selected = checkBox.isSelected();
-        configLoader.setMode(selected ? "true" : "false");
-
-        if (checkBox.isSelected()) {
-            handlerRegistry.switchToActiveMode();
-        } else {
-            handlerRegistry.switchToPassiveMode();
-        }
-    }
-
     public void updateScope(JCheckBox checkBox) {
         String boxText = checkBox.getText();
         boolean selected = checkBox.isSelected();
 
-        Set<String> haeScope = new HashSet<>(Arrays.asList(configLoader.getScope().split("\\|")));
+        Set<String> haeScope = new HashSet<>(
+            Arrays.asList(configLoader.getScope().split("\\|"))
+        );
 
         if (selected) {
             haeScope.add(boxText);
@@ -415,7 +435,11 @@ public class Config extends JPanel {
         configLoader.setScope(String.join("|", haeScope));
     }
 
-    private void addActionPerformed(ActionEvent e, DefaultTableModel model, JTextField addTextField) {
+    private void addActionPerformed(
+        ActionEvent e,
+        DefaultTableModel model,
+        JTextField addTextField
+    ) {
         String addTextFieldText = addTextField.getText();
         if (addTextField.getForeground().equals(Color.BLACK)) {
             addDataToTable(addTextFieldText, model);
@@ -429,7 +453,12 @@ public class Config extends JPanel {
     }
 
     private void reinitActionPerformed(ActionEvent e) {
-        int retCode = JOptionPane.showConfirmDialog(this, "Do you want to reinitialize rules? This action will overwrite your existing rules.", "Info", JOptionPane.YES_NO_OPTION);
+        int retCode = JOptionPane.showConfirmDialog(
+            this,
+            "Do you want to reinitialize rules? This action will overwrite your existing rules.",
+            "Info",
+            JOptionPane.YES_NO_OPTION
+        );
         if (retCode == JOptionPane.YES_OPTION) {
             boolean ret = configLoader.initRules();
             if (ret) {
