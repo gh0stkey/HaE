@@ -16,6 +16,7 @@ import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.swing.*;
@@ -216,7 +217,9 @@ public class HttpMessageActiveHandler implements HttpHandler {
         if (fingerprints.isEmpty()) {
             return "";
         }
-        String combined = String.join("|", fingerprints);
+        List<String> sorted = new ArrayList<>(fingerprints);
+        Collections.sort(sorted);
+        String combined = String.join("|", sorted);
         return HashCalculator.calculateHash(
             combined.getBytes(StandardCharsets.UTF_8)
         );
