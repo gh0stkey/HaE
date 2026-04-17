@@ -8,25 +8,50 @@ import hae.AppConstants;
 import hae.repository.DataRepository;
 import hae.repository.RuleRepository;
 import hae.utils.ConfigLoader;
-
+import hae.utils.string.HashCalculator;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MessageProcessor {
+
     private final MontoyaApi api;
     private final RegularMatcher regularMatcher;
 
-    public MessageProcessor(MontoyaApi api, ConfigLoader configLoader, DataRepository dataRepository, RuleRepository ruleRepository) {
+    public MessageProcessor(
+        MontoyaApi api,
+        ConfigLoader configLoader,
+        DataRepository dataRepository,
+        RuleRepository ruleRepository
+    ) {
         this.api = api;
-        this.regularMatcher = new RegularMatcher(api, configLoader, dataRepository, ruleRepository);
+        this.regularMatcher = new RegularMatcher(
+            api,
+            configLoader,
+            dataRepository,
+            ruleRepository
+        );
     }
 
-    public List<Map<String, String>> processMessage(String host, String url, String message, boolean highlightAction, boolean persist) {
+    public List<Map<String, String>> processMessage(
+        String host,
+        String url,
+        String message,
+        boolean highlightAction,
+        boolean persist
+    ) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
-            obj = regularMatcher.performRegexMatching(host, url, "any", message, message, message, persist);
+            obj = regularMatcher.performRegexMatching(
+                host,
+                url,
+                "any",
+                message,
+                message,
+                message,
+                persist
+            );
         } catch (Exception e) {
             api.logging().logToError("processMessage error: " + e.getMessage());
         }
@@ -34,35 +59,81 @@ public class MessageProcessor {
         return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processResponse(String host, String url, HttpResponse httpResponse, boolean highlightAction, boolean persist) {
+    public List<Map<String, String>> processResponse(
+        String host,
+        String url,
+        HttpResponse httpResponse,
+        boolean highlightAction,
+        boolean persist
+    ) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
-            String response = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
-            String body = new String(httpResponse.body().getBytes(), StandardCharsets.UTF_8);
-            String header = httpResponse.headers().stream()
-                    .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\r\n"));
+            String response = new String(
+                httpResponse.toByteArray().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String body = new String(
+                httpResponse.body().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String header = httpResponse
+                .headers()
+                .stream()
+                .map(HttpHeader::toString)
+                .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.performRegexMatching(host, url, "response", response, header, body, persist);
+            obj = regularMatcher.performRegexMatching(
+                host,
+                url,
+                "response",
+                response,
+                header,
+                body,
+                persist
+            );
         } catch (Exception e) {
-            api.logging().logToError("processResponse error: " + e.getMessage());
+            api
+                .logging()
+                .logToError("processResponse error: " + e.getMessage());
         }
 
         return getDataList(obj, highlightAction);
     }
 
-    public List<Map<String, String>> processRequest(String host, String url, HttpRequest httpRequest, boolean highlightAction, boolean persist) {
+    public List<Map<String, String>> processRequest(
+        String host,
+        String url,
+        HttpRequest httpRequest,
+        boolean highlightAction,
+        boolean persist
+    ) {
         Map<String, Map<String, Object>> obj = null;
 
         try {
-            String request = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
-            String body = new String(httpRequest.body().getBytes(), StandardCharsets.UTF_8);
-            String header = httpRequest.headers().stream()
-                    .map(HttpHeader::toString)
-                    .collect(Collectors.joining("\r\n"));
+            String request = new String(
+                httpRequest.toByteArray().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String body = new String(
+                httpRequest.body().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String header = httpRequest
+                .headers()
+                .stream()
+                .map(HttpHeader::toString)
+                .collect(Collectors.joining("\r\n"));
 
-            obj = regularMatcher.performRegexMatching(host, url, "request", request, header, body, persist);
+            obj = regularMatcher.performRegexMatching(
+                host,
+                url,
+                "request",
+                request,
+                header,
+                body,
+                persist
+            );
         } catch (Exception e) {
             api.logging().logToError("processRequest error: " + e.getMessage());
         }
@@ -70,7 +141,10 @@ public class MessageProcessor {
         return getDataList(obj, highlightAction);
     }
 
-    private List<Map<String, String>> getDataList(Map<String, Map<String, Object>> obj, boolean actionFlag) {
+    private List<Map<String, String>> getDataList(
+        Map<String, Map<String, Object>> obj,
+        boolean actionFlag
+    ) {
         List<Map<String, String>> highlightList = new ArrayList<>();
         List<Map<String, String>> extractList = new ArrayList<>();
 
@@ -80,15 +154,28 @@ public class MessageProcessor {
                 List<String> colorList = resultList.get(0);
                 List<String> commentList = resultList.get(1);
                 if (!colorList.isEmpty() && !commentList.isEmpty()) {
-                    String color = retrieveFinalColor(retrieveColorIndices(colorList));
-                    Map<String, String> colorMap = new HashMap<>() {{
-                        put("color", color);
-                    }};
-                    Map<String, String> commentMap = new HashMap<>() {{
-                        put("comment", String.join(", ", commentList));
-                    }};
+                    String color = retrieveFinalColor(
+                        retrieveColorIndices(colorList)
+                    );
+                    Map<String, String> colorMap = new HashMap<>() {
+                        {
+                            put("color", color);
+                        }
+                    };
+                    Map<String, String> commentMap = new HashMap<>() {
+                        {
+                            put("comment", String.join(", ", commentList));
+                        }
+                    };
+                    String fingerprint = computeDataFingerprint(obj);
+                    Map<String, String> fingerprintMap = new HashMap<>() {
+                        {
+                            put("fingerprint", fingerprint);
+                        }
+                    };
                     highlightList.add(colorMap);
                     highlightList.add(commentMap);
+                    highlightList.add(fingerprintMap);
                 }
             } else {
                 extractList.add(extractDataFromMap(obj));
@@ -98,26 +185,58 @@ public class MessageProcessor {
         return actionFlag ? highlightList : extractList;
     }
 
-    private Map<String, String> extractDataFromMap(Map<String, Map<String, Object>> inputData) {
+    private String computeDataFingerprint(
+        Map<String, Map<String, Object>> inputData
+    ) {
+        TreeSet<String> allValues = new TreeSet<>();
+        for (Map.Entry<
+            String,
+            Map<String, Object>
+        > entry : inputData.entrySet()) {
+            Object data = entry.getValue().get("data");
+            if (data != null) {
+                String[] values = data
+                    .toString()
+                    .split(AppConstants.boundary, -1);
+                Collections.addAll(allValues, values);
+            }
+        }
+        if (allValues.isEmpty()) {
+            return "";
+        }
+        return HashCalculator.calculateHash(
+            String.join("\n", allValues).getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private Map<String, String> extractDataFromMap(
+        Map<String, Map<String, Object>> inputData
+    ) {
         Map<String, String> extractedData = new HashMap<>();
-        inputData.keySet().forEach(key -> {
-            Map<String, Object> tempMap = inputData.get(key);
-            String data = tempMap.get("data").toString();
-            extractedData.put(key, data);
-        });
+        inputData
+            .keySet()
+            .forEach(key -> {
+                Map<String, Object> tempMap = inputData.get(key);
+                String data = tempMap.get("data").toString();
+                extractedData.put(key, data);
+            });
 
         return extractedData;
     }
 
-    private List<List<String>> extractColorsAndComments(Map<String, Map<String, Object>> inputData) {
+    private List<List<String>> extractColorsAndComments(
+        Map<String, Map<String, Object>> inputData
+    ) {
         List<String> colorList = new ArrayList<>();
         List<String> commentList = new ArrayList<>();
-        inputData.keySet().forEach(key -> {
-            Map<String, Object> tempMap = inputData.get(key);
-            String color = tempMap.get("color").toString();
-            colorList.add(color);
-            commentList.add(key);
-        });
+        inputData
+            .keySet()
+            .forEach(key -> {
+                Map<String, Object> tempMap = inputData.get(key);
+                String color = tempMap.get("color").toString();
+                colorList.add(color);
+                commentList.add(key);
+            });
         List<List<String>> result = new ArrayList<>();
         result.add(colorList);
         result.add(commentList);
@@ -159,9 +278,7 @@ public class MessageProcessor {
         }
 
         // 获取最终的颜色索引
-        int finalIndex = indices.stream()
-                .min(Integer::compareTo)
-                .orElse(0);
+        int finalIndex = indices.stream().min(Integer::compareTo).orElse(0);
 
         // 处理负数索引情况
         if (finalIndex < 0) {
@@ -174,5 +291,4 @@ public class MessageProcessor {
     public String retrieveFinalColor(List<Integer> colorList) {
         return upgradeColors(colorList);
     }
-
 }

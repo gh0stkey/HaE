@@ -11,8 +11,18 @@ public class MessageEntry {
     private final String status;
     private final String color;
     private final String method;
+    private final String dataFingerprint;
 
-    MessageEntry(HttpRequestResponse requestResponse, String method, String url, String comment, String length, String color, String status) {
+    MessageEntry(
+        HttpRequestResponse requestResponse,
+        String method,
+        String url,
+        String comment,
+        String length,
+        String color,
+        String status,
+        String dataFingerprint
+    ) {
         this.requestResponse = requestResponse;
         this.method = method;
         this.url = url;
@@ -20,6 +30,7 @@ public class MessageEntry {
         this.length = length;
         this.color = color;
         this.status = status;
+        this.dataFingerprint = dataFingerprint != null ? dataFingerprint : "";
     }
 
     public String getColor() {
@@ -48,5 +59,9 @@ public class MessageEntry {
 
     public HttpRequestResponse getRequestResponse() {
         return this.requestResponse;
+    }
+
+    public String getDataFingerprint() {
+        return this.dataFingerprint;
     }
 }
