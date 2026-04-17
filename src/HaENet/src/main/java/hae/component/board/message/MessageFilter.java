@@ -107,12 +107,6 @@ public class MessageFilter {
                     }
                 });
 
-                // 由于每个用户规则不同，如果进行项目文件共享则需要考虑全部匹配一下
-                if (!isMatched.get()) {
-                    isMatched.set(matchingString("{0}", filterText, requestString) ||
-                            matchingString("{0}", filterText, responseString));
-                }
-
                 if (isMatched.get()) {
                     result.add(entry);
                 }
