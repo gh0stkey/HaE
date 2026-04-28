@@ -31,7 +31,7 @@ GitCode project address: https://gitcode.com/gh0stkey/HaE
 **Plugin Installation**: `Extender - Extensions - Add - Select File - Next`
 
 When you load `HaE` for the first time, it will load the offline rule database from the Jar package. If you need to update the rules, click `Reinit` to reinitialize. The address of the built-in rule database can be found on GitHub:  
-`https://github.com/gh0stkey/HaE/blob/master/src/main/resources/rules/Rules.yml`
+`https://github.com/gh0stkey/HaE/blob/main/src/HaENet/src/main/resources/rules/Rules.yml`
 
 The configuration file (`Config.yml`) and rule file (`Rules.yml`) are stored in a fixed directory:
 
