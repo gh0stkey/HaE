@@ -112,6 +112,23 @@ public class DataRepositoryImpl implements DataRepository {
     }
 
     @Override
+    public synchronized void clearHostData(String host, boolean persist) {
+        if (host == null || host.isEmpty()) {
+            return;
+        }
+
+        dataMap.remove(host);
+
+        if (persist) {
+            try {
+                persistenceHelper.putData("data", host, PersistedObject.persistedObject());
+            } catch (Exception e) {
+                api.logging().logToError("Failed to clear persisted data for host " + host + ": " + e.getMessage());
+            }
+        }
+    }
+
+    @Override
     public void removeMatching(String hostPattern) {
         dataMap.keySet().parallelStream().forEach(key -> {
             if (StringProcessor.matchesHostPattern(key, hostPattern) || hostPattern.equals("*")) {

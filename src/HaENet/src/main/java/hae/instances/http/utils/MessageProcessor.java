@@ -2,6 +2,7 @@ package hae.instances.http.utils;
 
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.message.HttpHeader;
+import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import hae.AppConstants;
@@ -38,7 +39,8 @@ public class MessageProcessor {
         String url,
         String message,
         boolean highlightAction,
-        boolean persist
+        boolean persist,
+        boolean ignoreDataCache
     ) {
         Map<String, Map<String, Object>> obj = null;
 
@@ -50,7 +52,8 @@ public class MessageProcessor {
                 message,
                 message,
                 message,
-                persist
+                persist,
+                ignoreDataCache
             );
         } catch (Exception e) {
             api.logging().logToError("processMessage error: " + e.getMessage());
@@ -64,7 +67,8 @@ public class MessageProcessor {
         String url,
         HttpResponse httpResponse,
         boolean highlightAction,
-        boolean persist
+        boolean persist,
+        boolean ignoreDataCache
     ) {
         Map<String, Map<String, Object>> obj = null;
 
@@ -90,7 +94,8 @@ public class MessageProcessor {
                 response,
                 header,
                 body,
-                persist
+                persist,
+                ignoreDataCache
             );
         } catch (Exception e) {
             api
@@ -101,12 +106,77 @@ public class MessageProcessor {
         return getDataList(obj, highlightAction);
     }
 
+    public List<Map<String, String>> processRequestResponse(
+        String host,
+        String url,
+        HttpRequestResponse requestResponse,
+        boolean highlightAction,
+        boolean persist,
+        boolean ignoreDataCache
+    ) {
+        Map<String, Map<String, Object>> obj = null;
+
+        try {
+            HttpRequest httpRequest = requestResponse.request();
+            HttpResponse httpResponse = requestResponse.response();
+            String request = new String(
+                httpRequest.toByteArray().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String requestBody = new String(
+                httpRequest.body().getBytes(),
+                StandardCharsets.UTF_8
+            );
+            String requestHeader = httpRequest
+                .headers()
+                .stream()
+                .map(HttpHeader::toString)
+                .collect(Collectors.joining("\r\n"));
+            String response = "";
+            String responseBody = "";
+            String responseHeader = "";
+            if (httpResponse != null) {
+                response = new String(
+                    httpResponse.toByteArray().getBytes(),
+                    StandardCharsets.UTF_8
+                );
+                responseBody = new String(
+                    httpResponse.body().getBytes(),
+                    StandardCharsets.UTF_8
+                );
+                responseHeader = httpResponse
+                    .headers()
+                    .stream()
+                    .map(HttpHeader::toString)
+                    .collect(Collectors.joining("\r\n"));
+            }
+
+            obj = regularMatcher.performRegexMatching(
+                host,
+                url,
+                "any",
+                request + "\r\n\r\n" + response,
+                requestHeader + "\r\n" + responseHeader,
+                requestBody + "\r\n" + responseBody,
+                persist,
+                ignoreDataCache
+            );
+        } catch (Exception e) {
+            api
+                .logging()
+                .logToError("processRequestResponse error: " + e.getMessage());
+        }
+
+        return getDataList(obj, highlightAction);
+    }
+
     public List<Map<String, String>> processRequest(
         String host,
         String url,
         HttpRequest httpRequest,
         boolean highlightAction,
-        boolean persist
+        boolean persist,
+        boolean ignoreDataCache
     ) {
         Map<String, Map<String, Object>> obj = null;
 
@@ -132,7 +202,8 @@ public class MessageProcessor {
                 request,
                 header,
                 body,
-                persist
+                persist,
+                ignoreDataCache
             );
         } catch (Exception e) {
             api.logging().logToError("processRequest error: " + e.getMessage());

@@ -135,7 +135,8 @@ public class ScopedDataboardDialog extends JDialog {
         DataRepository dataRepository,
         RuleRepository ruleRepository,
         ValidatorService validatorService,
-        List<HttpRequestResponse> messages
+        List<HttpRequestResponse> messages,
+        boolean ignoreDataCache
     ) {
         MessageProcessor messageProcessor = new MessageProcessor(
             api,
@@ -161,30 +162,19 @@ public class ScopedDataboardDialog extends JDialog {
                         String url = request.url();
                         String host = StringProcessor.getHostByUrl(url);
                         HttpResponse response = message.response();
-
-                        List<Map<String, String>> reqHighlight =
-                            messageProcessor.processRequest(
+                        List<Map<String, String>> highlight =
+                            messageProcessor.processRequestResponse(
                                 host,
                                 url,
-                                request,
+                                message,
                                 true,
-                                false
+                                false,
+                                ignoreDataCache
                             );
-                        List<Map<String, String>> respHighlight = null;
-                        if (response != null) {
-                            respHighlight = messageProcessor.processResponse(
-                                host,
-                                url,
-                                response,
-                                true,
-                                false
-                            );
-                        }
 
                         List<String> colorList = new ArrayList<>();
                         List<String> commentList = new ArrayList<>();
-                        collectHighlight(reqHighlight, colorList, commentList);
-                        collectHighlight(respHighlight, colorList, commentList);
+                        collectHighlight(highlight, colorList, commentList);
 
                         if (!colorList.isEmpty()) {
                             String color = messageProcessor.retrieveFinalColor(
@@ -220,26 +210,15 @@ public class ScopedDataboardDialog extends JDialog {
 
                         mergeExtractResult(
                             ruleDataMap,
-                            messageProcessor.processRequest(
+                            messageProcessor.processRequestResponse(
                                 host,
                                 url,
-                                request,
+                                message,
                                 false,
-                                false
+                                false,
+                                ignoreDataCache
                             )
                         );
-                        if (response != null) {
-                            mergeExtractResult(
-                                ruleDataMap,
-                                messageProcessor.processResponse(
-                                    host,
-                                    url,
-                                    response,
-                                    false,
-                                    false
-                                )
-                            );
-                        }
                     } catch (Exception e) {
                         api
                             .logging()

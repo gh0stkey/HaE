@@ -112,7 +112,8 @@ public class HttpMessageActiveHandler implements HttpHandler {
                         request.url(),
                         request,
                         true,
-                        true
+                        true,
+                        false
                     )
                 );
                 setColorAndCommentList(
@@ -121,7 +122,8 @@ public class HttpMessageActiveHandler implements HttpHandler {
                         request.url(),
                         httpResponseReceived,
                         true,
-                        true
+                        true,
+                        false
                     )
                 );
 

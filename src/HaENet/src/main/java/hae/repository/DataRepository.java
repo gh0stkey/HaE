@@ -25,6 +25,8 @@ public interface DataRepository {
 
     void remove(String host);
 
+    void clearHostData(String host, boolean persist);
+
     void removeMatching(String hostPattern);
 
     void clear();

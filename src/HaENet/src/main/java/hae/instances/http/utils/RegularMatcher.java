@@ -36,7 +36,7 @@ public class RegularMatcher {
         this.ruleRepository = ruleRepository;
     }
 
-    public Map<String, Map<String, Object>> performRegexMatching(String host, String url, String type, String message, String header, String body, boolean persist) {
+    public Map<String, Map<String, Object>> performRegexMatching(String host, String url, String type, String message, String header, String body, boolean persist, boolean ignoreDataCache) {
         // 删除动态响应头再进行存储
         String originalMessage = message;
         String dynamicHeader = configLoader.getDynamicHeader();
@@ -49,7 +49,7 @@ public class RegularMatcher {
         String messageIndex = HashCalculator.calculateHash((host + "|" + message).getBytes());
 
         // 从数据缓存中读取
-        Map<String, Map<String, Object>> dataCacheMap = DataCache.get(messageIndex);
+        Map<String, Map<String, Object>> dataCacheMap = ignoreDataCache ? null : DataCache.get(messageIndex);
 
         // 存在则返回
         if (dataCacheMap != null) {
