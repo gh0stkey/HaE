@@ -10,7 +10,7 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 1wtbb                      | 25.00 CNY  |
 | Deep                       | 66.66 CNY  |
 | NaTsUk0                    | 50.00 CNY  |
-| Kite                       | 48.00 CNY  |
+| Kite                       | 248.00 CNY |
 | 红色键盘                   | 99.99 CNY  |
 | 曾哥                       | 188.88 CNY |
 | 祝祝                       | 488.00 CNY |
