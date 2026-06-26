@@ -128,6 +128,13 @@ public class Config extends JPanel {
 
     private JTextField getLimitPanel() {
         JTextField limitSizeTextField = new JTextField();
+
+        javax.swing.Timer writeTimer = new javax.swing.Timer(500, e ->
+                configLoader.setLimitSize(limitSizeTextField.getText()));
+        writeTimer.setRepeats(false);
+
+        limitSizeTextField.setText(configLoader.getLimitSize());
+
         limitSizeTextField
                 .getDocument()
                 .addDocumentListener(
@@ -148,13 +155,10 @@ public class Config extends JPanel {
                             }
 
                             private void onTextChange() {
-                                String limitSizeText = limitSizeTextField.getText();
-                                configLoader.setLimitSize(limitSizeText);
+                                writeTimer.restart();
                             }
                         }
                 );
-
-        limitSizeTextField.setText(configLoader.getLimitSize());
 
         return limitSizeTextField;
     }

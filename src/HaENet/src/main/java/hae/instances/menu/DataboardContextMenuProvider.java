@@ -48,7 +48,7 @@ public class DataboardContextMenuProvider implements ContextMenuItemsProvider {
         JMenuItem viewMenuItem = new JMenuItem("View in Databoard");
         viewMenuItem.addActionListener(e ->
                 ScopedDataboardDialog.show(api, configLoader, dataRepository, ruleRepository,
-                validatorService, selectedMessages, false));
+                        validatorService, selectedMessages, false));
 
         JMenuItem rescanMenuItem = new JMenuItem("Rescan");
         rescanMenuItem.addActionListener(e -> rescan(selectedMessages));
@@ -58,10 +58,10 @@ public class DataboardContextMenuProvider implements ContextMenuItemsProvider {
 
     private void rescan(List<HttpRequestResponse> selectedMessages) {
         MessageProcessor messageProcessor = new MessageProcessor(
-            api,
-            configLoader,
-            dataRepository,
-            ruleRepository
+                api,
+                configLoader,
+                dataRepository,
+                ruleRepository
         );
 
         new SwingWorker<Integer, Void>() {
@@ -88,23 +88,23 @@ public class DataboardContextMenuProvider implements ContextMenuItemsProvider {
                         }
 
                         messageProcessor.processRequest(
-                            host,
-                            url,
-                            request,
-                            true,
-                            true,
-                            true
+                                host,
+                                url,
+                                request,
+                                true,
+                                true,
+                                true
                         );
 
                         HttpResponse response = message.response();
                         if (response != null) {
                             messageProcessor.processResponse(
-                                host,
-                                url,
-                                response,
-                                true,
-                                true,
-                                true
+                                    host,
+                                    url,
+                                    response,
+                                    true,
+                                    true,
+                                    true
                             );
                         }
                         count++;
@@ -120,10 +120,10 @@ public class DataboardContextMenuProvider implements ContextMenuItemsProvider {
                 try {
                     int count = get();
                     JOptionPane.showMessageDialog(
-                        null,
-                        String.format("Rescan completed for %s message(s).", count),
-                        "HaE",
-                        JOptionPane.INFORMATION_MESSAGE
+                            api.userInterface().swingUtils().suiteFrame(),
+                            String.format("Rescan completed for %s message(s).", count),
+                            "HaE",
+                            JOptionPane.INFORMATION_MESSAGE
                     );
                 } catch (Exception ex) {
                     api.logging().logToError("Rescan: " + ex.getMessage());

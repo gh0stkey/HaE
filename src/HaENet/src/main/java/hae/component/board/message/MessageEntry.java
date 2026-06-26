@@ -14,14 +14,14 @@ public class MessageEntry {
     private final String dataFingerprint;
 
     MessageEntry(
-        HttpRequestResponse requestResponse,
-        String method,
-        String url,
-        String comment,
-        String length,
-        String color,
-        String status,
-        String dataFingerprint
+            HttpRequestResponse requestResponse,
+            String method,
+            String url,
+            String comment,
+            String length,
+            String color,
+            String status,
+            String dataFingerprint
     ) {
         this.requestResponse = requestResponse;
         this.method = method;

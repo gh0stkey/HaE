@@ -18,11 +18,11 @@ public class HandlerRegistry {
     private Registration activeHandler;
 
     public HandlerRegistry(
-        MontoyaApi api,
-        ConfigLoader configLoader,
-        MessageTableModel messageTableModel,
-        DataRepository dataRepository,
-        RuleRepository ruleRepository
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            MessageTableModel messageTableModel,
+            DataRepository dataRepository,
+            RuleRepository ruleRepository
     ) {
         this.api = api;
         this.configLoader = configLoader;
@@ -33,16 +33,16 @@ public class HandlerRegistry {
 
     public void registerAll() {
         this.activeHandler = api
-            .http()
-            .registerHttpHandler(
-                new HttpMessageActiveHandler(
-                    api,
-                    configLoader,
-                    messageTableModel,
-                    dataRepository,
-                    ruleRepository
-                )
-            );
+                .http()
+                .registerHttpHandler(
+                        new HttpMessageActiveHandler(
+                                api,
+                                configLoader,
+                                messageTableModel,
+                                dataRepository,
+                                ruleRepository
+                        )
+                );
     }
 
     public void unregisterAll() {

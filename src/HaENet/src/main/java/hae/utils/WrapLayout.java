@@ -37,7 +37,6 @@ public class WrapLayout extends FlowLayout {
             int maxWidth = target.getWidth() - insets.left - insets.right - getHgap() * 2;
 
             if (maxWidth <= 0) {
-                // Container not yet sized; fall back to single-line calculation
                 return preferred ? super.preferredLayoutSize(target) : super.minimumLayoutSize(target);
             }
 

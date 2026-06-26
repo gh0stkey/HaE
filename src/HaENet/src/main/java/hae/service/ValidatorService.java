@@ -58,19 +58,6 @@ public class ValidatorService {
 
     private static final String SEVERITY_INDEX_KEY = "severity_index";
     private static final String SEVERITY_PREFIX = "sev_";
-
-    private final MontoyaApi api;
-    private final RuleRepository ruleRepository;
-    private final Persistence persistence;
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor();
-
-    // ruleName -> matchValue -> severity
-    private final ConcurrentHashMap<
-            String,
-            ConcurrentHashMap<String, String>
-            > severityStore = new ConcurrentHashMap<>();
-
     // ruleName -> matchValue -> [before, after]
     private static final ConcurrentHashMap<
             String,
@@ -82,12 +69,189 @@ public class ValidatorService {
             ConcurrentHashMap<String, String>
             > urlStore = new ConcurrentHashMap<>();
     private static final int CONTEXT_LENGTH = 50;
+    private static final Gson GSON = new Gson();
+    private final MontoyaApi api;
+    private final RuleRepository ruleRepository;
+    private final Persistence persistence;
+    private final ExecutorService executor =
+            Executors.newSingleThreadExecutor();
+    // ruleName -> matchValue -> severity
+    private final ConcurrentHashMap<
+            String,
+            ConcurrentHashMap<String, String>
+            > severityStore = new ConcurrentHashMap<>();
 
     public ValidatorService(MontoyaApi api, RuleRepository ruleRepository) {
         this.api = api;
         this.ruleRepository = ruleRepository;
         this.persistence = api.persistence();
         loadFromPersistence();
+    }
+
+    public static void putContext(
+            String ruleName,
+            String matchValue,
+            String matchContent
+    ) {
+        ConcurrentHashMap<String, String[]> ruleCtx =
+                contextStore.computeIfAbsent(ruleName, k ->
+                        new ConcurrentHashMap<>()
+                );
+        if (ruleCtx.containsKey(matchValue)) return;
+        int pos = matchContent.indexOf(matchValue);
+        if (pos < 0) return;
+        String before = matchContent.substring(
+                Math.max(0, pos - CONTEXT_LENGTH),
+                pos
+        );
+        String after = matchContent.substring(
+                Math.min(pos + matchValue.length(), matchContent.length()),
+                Math.min(
+                        pos + matchValue.length() + CONTEXT_LENGTH,
+                        matchContent.length()
+                )
+        );
+        ruleCtx.putIfAbsent(matchValue, new String[]{before, after});
+    }
+
+    public static void putUrl(String ruleName, String matchValue, String url) {
+        ConcurrentHashMap<String, String> ruleUrls = urlStore.computeIfAbsent(
+                ruleName,
+                k -> new ConcurrentHashMap<>()
+        );
+        ruleUrls.putIfAbsent(matchValue, url);
+    }
+
+    public static int compareBySeverity(String a, String b) {
+        int ra = SEVERITY_RANK.getOrDefault(a, 3);
+        int rb = SEVERITY_RANK.getOrDefault(b, 3);
+        return Integer.compare(ra, rb);
+    }
+
+    public static Color getSeverityColor(String severity) {
+        return switch (severity) {
+            case SEVERITY_HIGH -> new Color(220, 50, 50);
+            case SEVERITY_MEDIUM -> new Color(220, 150, 30);
+            case SEVERITY_LOW -> new Color(60, 130, 220);
+            default -> Color.GRAY;
+        };
+    }
+
+    private static String buildInputJson(
+            RuleDefinition rule,
+            String group,
+            List<String> matches
+    ) {
+        JsonObject root = new JsonObject();
+
+        JsonObject ruleObj = new JsonObject();
+        ruleObj.addProperty("name", rule.getName());
+        ruleObj.addProperty("regex", rule.getFirstRegex());
+        ruleObj.addProperty("group", group);
+        root.add("rule", ruleObj);
+
+        JsonArray items = getJsonElements(rule.getName(), matches);
+        root.add("items", items);
+
+        return GSON.toJson(root);
+    }
+
+    private static @NonNull JsonArray getJsonElements(
+            String ruleName,
+            List<String> matches
+    ) {
+        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(
+                ruleName
+        );
+        ConcurrentHashMap<String, String> ruleUrls = urlStore.get(ruleName);
+        JsonArray items = new JsonArray();
+        for (int i = 0; i < matches.size(); i++) {
+            JsonObject item = new JsonObject();
+            item.addProperty("index", i);
+
+            JsonObject data = new JsonObject();
+            data.addProperty("match", matches.get(i));
+            String url = ruleUrls != null ? ruleUrls.get(matches.get(i)) : null;
+            data.addProperty("url", url != null ? url : "");
+            JsonObject context = new JsonObject();
+            String[] ctx = ruleCtx != null ? ruleCtx.get(matches.get(i)) : null;
+            context.addProperty("before", ctx != null ? ctx[0] : "");
+            context.addProperty("after", ctx != null ? ctx[1] : "");
+            data.add("context", context);
+
+            item.add("data", data);
+            items.add(item);
+        }
+        return items;
+    }
+
+    public static String executeCommand(
+            String command,
+            String input,
+            long timeout
+    ) {
+        try {
+            String osName = System.getProperty("os.name", "").toLowerCase();
+            String[] cmd = osName.contains("win")
+                    ? new String[]{"cmd", "/c", command}
+                    : new String[]{"/bin/sh", "-c", command};
+            Process process = new ProcessBuilder(cmd).start();
+
+            Thread writer = new Thread(() -> {
+                try (OutputStream os = process.getOutputStream()) {
+                    os.write(input.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException ignored) {
+                }
+            }, "HaE-Validator-stdin");
+            writer.setDaemon(true);
+            writer.start();
+
+            StringBuilder stdout = new StringBuilder();
+            Thread reader = new Thread(() -> {
+                try (InputStream is = process.getInputStream()) {
+                    stdout.append(
+                            new String(is.readAllBytes(), StandardCharsets.UTF_8)
+                    );
+                } catch (IOException ignored) {
+                }
+            }, "HaE-Validator-stdout");
+            reader.setDaemon(true);
+            reader.start();
+
+            boolean finished = process.waitFor(timeout, TimeUnit.MILLISECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                writer.join(1000);
+                reader.join(1000);
+                return null;
+            }
+
+            writer.join(1000);
+            reader.join(1000);
+            return process.exitValue() == 0 ? stdout.toString().trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Map<Integer, String> parseOutput(String output) {
+        Map<Integer, String> severityMap = new HashMap<>();
+        try {
+            JsonObject parsed = GSON.fromJson(output, JsonObject.class);
+            if (parsed == null || !parsed.has("results")) return severityMap;
+
+            JsonArray results = parsed.getAsJsonArray("results");
+            for (int i = 0; i < results.size(); i++) {
+                JsonObject r = results.get(i).getAsJsonObject();
+                int index = r.get("index").getAsInt();
+                String tags = r.get("tags").getAsString();
+                if (VALID_TAGS.contains(tags)) {
+                    severityMap.put(index, tags);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return severityMap;
     }
 
     public String getSeverity(String ruleName, String matchValue) {
@@ -240,40 +404,6 @@ public class ValidatorService {
         return null;
     }
 
-    public static void putContext(
-            String ruleName,
-            String matchValue,
-            String matchContent
-    ) {
-        ConcurrentHashMap<String, String[]> ruleCtx =
-                contextStore.computeIfAbsent(ruleName, k ->
-                        new ConcurrentHashMap<>()
-                );
-        if (ruleCtx.containsKey(matchValue)) return;
-        int pos = matchContent.indexOf(matchValue);
-        if (pos < 0) return;
-        String before = matchContent.substring(
-                Math.max(0, pos - CONTEXT_LENGTH),
-                pos
-        );
-        String after = matchContent.substring(
-                Math.min(pos + matchValue.length(), matchContent.length()),
-                Math.min(
-                        pos + matchValue.length() + CONTEXT_LENGTH,
-                        matchContent.length()
-                )
-        );
-        ruleCtx.putIfAbsent(matchValue, new String[]{before, after});
-    }
-
-    public static void putUrl(String ruleName, String matchValue, String url) {
-        ConcurrentHashMap<String, String> ruleUrls = urlStore.computeIfAbsent(
-                ruleName,
-                k -> new ConcurrentHashMap<>()
-        );
-        ruleUrls.putIfAbsent(matchValue, url);
-    }
-
     public void clear() {
         severityStore.clear();
         contextStore.clear();
@@ -286,21 +416,6 @@ public class ValidatorService {
         severityStore.clear();
         contextStore.clear();
         urlStore.clear();
-    }
-
-    public static int compareBySeverity(String a, String b) {
-        int ra = SEVERITY_RANK.getOrDefault(a, 3);
-        int rb = SEVERITY_RANK.getOrDefault(b, 3);
-        return Integer.compare(ra, rb);
-    }
-
-    public static Color getSeverityColor(String severity) {
-        return switch (severity) {
-            case SEVERITY_HIGH -> new Color(220, 50, 50);
-            case SEVERITY_MEDIUM -> new Color(220, 150, 30);
-            case SEVERITY_LOW -> new Color(60, 130, 220);
-            default -> Color.GRAY;
-        };
     }
 
     private void loadFromPersistence() {
@@ -354,7 +469,6 @@ public class ValidatorService {
                     .extensionData()
                     .setStringList(SEVERITY_PREFIX + ruleName, entries);
 
-            // Update index
             PersistedList<String> index = persistence
                     .extensionData()
                     .getStringList(SEVERITY_INDEX_KEY);
@@ -383,123 +497,6 @@ public class ValidatorService {
         for (String ruleName : severityStore.keySet()) {
             persistRule(ruleName);
         }
-    }
-
-    private static final Gson GSON = new Gson();
-
-    private static String buildInputJson(
-            RuleDefinition rule,
-            String group,
-            List<String> matches
-    ) {
-        JsonObject root = new JsonObject();
-
-        JsonObject ruleObj = new JsonObject();
-        ruleObj.addProperty("name", rule.getName());
-        ruleObj.addProperty("regex", rule.getFirstRegex());
-        ruleObj.addProperty("group", group);
-        root.add("rule", ruleObj);
-
-        JsonArray items = getJsonElements(rule.getName(), matches);
-        root.add("items", items);
-
-        return GSON.toJson(root);
-    }
-
-    private static @NonNull JsonArray getJsonElements(
-            String ruleName,
-            List<String> matches
-    ) {
-        ConcurrentHashMap<String, String[]> ruleCtx = contextStore.get(
-                ruleName
-        );
-        ConcurrentHashMap<String, String> ruleUrls = urlStore.get(ruleName);
-        JsonArray items = new JsonArray();
-        for (int i = 0; i < matches.size(); i++) {
-            JsonObject item = new JsonObject();
-            item.addProperty("index", i);
-
-            JsonObject data = new JsonObject();
-            data.addProperty("match", matches.get(i));
-            String url = ruleUrls != null ? ruleUrls.get(matches.get(i)) : null;
-            data.addProperty("url", url != null ? url : "");
-            JsonObject context = new JsonObject();
-            String[] ctx = ruleCtx != null ? ruleCtx.get(matches.get(i)) : null;
-            context.addProperty("before", ctx != null ? ctx[0] : "");
-            context.addProperty("after", ctx != null ? ctx[1] : "");
-            data.add("context", context);
-
-            item.add("data", data);
-            items.add(item);
-        }
-        return items;
-    }
-
-    public static String executeCommand(
-            String command,
-            String input,
-            long timeout
-    ) {
-        try {
-            String osName = System.getProperty("os.name", "").toLowerCase();
-            String[] cmd = osName.contains("win")
-                    ? new String[]{"cmd", "/c", command}
-                    : new String[]{"/bin/sh", "-c", command};
-            Process process = new ProcessBuilder(cmd).start();
-
-            Thread writer = new Thread(() -> {
-                try (OutputStream os = process.getOutputStream()) {
-                    os.write(input.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException ignored) {
-                }
-            });
-            writer.start();
-
-            StringBuilder stdout = new StringBuilder();
-            Thread reader = new Thread(() -> {
-                try (InputStream is = process.getInputStream()) {
-                    stdout.append(
-                            new String(is.readAllBytes(), StandardCharsets.UTF_8)
-                    );
-                } catch (IOException ignored) {
-                }
-            });
-            reader.start();
-
-            boolean finished = process.waitFor(timeout, TimeUnit.MILLISECONDS);
-            if (!finished) {
-                process.destroyForcibly();
-                writer.join(1000);
-                reader.join(1000);
-                return null;
-            }
-
-            writer.join(1000);
-            reader.join(1000);
-            return process.exitValue() == 0 ? stdout.toString().trim() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static Map<Integer, String> parseOutput(String output) {
-        Map<Integer, String> severityMap = new HashMap<>();
-        try {
-            JsonObject parsed = GSON.fromJson(output, JsonObject.class);
-            if (parsed == null || !parsed.has("results")) return severityMap;
-
-            JsonArray results = parsed.getAsJsonArray("results");
-            for (int i = 0; i < results.size(); i++) {
-                JsonObject r = results.get(i).getAsJsonObject();
-                int index = r.get("index").getAsInt();
-                String tags = r.get("tags").getAsString();
-                if (VALID_TAGS.contains(tags)) {
-                    severityMap.put(index, tags);
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return severityMap;
     }
 
     public static class SeverityBadgeRenderer extends DefaultTableCellRenderer {

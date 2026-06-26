@@ -8,6 +8,7 @@ import burp.api.montoya.persistence.PersistedList;
 import burp.api.montoya.persistence.PersistedObject;
 import burp.api.montoya.persistence.Persistence;
 import hae.component.board.message.MessageTableModel;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -24,26 +25,30 @@ public class DataManager {
     }
 
     public void putData(
-        String dataType,
-        String dataName,
-        PersistedObject persistedObject
+            String dataType,
+            String dataName,
+            PersistedObject persistedObject
     ) {
         persistenceHelper.putData(dataType, dataName, persistedObject);
     }
 
     public synchronized void loadData(MessageTableModel messageTableModel) {
-        // 获取消息索引
-        PersistedList<String> messageIndex = persistence
-            .extensionData()
-            .getStringList("message");
+        try {
+            // 获取消息索引
+            PersistedList<String> messageIndex = persistence
+                    .extensionData()
+                    .getStringList("message");
 
-        // 从索引加载消息数据
-        loadMessageData(messageIndex, messageTableModel);
+            // 从索引加载消息数据
+            loadMessageData(messageIndex, messageTableModel);
+        } catch (Exception e) {
+            api.logging().logToError("loadData: " + e.getMessage());
+        }
     }
 
     private void loadMessageData(
-        PersistedList<String> messageIndex,
-        MessageTableModel messageTableModel
+            PersistedList<String> messageIndex,
+            MessageTableModel messageTableModel
     ) {
         if (messageIndex == null || messageIndex.isEmpty()) {
             return;
@@ -51,10 +56,10 @@ public class DataManager {
 
         // 直接转换为List，简化处理
         List<String> indexList = messageIndex
-            .stream()
-            .filter(Objects::nonNull)
-            .map(Object::toString)
-            .toList();
+                .stream()
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .toList();
 
         if (indexList.isEmpty()) {
             return;
@@ -72,22 +77,22 @@ public class DataManager {
     }
 
     private void processBatch(
-        List<String> batch,
-        MessageTableModel messageTableModel
+            List<String> batch,
+            MessageTableModel messageTableModel
     ) {
         batch.forEach(index -> {
             try {
                 PersistedObject dataObj = persistence
-                    .extensionData()
-                    .getChildObject(index);
+                        .extensionData()
+                        .getChildObject(index);
                 if (dataObj != null) {
                     HttpRequestResponse messageInfo =
-                        dataObj.getHttpRequestResponse("messageInfo");
+                            dataObj.getHttpRequestResponse("messageInfo");
                     if (messageInfo != null) {
                         addMessageToModel(
-                            messageInfo,
-                            dataObj,
-                            messageTableModel
+                                messageInfo,
+                                dataObj,
+                                messageTableModel
                         );
                     }
                 }
@@ -98,9 +103,9 @@ public class DataManager {
     }
 
     private void addMessageToModel(
-        HttpRequestResponse messageInfo,
-        PersistedObject dataObj,
-        MessageTableModel messageTableModel
+            HttpRequestResponse messageInfo,
+            PersistedObject dataObj,
+            MessageTableModel messageTableModel
     ) {
         HttpRequest request = messageInfo.request();
         HttpResponse response = messageInfo.response();
@@ -108,15 +113,15 @@ public class DataManager {
         String dataFingerprint = dataObj.getString("dataFingerprint");
 
         messageTableModel.add(
-            messageInfo,
-            request.url(),
-            request.method(),
-            String.valueOf(response.statusCode()),
-            String.valueOf(response.toByteArray().length()),
-            dataObj.getString("comment"),
-            dataObj.getString("color"),
-            dataFingerprint != null ? dataFingerprint : "",
-            false
+                messageInfo,
+                request.url(),
+                request.method(),
+                String.valueOf(response.statusCode()),
+                String.valueOf(response.toByteArray().length()),
+                dataObj.getString("comment"),
+                dataObj.getString("color"),
+                dataFingerprint != null ? dataFingerprint : "",
+                false
         );
     }
 }

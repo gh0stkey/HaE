@@ -3,6 +3,7 @@ package hae.utils.string;
 import java.security.MessageDigest;
 
 public class HashCalculator {
+
     public static String calculateHash(byte[] bytes) {
         MessageDigest digest;
         try {
@@ -14,7 +15,7 @@ public class HashCalculator {
         }
     }
 
-    private static String bytesToHex(byte[] bytes) {
+    public static String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : bytes) {
             String hex = Integer.toHexString(0xff & b);

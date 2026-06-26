@@ -43,8 +43,8 @@ public class Datatable extends JPanel {
                     ValidatorService.SEVERITY_NONE
             )
     );
-    private SwingWorker<Void, Void> doubleClickWorker;
     private final JLabel statusLabel = new JLabel();
+    private SwingWorker<Void, Void> doubleClickWorker;
 
     public Datatable(
             MontoyaApi api,
@@ -396,23 +396,28 @@ public class Datatable extends JPanel {
             JTextField searchField,
             boolean isReversible
     ) {
+        final String searchText = searchField.getText().toLowerCase();
+        final boolean isEmpty = searchText.isEmpty();
+        final boolean reverseReturn = searchMode.isSelected() && isReversible;
+        final boolean isRegex = regexMode.isSelected();
+
+        Pattern compiledPattern = null;
+        if (isRegex) {
+            try {
+                compiledPattern = Pattern.compile(
+                        searchText,
+                        Pattern.CASE_INSENSITIVE
+                );
+            } catch (Exception ignored) {
+            }
+        }
+        final Pattern pattern = compiledPattern;
+
         return new RowFilter<>() {
             public boolean include(Entry<?, ?> entry) {
-                String searchText = searchField.getText();
-                searchText = searchText.toLowerCase();
                 String entryValue = ((String) entry.getValue(1)).toLowerCase();
-                boolean filterReturn = searchText.isEmpty();
-                boolean reverseReturn = searchMode.isSelected() && isReversible;
-                if (regexMode.isSelected()) {
-                    Pattern pattern = null;
-                    try {
-                        pattern = Pattern.compile(
-                                searchText,
-                                Pattern.CASE_INSENSITIVE
-                        );
-                    } catch (Exception ignored) {
-                    }
-
+                boolean filterReturn = isEmpty;
+                if (isRegex) {
                     if (pattern != null) {
                         filterReturn =
                                 filterReturn ||

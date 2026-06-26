@@ -14,12 +14,13 @@ import hae.utils.ConfigLoader;
 import hae.utils.http.HttpUtils;
 import hae.utils.string.HashCalculator;
 import hae.utils.string.StringProcessor;
+
+import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.swing.*;
 
 public class HttpMessageActiveHandler implements HttpHandler {
 
@@ -33,35 +34,35 @@ public class HttpMessageActiveHandler implements HttpHandler {
     // 同时采用 ThreadLocal 来保证多线程并发的情况下全局变量的安全性
     private final ThreadLocal<String> host = ThreadLocal.withInitial(() -> "");
     private final ThreadLocal<List<String>> colorList = ThreadLocal.withInitial(
-        ArrayList::new
+            ArrayList::new
     );
     private final ThreadLocal<List<String>> commentList =
-        ThreadLocal.withInitial(ArrayList::new);
+            ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> fingerprintList =
-        ThreadLocal.withInitial(ArrayList::new);
+            ThreadLocal.withInitial(ArrayList::new);
 
     public HttpMessageActiveHandler(
-        MontoyaApi api,
-        ConfigLoader configLoader,
-        MessageTableModel messageTableModel,
-        DataRepository dataRepository,
-        RuleRepository ruleRepository
+            MontoyaApi api,
+            ConfigLoader configLoader,
+            MessageTableModel messageTableModel,
+            DataRepository dataRepository,
+            RuleRepository ruleRepository
     ) {
         this.api = api;
         this.configLoader = configLoader;
         this.httpUtils = new HttpUtils(api, configLoader);
         this.messageTableModel = messageTableModel;
         this.messageProcessor = new MessageProcessor(
-            api,
-            configLoader,
-            dataRepository,
-            ruleRepository
+                api,
+                configLoader,
+                dataRepository,
+                ruleRepository
         );
     }
 
     @Override
     public RequestToBeSentAction handleHttpRequestToBeSent(
-        HttpRequestToBeSent httpRequestToBeSent
+            HttpRequestToBeSent httpRequestToBeSent
     ) {
         colorList.get().clear();
         commentList.get().clear();
@@ -73,118 +74,132 @@ public class HttpMessageActiveHandler implements HttpHandler {
             host.set(StringProcessor.getHostByUrl(httpRequestToBeSent.url()));
         } catch (Exception e) {
             api
-                .logging()
-                .logToError("handleHttpRequestToBeSent: " + e.getMessage());
+                    .logging()
+                    .logToError("handleHttpRequestToBeSent: " + e.getMessage());
         }
 
         return RequestToBeSentAction.continueWith(
-            httpRequestToBeSent,
-            annotations
+                httpRequestToBeSent,
+                annotations
         );
     }
 
     @Override
     public ResponseReceivedAction handleHttpResponseReceived(
-        HttpResponseReceived httpResponseReceived
+            HttpResponseReceived httpResponseReceived
     ) {
         Annotations annotations = httpResponseReceived.annotations();
         HttpRequest request = httpResponseReceived.initiatingRequest();
         HttpRequestResponse requestResponse =
-            HttpRequestResponse.httpRequestResponse(
-                request,
-                httpResponseReceived
-            );
+                HttpRequestResponse.httpRequestResponse(
+                        request,
+                        httpResponseReceived
+                );
         String toolType = httpResponseReceived
-            .toolSource()
-            .toolType()
-            .toolName();
+                .toolSource()
+                .toolType()
+                .toolName();
 
         boolean matches = httpUtils.verifyHttpRequestResponse(
-            requestResponse,
-            toolType
+                requestResponse,
+                toolType
         );
 
         if (!matches) {
             try {
                 setColorAndCommentList(
-                    messageProcessor.processRequest(
-                        host.get(),
-                        request.url(),
-                        request,
-                        true,
-                        true,
-                        false
-                    )
+                        messageProcessor.processRequest(
+                                host.get(),
+                                request.url(),
+                                request,
+                                true,
+                                true,
+                                false
+                        )
                 );
                 setColorAndCommentList(
-                    messageProcessor.processResponse(
-                        host.get(),
-                        request.url(),
-                        httpResponseReceived,
-                        true,
-                        true,
-                        false
-                    )
+                        messageProcessor.processResponse(
+                                host.get(),
+                                request.url(),
+                                httpResponseReceived,
+                                true,
+                                true,
+                                false
+                        )
                 );
 
                 if (
-                    !colorList.get().isEmpty() && !commentList.get().isEmpty()
+                        !colorList.get().isEmpty() && !commentList.get().isEmpty()
                 ) {
                     HttpRequestResponse httpRequestResponse =
-                        HttpRequestResponse.httpRequestResponse(
-                            request,
-                            httpResponseReceived
-                        );
+                            HttpRequestResponse.httpRequestResponse(
+                                    request,
+                                    httpResponseReceived
+                            );
 
                     String color = messageProcessor.retrieveFinalColor(
-                        messageProcessor.retrieveColorIndices(colorList.get())
+                            messageProcessor.retrieveColorIndices(colorList.get())
                     );
                     annotations.setHighlightColor(
-                        HighlightColor.highlightColor(color)
+                            HighlightColor.highlightColor(color)
                     );
                     String comment = StringProcessor.mergeComment(
-                        String.join(", ", commentList.get())
+                            String.join(", ", commentList.get())
                     );
                     annotations.setNotes(comment);
 
                     String method = request.method();
                     String url = request.url();
                     String status = String.valueOf(
-                        httpResponseReceived.statusCode()
+                            httpResponseReceived.statusCode()
                     );
                     String length = String.valueOf(
-                        httpResponseReceived.toByteArray().length()
+                            httpResponseReceived.toByteArray().length()
                     );
 
                     String dataFingerprint = combineFingerprints(
-                        fingerprintList.get()
+                            fingerprintList.get()
                     );
 
                     new SwingWorker<Void, Void>() {
                         @Override
                         protected Void doInBackground() {
                             messageTableModel.add(
-                                httpRequestResponse,
-                                url,
-                                method,
-                                status,
-                                length,
-                                comment,
-                                color,
-                                dataFingerprint,
-                                true
+                                    httpRequestResponse,
+                                    url,
+                                    method,
+                                    status,
+                                    length,
+                                    comment,
+                                    color,
+                                    dataFingerprint,
+                                    true
                             );
                             return null;
                         }
+
+                        @Override
+                        protected void done() {
+                            try {
+                                get();
+                            } catch (Exception ex) {
+                                api
+                                        .logging()
+                                        .logToError(
+                                                "handleHttpResponseReceived (add): " +
+                                                        ex.getMessage()
+                                        );
+                            }
+                        }
                     }
-                        .execute();
+                            .execute();
                 }
             } catch (Exception e) {
                 api
-                    .logging()
-                    .logToError(
-                        "handleHttpResponseReceived: " + e.getMessage()
-                    );
+                        .logging()
+                        .logToError(
+                                "handleHttpResponseReceived: " + e.getMessage()
+                        );
             } finally {
                 cleanupThreadLocals();
             }
@@ -193,8 +208,8 @@ public class HttpMessageActiveHandler implements HttpHandler {
         }
 
         return ResponseReceivedAction.continueWith(
-            httpResponseReceived,
-            annotations
+                httpResponseReceived,
+                annotations
         );
     }
 
@@ -223,7 +238,7 @@ public class HttpMessageActiveHandler implements HttpHandler {
         Collections.sort(sorted);
         String combined = String.join("|", sorted);
         return HashCalculator.calculateHash(
-            combined.getBytes(StandardCharsets.UTF_8)
+                combined.getBytes(StandardCharsets.UTF_8)
         );
     }
 }

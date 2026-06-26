@@ -167,17 +167,21 @@ public class DataRepositoryImpl implements DataRepository {
 
     @Override
     public void loadFromPersistence() {
-        PersistedList<String> dataIndex = persistence.extensionData().getStringList("data");
-        if (dataIndex != null && !dataIndex.isEmpty()) {
-            dataIndex.forEach(index -> {
-                PersistedObject dataObj = persistence.extensionData().getChildObject(index);
-                try {
-                    dataObj.stringListKeys().forEach(dataKey ->
-                            mergeData(index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
-                } catch (Exception e) {
-                    api.logging().logToError("Failed to load persisted data for " + index + ": " + e.getMessage());
-                }
-            });
+        try {
+            PersistedList<String> dataIndex = persistence.extensionData().getStringList("data");
+            if (dataIndex != null && !dataIndex.isEmpty()) {
+                dataIndex.forEach(index -> {
+                    PersistedObject dataObj = persistence.extensionData().getChildObject(index);
+                    try {
+                        dataObj.stringListKeys().forEach(dataKey ->
+                                mergeData(index, dataKey, dataObj.getStringList(dataKey).stream().toList(), false));
+                    } catch (Exception e) {
+                        api.logging().logToError("Failed to load persisted data for " + index + ": " + e.getMessage());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            api.logging().logToError("Failed to load persisted data: " + e.getMessage());
         }
     }
 }
