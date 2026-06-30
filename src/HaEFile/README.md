@@ -45,4 +45,8 @@ Currently, HaE File rules consist of 6 fields, with detailed meanings as follows
 6. **External Validation**: Supports **external validators** for classifying match results by severity (high/medium/low/none), enabling automated risk rating.
 7. **Practical Rules**: The official rule library is **based on real-world scenario summaries**, covering basic information, sensitive information, and other categories — ready to use out of the box.
 
-![](images/HaEFile.png)
+| Name              | Display                                       |
+| ------------------------ | ---------------------------------------------------- |
+| Main     | <img src="images/HaEFile.png" style="width: 80%" />     |
+| Settings (Rules)     | <img src="images/rules.png" style="width: 80%" />     |
+| Settings (Config)     | <img src="images/config.png" style="width: 80%" />     |

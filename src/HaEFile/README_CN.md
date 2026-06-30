@@ -45,4 +45,8 @@ HaE File 目前的规则一共有 6 个字段，详细的含义如下所示：
 6. **外部验证**：支持通过**外部验证器**对匹配结果进行严重程度分类（high/medium/low/none），实现自动化风险评级。
 7. **实战规则**：官方规则库**基于实战化场景总结输出**，涵盖基础信息、敏感信息等多个分类，开箱即用。
 
-![](images/HaEFile.png)
+| 界面名称              | 界面展示                                       |
+| ------------------------ | ---------------------------------------------------- |
+| Main（主界面）     | <img src="images/HaEFile.png" style="width: 80%" />     |
+| Settings (规则管理)     | <img src="images/rules.png" style="width: 80%" />     |
+| Settings (配置管理)     | <img src="images/config.png" style="width: 80%" />     |
