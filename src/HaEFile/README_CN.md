@@ -1,9 +1,12 @@
 <div align="center">
 <img src="/resource/image/logo.png" style="width: 20%" />
 <h3>HaE File</h3>
+<h5>第一作者： <a href="https://github.com/0chencc">0chencc</a>（米斯特安全团队）<br>第二作者： <a href="https://github.com/gh0stkey">EvilChen</a></h5>
 </div>
 
 README 版本: \[[English](README.md) | [简体中文](README_CN.md)\]
+
+内测先行者计划名单致谢：冰淇霖、ArG3、Kite
 
 ## 项目介绍
 

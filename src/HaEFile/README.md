@@ -1,9 +1,12 @@
 <div align="center">
 <img src="/resource/image/logo.png" style="width: 20%" />
 <h3>HaE File</h3>
+<h5>First Author: <a href="https://github.com/0chencc">0chencc</a> (Mystery Security Team)<br>Second Author: <a href="https://github.com/gh0stkey">EvilChen</a></h5>
 </div>
 
 README Version: \[[English](README.md) | [简体中文](README_CN.md)\]
+
+Thank you list for the beta pioneer program: 冰淇霖, ArG3, Kite
 
 ## Project Introduction
 
