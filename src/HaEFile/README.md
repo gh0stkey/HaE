@@ -6,7 +6,7 @@
 
 README Version: \[[English](README.md) | [简体中文](README_CN.md)\]
 
-Thank you list for the beta pioneer program: 冰淇霖, ArG3, Kite
+Thank you list for the beta pioneer program: [冰淇霖](https://github.com/Ice-1in)、[ArG3](https://github.com/Arg3Sea)、[Kite](https://github.com/Kite156)
 
 ## Project Introduction
 
