@@ -1,0 +1,263 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --hae-badge-bg: var(--vscode-badge-background);
+  --hae-badge-fg: var(--vscode-badge-foreground);
+  --hae-badge-padding: 1px 6px;
+  --hae-badge-radius: 10px;
+  --hae-badge-font-size: 10px;
+  --hae-selected-ring:
+    inset 0 0 0 1px var(--vscode-focusBorder),
+    0 0 0 1px color-mix(in srgb, var(--vscode-focusBorder) 70%, transparent);
+  --hae-rule-red-bg: #ff6b6b;
+  --hae-rule-red-border: #cc5555;
+  --hae-rule-orange-bg: #ffa726;
+  --hae-rule-orange-border: #cc851e;
+  --hae-rule-yellow-bg: #ffd93d;
+  --hae-rule-yellow-border: #ccae31;
+  --hae-rule-green-bg: #90ee90;
+  --hae-rule-green-border: #73be73;
+  --hae-rule-cyan-bg: #6bcfef;
+  --hae-rule-cyan-border: #56a6bf;
+  --hae-rule-blue-bg: #42a5f5;
+  --hae-rule-blue-border: #3584c4;
+  --hae-rule-pink-bg: #ff77c4;
+  --hae-rule-pink-border: #cc5f9d;
+  --hae-rule-magenta-bg: #e040fb;
+  --hae-rule-magenta-border: #b333c9;
+  --hae-rule-gray-bg: #9e9e9e;
+  --hae-rule-gray-border: #7e7e7e;
+  --hae-rule-none-bg: color-mix(in srgb, var(--vscode-foreground) 8%, transparent);
+  --hae-rule-none-border: color-mix(in srgb, var(--vscode-foreground) 45%, transparent);
+  --hae-severity-high-bg: var(--vscode-inputValidation-errorBackground);
+  --hae-severity-high-border: var(--vscode-inputValidation-errorBorder);
+  --hae-severity-high-dot: var(--vscode-inputValidation-errorBorder, #f14c4c);
+  --hae-severity-medium-bg: var(--vscode-inputValidation-warningBackground);
+  --hae-severity-medium-border: var(--vscode-inputValidation-warningBorder);
+  --hae-severity-medium-dot: var(--vscode-inputValidation-warningBorder, #cca700);
+  --hae-severity-low-bg: var(--vscode-inputValidation-infoBackground);
+  --hae-severity-low-border: var(--vscode-inputValidation-infoBorder);
+  --hae-severity-low-dot: var(--vscode-inputValidation-infoBorder, #007acc);
+  --hae-severity-none-fg: var(--vscode-descriptionForeground);
+  --hae-severity-none-border: var(--vscode-panel-border);
+  --hae-status-valid-fg: var(--vscode-testing-iconPassed, #4bb34b);
+  --hae-status-valid-bg: color-mix(
+    in srgb,
+    var(--vscode-testing-iconPassed, #4bb34b) 15%,
+    transparent
+  );
+  --hae-status-invalid-fg: var(--vscode-testing-iconFailed, #f48771);
+  --hae-status-invalid-bg: color-mix(
+    in srgb,
+    var(--vscode-testing-iconFailed, #f48771) 15%,
+    transparent
+  );
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+button {
+  font-family: var(--vscode-font-family);
+  cursor: pointer;
+}
+
+.hae-badge {
+  font-size: var(--hae-badge-font-size);
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 4px;
+  background-color: var(--hae-badge-bg);
+  color: var(--hae-badge-fg);
+  border-radius: var(--hae-badge-radius);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.hae-color-dot {
+  min-width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+.hae-color-dot.color-red,
+.hae-color-dot.color-orange,
+.hae-color-dot.color-yellow,
+.hae-color-dot.color-green,
+.hae-color-dot.color-cyan,
+.hae-color-dot.color-blue,
+.hae-color-dot.color-pink,
+.hae-color-dot.color-magenta,
+.hae-color-dot.color-gray,
+.hae-color-dot.color-none {
+  background-color: color-mix(in srgb, var(--hae-rule-color-border) 18%, transparent);
+  border-color: var(--hae-rule-color-border);
+}
+
+.hae-color-dot.color-none {
+  background-color: transparent;
+  border-color: var(--hae-rule-none-border);
+}
+
+.color-red {
+  --hae-rule-color-bg: var(--hae-rule-red-bg);
+  --hae-rule-color-border: var(--hae-rule-red-border);
+}
+.color-orange {
+  --hae-rule-color-bg: var(--hae-rule-orange-bg);
+  --hae-rule-color-border: var(--hae-rule-orange-border);
+}
+.color-yellow {
+  --hae-rule-color-bg: var(--hae-rule-yellow-bg);
+  --hae-rule-color-border: var(--hae-rule-yellow-border);
+}
+.color-green {
+  --hae-rule-color-bg: var(--hae-rule-green-bg);
+  --hae-rule-color-border: var(--hae-rule-green-border);
+}
+.color-cyan {
+  --hae-rule-color-bg: var(--hae-rule-cyan-bg);
+  --hae-rule-color-border: var(--hae-rule-cyan-border);
+}
+.color-blue {
+  --hae-rule-color-bg: var(--hae-rule-blue-bg);
+  --hae-rule-color-border: var(--hae-rule-blue-border);
+}
+.color-pink {
+  --hae-rule-color-bg: var(--hae-rule-pink-bg);
+  --hae-rule-color-border: var(--hae-rule-pink-border);
+}
+.color-magenta {
+  --hae-rule-color-bg: var(--hae-rule-magenta-bg);
+  --hae-rule-color-border: var(--hae-rule-magenta-border);
+}
+.color-gray {
+  --hae-rule-color-bg: var(--hae-rule-gray-bg);
+  --hae-rule-color-border: var(--hae-rule-gray-border);
+}
+.color-none {
+  --hae-rule-color-bg: var(--hae-rule-none-bg);
+  --hae-rule-color-border: var(--hae-rule-none-border);
+}
+
+.search-box {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 12px;
+  color: var(--vscode-input-placeholderForeground);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 52px 6px 26px;
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 2px;
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.search-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 26px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--vscode-input-placeholderForeground);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.clear-btn:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+  color: var(--vscode-foreground);
+}
+
+.regex-toggle {
+  position: absolute;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--vscode-descriptionForeground);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.regex-toggle:hover {
+  opacity: 1;
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.regex-toggle.active {
+  color: var(--vscode-inputOption-activeForeground, var(--vscode-foreground));
+  border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder));
+  background-color: var(--vscode-inputOption-activeBackground);
+  opacity: 1;
+}

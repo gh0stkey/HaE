@@ -1,0 +1,38 @@
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  min-height: 38px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.detail-header-group {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--vscode-descriptionForeground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.detail-header-sep {
+  font-size: 13px;
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.detail-header-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}

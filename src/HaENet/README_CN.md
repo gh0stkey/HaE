@@ -21,7 +21,7 @@ README 版本: \[[English](README.md) | [简体中文](README_CN.md)\]
 
 插件装载: `Extender - Extensions - Add - Select File - Next`
 
-初次装载`HaE Network`会从Jar包中加载离线的规则库，如果更新可以点击`Reinit`进行重新初始化。内置规则库地址可以在Github上找到：`https://github.com/gh0stkey/HaE/blob/main/src/HaENet/src/main/resources/rules/Rules.yml`。
+初次装载`HaE Network`会从Jar包中加载离线的规则库，如果更新可以点击`Reinit`进行重新初始化。内置规则库地址可以在Github上找到：`https://github.com/gh0stkey/HaE/blob/main/src/HaENet/sources/src/main/resources/rules/Rules.yml`。
 
 配置文件（`Config.yml`）和规则文件（`Rules.yml`）会放在固定目录下：
 

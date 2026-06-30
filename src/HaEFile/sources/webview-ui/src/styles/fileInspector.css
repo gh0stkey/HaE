@@ -1,0 +1,7 @@
+body {
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-panel-background, var(--vscode-sideBar-background));
+  overflow: hidden;
+  height: 100vh;
+}

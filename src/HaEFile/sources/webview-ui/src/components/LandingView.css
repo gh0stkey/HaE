@@ -1,0 +1,331 @@
+.landing-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  height: 100%;
+  color: var(--vscode-descriptionForeground);
+  position: relative;
+}
+
+.landing-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vscode-progressBar-background, #0e70c0);
+  box-shadow: 0 0 6px var(--vscode-progressBar-background, #0e70c0);
+  opacity: 0;
+  animation: ambient-flicker 5s ease-in-out infinite;
+}
+
+.ambient-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--vscode-progressBar-background, #0e70c0) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  animation: ambient-flicker 6s ease-in-out infinite;
+}
+
+@keyframes ambient-flicker {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-3px);
+  }
+  60% {
+    opacity: 0.5;
+  }
+}
+
+.hae-orb {
+  position: relative;
+  width: 120px;
+  height: 68px;
+  margin-bottom: 28px;
+  cursor: pointer;
+  transition:
+    width 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.hae-orb:hover .orb-eye-shell {
+  opacity: 0.8;
+}
+
+.hae-orb:hover .orb-center {
+  box-shadow: 0 0 16px var(--vscode-progressBar-background, #0e70c0);
+}
+
+.landing-state--active .hae-orb {
+  width: 140px;
+  height: 140px;
+  cursor: default;
+}
+
+.orb-eye-shell {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% / 42%;
+  border: 1.5px solid var(--vscode-progressBar-background, #0e70c0);
+  opacity: 0.55;
+  animation: orb-breathe 3.2s ease-in-out infinite;
+  transition:
+    opacity 0.5s ease,
+    border-radius 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-state--active .orb-eye-shell {
+  opacity: 0;
+  border-radius: 50%;
+  animation: none;
+}
+
+.orb-iris {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid var(--vscode-progressBar-background, #0e70c0);
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+}
+
+.landing-state--active .orb-iris {
+  opacity: 0;
+}
+
+.orb-scanline {
+  position: absolute;
+  left: 12%;
+  width: 76%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--vscode-progressBar-background, #0e70c0) 50%,
+    transparent 100%
+  );
+  opacity: 0.35;
+  animation: orb-scan 4s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+
+.landing-state--active .orb-scanline {
+  opacity: 0;
+  animation: none;
+}
+
+.orb-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--vscode-progressBar-background, #0e70c0);
+  box-shadow: 0 0 10px var(--vscode-progressBar-background, #0e70c0);
+  animation: orb-glow 3.2s ease-in-out infinite;
+  transition:
+    width 0.7s ease,
+    height 0.7s ease,
+    box-shadow 0.5s ease;
+  z-index: 1;
+}
+
+.landing-state--active .orb-center {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 8px var(--vscode-progressBar-background, #0e70c0);
+  animation: none;
+}
+
+.orb-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--vscode-progressBar-background, #0e70c0);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.5s ease 0.35s;
+}
+
+.landing-state--active .orb-ring-1 {
+  width: 46px;
+  height: 46px;
+  opacity: 0.5;
+  animation: orb-radar-pulse 2.4s ease-out infinite;
+}
+
+.landing-state--active .orb-ring-2 {
+  width: 88px;
+  height: 88px;
+  opacity: 0.3;
+  animation: orb-radar-pulse 2.4s ease-out 0.6s infinite;
+}
+
+.landing-state--active .orb-ring-3 {
+  width: 130px;
+  height: 130px;
+  opacity: 0.15;
+  animation: orb-radar-pulse 2.4s ease-out 1.2s infinite;
+}
+
+.orb-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    var(--vscode-progressBar-background, #0e70c0) 0%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease 0.35s;
+}
+
+.landing-state--active .orb-sweep {
+  opacity: 1;
+  animation: orb-sweep-rotate 2s linear infinite;
+}
+
+.landing-text {
+  position: relative;
+  height: 52px;
+  width: 260px;
+}
+
+.landing-idle-text,
+.landing-scan-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease;
+}
+
+.landing-idle-text {
+  opacity: 1;
+}
+
+.landing-scan-text {
+  opacity: 0;
+}
+
+.landing-state--active .landing-idle-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.landing-state--active .landing-scan-text {
+  opacity: 1;
+}
+
+.landing-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--vscode-foreground);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.landing-subtitle {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scaleY(1.04);
+  }
+}
+
+@keyframes orb-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--vscode-progressBar-background, #0e70c0);
+  }
+  50% {
+    box-shadow: 0 0 14px var(--vscode-progressBar-background, #0e70c0);
+  }
+}
+
+@keyframes orb-scan {
+  0%,
+  100% {
+    top: 8%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.35;
+  }
+  50% {
+    top: 88%;
+    opacity: 0.35;
+  }
+  60% {
+    opacity: 0;
+  }
+}
+
+@keyframes orb-radar-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  30% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+@keyframes orb-sweep-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,247 @@
+{
+  "name": "hae",
+  "displayName": "HaE",
+  "description": "HaE is a framework-style project in the field of cybersecurity (data security), adopting a Lego brick-style modular design philosophy to achieve fine-grained tagging and extraction of File and HTTP messages (including WebSocket).",
+  "version": "1.0.0",
+  "icon": "resources/images/logo.png",
+  "publisher": "0chencc-With-EvilChen",
+  "author": {
+    "name": "0chencc && EvilChen"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gh0stkey/HaE"
+  },
+  "bugs": {
+    "url": "https://github.com/gh0stkey/HaE/issues"
+  },
+  "homepage": "https://github.com/gh0stkey/HaE#readme",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "HaE",
+      "properties": {
+        "hae.ripgrepPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to ripgrep executable"
+        },
+        "hae.rules": {
+          "type": "array",
+          "default": [],
+          "description": "Scan rules configuration"
+        },
+        "hae.enableDecoration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time highlighting in editor"
+        },
+        "hae.decorationDelay": {
+          "type": "number",
+          "default": 500,
+          "minimum": 100,
+          "maximum": 5000,
+          "description": "Delay before applying highlighting in milliseconds (100-5000)"
+        },
+        "hae.maxFileSize": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 104857600,
+          "description": "Maximum file size in bytes. Files larger than this will be skipped during scanning and highlighting. (0 = no limit)"
+        },
+        "hae.ignoredExtensions": {
+          "type": "array",
+          "default": [
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".ico",
+            ".svg",
+            ".webp",
+            ".bmp"
+          ],
+          "description": "File extensions to skip during scanning (e.g., .png, .jpg)"
+        },
+        "hae.maxResults": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Maximum number of scan results per file (0 = no limit)"
+        },
+        "hae.scanTimeout": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 600000,
+          "description": "Scan operation timeout in milliseconds (0 = no limit)"
+        },
+        "hae.scanWorkerMaxConcurrency": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "description": "Maximum number of concurrent scan worker threads (minimum: 1, no upper limit)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "hae.openDataboard",
+        "title": "HaE: Open Databoard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "hae.openConfig",
+        "title": "HaE: Open Settings",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "hae.scanFile",
+        "title": "HaE: Scan File",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "hae.scanFolder",
+        "title": "HaE: Scan Folder",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "hae.scanWorkspace",
+        "title": "HaE: Scan Workspace",
+        "icon": "$(folder-opened)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hae",
+          "title": "HaE",
+          "icon": "resources/images/logo.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "haePanel",
+          "title": "HaE",
+          "icon": "resources/images/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "hae": [
+        {
+          "type": "webview",
+          "id": "hae.databoard",
+          "name": "HaE",
+          "icon": "resources/images/logo.svg",
+          "retainContextWhenHidden": true
+        }
+      ],
+      "haePanel": [
+        {
+          "type": "webview",
+          "id": "hae.fileInspector",
+          "name": "File Inspector",
+          "retainContextWhenHidden": true
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "hae.openDataboard",
+          "when": "view == hae.databoard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hae.openConfig",
+          "when": "view == hae.databoard",
+          "group": "navigation@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "hae.scanFile",
+          "group": "1_hae@1",
+          "when": "resourceExtname"
+        },
+        {
+          "command": "hae.scanFolder",
+          "group": "1_hae@2",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "hae.scanWorkspace",
+          "group": "1_hae@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "hae.scanFile",
+          "group": "1_hae"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "hae.scanWorkspace"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "npm run build:webview && npm run compile",
+    "build:webview": "cd webview-ui && npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "watch:webview": "cd webview-ui && npm run dev",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"webview-ui/**/*.css\" \"webview-ui/**/*.tsx\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"webview-ui/**/*.css\" \"webview-ui/**/*.tsx\" \"*.json\" \"*.md\"",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.105.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "arrowParens": "always",
+    "endOfLine": "lf",
+    "bracketSpacing": true,
+    "bracketSameLine": false
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}
