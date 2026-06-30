@@ -1,5 +1,5 @@
 <div align="center">
-<img src="/resources/image/logo.png" style="width: 20%" />
+<img src="/resource/image/logo.png" style="width: 20%" />
 <h3>HaE File</h3>
 </div>
 
