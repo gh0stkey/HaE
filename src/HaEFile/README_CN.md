@@ -6,7 +6,7 @@
 
 README 版本: \[[English](README.md) | [简体中文](README_CN.md)\]
 
-内测先行者计划名单致谢：冰淇霖、ArG3、Kite
+内测先行者计划致谢名单：冰淇霖、ArG3、Kite
 
 ## 项目介绍
 
