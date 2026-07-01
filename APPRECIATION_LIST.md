@@ -42,3 +42,4 @@ We appreciate everyone's support for the project. The following list is sorted b
 | Cr4zy                 | 66.66 CNY  |
 | 胡斐                 | 99.00 CNY  |
 | depy                 | 88.00 CNY  |
+| ArG3                 | 88.88 CNY  |
