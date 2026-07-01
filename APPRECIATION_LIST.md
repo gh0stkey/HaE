@@ -40,3 +40,5 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 强少张                      | 88.88 CNY  |
 | J4team-jiwa                 | 88.88 CNY  |
 | Cr4zy                 | 66.66 CNY  |
+| 胡斐                 | 99.00 CNY  |
+| depy                 | 88.00 CNY  |
