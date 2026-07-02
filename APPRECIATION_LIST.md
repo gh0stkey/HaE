@@ -43,3 +43,4 @@ We appreciate everyone's support for the project. The following list is sorted b
 | 胡斐                 | 99.00 CNY  |
 | depy                 | 88.00 CNY  |
 | ArG3                 | 88.88 CNY  |
+| kr0x02                 | 50.00 CNY  |
