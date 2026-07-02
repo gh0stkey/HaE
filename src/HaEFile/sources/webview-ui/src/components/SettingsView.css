@@ -989,7 +989,9 @@ input:focus + .slider {
 .combobox-search {
   display: flex;
   align-items: center;
-  padding: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--vscode-panel-border);
 }
 
@@ -1001,10 +1003,12 @@ input:focus + .slider {
 
 .combobox-search input {
   flex: 1;
+  padding: 0;
   background: transparent;
   border: none;
   color: var(--vscode-input-foreground);
   font-size: 13px;
+  line-height: 1.4;
   outline: none;
 }
 
@@ -1022,11 +1026,14 @@ input:focus + .slider {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  min-height: 34px;
+  padding: 0 12px;
+  box-sizing: border-box;
   background: transparent;
   border: none;
   color: var(--vscode-dropdown-foreground);
   font-size: 13px;
+  line-height: 1.4;
   cursor: pointer;
   text-align: left;
   gap: 8px;

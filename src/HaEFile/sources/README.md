@@ -1,5 +1,4 @@
 <div align="center">
-<img src="resources/images/logo.png" style="width: 20%" />
 <h3><a href="https://github.com/gh0stkey/HaE">HaE File</a></h3>
 <h5>First Author: <a href="https://github.com/0chencc">0chencc</a> (Mystery Security Team)<br>Second Author: <a href="https://github.com/gh0stkey">EvilChen</a></h5>
 </div>

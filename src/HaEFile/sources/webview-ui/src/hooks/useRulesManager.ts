@@ -133,6 +133,7 @@ interface UseRulesManagerReturn {
   existingGroups: string[];
   filteredGroups: Record<string, ScanRule[]>;
   regexValidation: RegexValidation;
+  canSaveRule: boolean;
 
   setEditingRule: React.Dispatch<React.SetStateAction<EditingRule | null>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -184,10 +185,42 @@ export function useRulesManager({ rules }: UseRulesManagerProps): UseRulesManage
     }
   }, [state.editingRule?.regex, state.editingRule?.sensitive]);
 
+  const preparedRuleForSave = useMemo(() => {
+    const editingRule = state.editingRule;
+    if (!editingRule) {
+      return null;
+    }
+
+    const finalName = editingRule.name?.trim() || '';
+    const finalRegex = editingRule.regex?.trim() || '';
+    const finalGroup = editingRule.group?.trim() || '';
+
+    if (!finalName || !finalRegex || !finalGroup || !regexValidation.isValid) {
+      return null;
+    }
+
+    const validator: ValidatorConfig | undefined = editingRule.validatorCommand?.trim()
+      ? {
+          command: editingRule.validatorCommand.trim(),
+          timeout: editingRule.validatorTimeout || 5000,
+          bulk: editingRule.validatorBulk || 500,
+        }
+      : undefined;
+
+    return {
+      finalName,
+      finalRegex,
+      finalGroup,
+      validator,
+    };
+  }, [regexValidation.isValid, state.editingRule]);
+
+  const canSaveRule = preparedRuleForSave !== null;
+
   const groupedRules = useMemo(() => {
     const grouped: Record<string, ScanRule[]> = {};
     rules.forEach((rule) => {
-      const group = rule.group || 'Default';
+      const group = rule.group;
       if (!grouped[group]) {
         grouped[group] = [];
       }
@@ -289,38 +322,19 @@ export function useRulesManager({ rules }: UseRulesManagerProps): UseRulesManage
 
   const saveRule = useCallback(() => {
     const editingRule = state.editingRule;
-    if (!editingRule) return;
-
-    if (!editingRule.name || !editingRule.regex) {
+    if (!editingRule || !preparedRuleForSave) {
       return;
     }
-
-    try {
-      const flags = editingRule.sensitive ? 'g' : 'gi';
-      new RegExp(editingRule.regex, flags);
-    } catch {
-      return;
-    }
-
-    const finalGroup = editingRule.group || 'Default';
-
-    const validator: ValidatorConfig | undefined = editingRule.validatorCommand?.trim()
-      ? {
-          command: editingRule.validatorCommand.trim(),
-          timeout: editingRule.validatorTimeout || 5000,
-          bulk: editingRule.validatorBulk || 500,
-        }
-      : undefined;
 
     const ruleToSave: ScanRule = {
       id: editingRule.isNew ? 'new_' : editingRule.id!,
-      name: editingRule.name!,
-      group: finalGroup,
-      regex: editingRule.regex!,
+      name: preparedRuleForSave.finalName,
+      group: preparedRuleForSave.finalGroup,
+      regex: preparedRuleForSave.finalRegex,
       color: editingRule.color || 'green',
       loaded: editingRule.loaded ?? true,
       sensitive: editingRule.sensitive ?? false,
-      validator: validator,
+      validator: preparedRuleForSave.validator,
     };
 
     vscode.postMessage({
@@ -329,7 +343,7 @@ export function useRulesManager({ rules }: UseRulesManagerProps): UseRulesManage
     });
 
     dispatch({ type: 'CANCEL_EDIT' });
-  }, [state.editingRule]);
+  }, [preparedRuleForSave, state.editingRule]);
 
   const deleteRule = useCallback((id: string) => {
     vscode.postMessage({
@@ -418,6 +432,7 @@ export function useRulesManager({ rules }: UseRulesManagerProps): UseRulesManage
     existingGroups,
     filteredGroups,
     regexValidation,
+    canSaveRule,
     setEditingRule,
     setSearchTerm,
     setEditingGroupNewName,

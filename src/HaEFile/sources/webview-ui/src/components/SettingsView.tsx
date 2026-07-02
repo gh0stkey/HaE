@@ -93,6 +93,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ logoUri }) => {
     editingGroupName,
     editingGroupNewName,
     regexValidation,
+    canSaveRule,
     filteredGroups,
     existingGroups,
     setEditingRule,
@@ -849,11 +850,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ logoUri }) => {
               <button className="btn" onClick={cancelEdit}>
                 Cancel
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={saveRule}
-                disabled={!editingRule.name || !editingRule.regex || !regexValidation.isValid}
-              >
+              <button className="btn btn-primary" onClick={saveRule} disabled={!canSaveRule}>
                 {editingRule.isNew ? 'Create' : 'Save'}
               </button>
             </div>

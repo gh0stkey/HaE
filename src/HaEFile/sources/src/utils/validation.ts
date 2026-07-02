@@ -49,10 +49,13 @@ function isValidValidatorConfig(val: unknown): boolean {
 function hasValidRequiredFields(rule: Record<string, unknown>): boolean {
   return (
     typeof rule.id === 'string' &&
-    rule.id.length > 0 &&
+    rule.id.trim().length > 0 &&
     typeof rule.name === 'string' &&
+    rule.name.trim().length > 0 &&
     typeof rule.group === 'string' &&
+    rule.group.trim().length > 0 &&
     typeof rule.regex === 'string' &&
+    rule.regex.trim().length > 0 &&
     typeof rule.loaded === 'boolean'
   );
 }

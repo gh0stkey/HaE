@@ -2,7 +2,7 @@
   "name": "hae",
   "displayName": "HaE",
   "description": "HaE is a framework-style project in the field of cybersecurity (data security), adopting a Lego brick-style modular design philosophy to achieve fine-grained tagging and extraction of File and HTTP messages (including WebSocket).",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icon": "resources/images/logo.png",
   "publisher": "0chencc-With-EvilChen",
   "author": {
@@ -154,6 +154,7 @@
           "type": "webview",
           "id": "hae.fileInspector",
           "name": "File Inspector",
+          "icon": "resources/images/logo.svg",
           "retainContextWhenHidden": true
         }
       ]
@@ -202,8 +203,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "npm run build:webview && npm run compile",
+    "build": "npm run clean && npm run build:webview && npm run compile",
     "build:webview": "cd webview-ui && npm run build",
+    "clean": "rm -rf out",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "watch:webview": "cd webview-ui && npm run dev",

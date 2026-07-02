@@ -131,7 +131,11 @@ export class RuleService {
       }
       const newRules: ScanRule[] = [];
       for (const ruleGroup of parsed.rules) {
-        if (!ruleGroup.group || !Array.isArray(ruleGroup.rule)) {
+        if (
+          typeof ruleGroup.group !== 'string' ||
+          ruleGroup.group.trim() === '' ||
+          !Array.isArray(ruleGroup.rule)
+        ) {
           continue;
         }
         for (const ruleItem of ruleGroup.rule) {
